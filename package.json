@@ -14,4 +14,7 @@
     "uuid": "^11.1.0",
     "ws": "^8.18.2"
   }
+  "scripts": {
+  "start": "node server.js"
+}
 }
