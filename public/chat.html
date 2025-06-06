@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body { font-family: sans-serif; padding: 20px; }
+      input { margin: 5px; padding: 8px; width: 300px; }
+      #chat { margin-top: 10px; border: 1px solid #ccc; padding: 10px; max-height: 300px; overflow-y: auto; }
+      #chat div { margin-bottom: 5px; }
+    </style>
+  </head>
+  <body>
+    <input id="name" placeholder="Enter your name" />
+    <input id="input" placeholder="Type message" disabled />
+    <div id="chat"></div>
+
+    <script>
+      const params = new URLSearchParams(location.search)
+      const chatID = params.get("chatID")
+      const ws = new WebSocket(`ws://${location.host}`)
+
+      let username = ""
+
+      document.getElementById("name").addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          username = e.target.value.trim()
+          if (username) {
+            e.target.disabled = true
+            document.getElementById("input").disabled = false
+            ws.send(JSON.stringify({ type: "join", chatID }))
+          }
+        }
+      })
+
+      document.getElementById("input").addEventListener("keydown", e => {
+        if (e.key === "Enter" && username) {
+          ws.send(JSON.stringify({
+            type: "message",
+            content: e.target.value,
+            sender: username
+          }))
+          e.target.value = ""
+        }
+      })
+
+      ws.onmessage = event => {
+        const data = JSON.parse(event.data)
+        if (data.type === "history") {
+          data.messages.forEach(msg => append(msg.content, msg.sender))
+        } else if (data.type === "message") {
+          append(data.message.content, data.message.sender)
+        }
+      }
+
+      function append(text, sender = "Anonymous") {
+        const div = document.createElement("div")
+        div.textContent = `${sender}: ${text}`
+        document.getElementById("chat").append(div)
+      }
+    </script>
+  </body>
+</html>

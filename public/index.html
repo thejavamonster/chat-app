@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <button id="create">Create Chat</button>
+    <p id="link"></p>
+    <script>
+      document.getElementById("create").onclick = async () => {
+        const res = await fetch("/create-chat", { method: "POST" })
+        const data = await res.json()
+        document.getElementById("link").innerText = location.origin + data.url
+      }
+    </script>
+  </body>
+</html>
