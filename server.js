@@ -33,7 +33,12 @@ wss.on('connection', (ws, req) => {
             timestamp: Date.now(),
             sender: data.sender || 'Anonymous'
         }
-        chats.get(chatID).push(message)
+        if (!chats.has(chatID)) {
+          console.warn(`Chat ${chatID} not found. Ignoring message.`);
+          return;
+        }
+        chats.get(chatID).push(message);
+        
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
             client.send(JSON.stringify({ type: 'message', message }))
