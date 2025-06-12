@@ -1,61 +1,93 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <style>
-      body { font-family: sans-serif; padding: 20px; }
-      input { margin: 5px; padding: 8px; width: 300px; }
-      #chat { margin-top: 10px; border: 1px solid #ccc; padding: 10px; max-height: 300px; overflow-y: auto; }
-      #chat div { margin-bottom: 5px; }
-    </style>
-  </head>
-  <body>
-    <input id="name" placeholder="Enter your name" />
-    <input id="input" placeholder="Type message" disabled />
-    <div id="chat"></div>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    #chatBox {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #inputContainer {
+      display: flex;
+      gap: 10px;
+    }
+    #messageInput {
+      flex: 1;
+      padding: 8px;
+      font-size: 16px;
+    }
+    #sendButton {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>The Testing Area</h1>
+  <div id="chatBox"></div>
+  <div id="inputContainer">
+    <input id="messageInput" type="text" placeholder="Type a message..." />
+    <button id="sendButton">Send</button>
+  </div>
 
-    <script>
-      const params = new URLSearchParams(location.search)
-      const chatID = params.get("chatID")
-      const ws = new WebSocket(`wss://${location.host}`)
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const chatID = params.get("chatID");
 
-      let username = ""
+    if (!chatID) {
+      alert("No chatID in URL. Please create a chat first.");
+      throw new Error("Missing chatID");
+    }
 
-      document.getElementById("name").addEventListener("keydown", e => {
-        if (e.key === "Enter") {
-          username = e.target.value.trim()
-          if (username) {
-            e.target.disabled = true
-            document.getElementById("input").disabled = false
-            ws.send(JSON.stringify({ type: "join", chatID }))
-          }
-        }
-      })
+    const ws = new WebSocket(`ws://${location.host}`);
 
-      document.getElementById("input").addEventListener("keydown", e => {
-        if (e.key === "Enter" && username) {
-          ws.send(JSON.stringify({
-            type: "message",
-            content: e.target.value,
-            sender: username
-          }))
-          e.target.value = ""
-        }
-      })
+    ws.addEventListener("open", () => {
+      console.log("Connected to WebSocket");
+      ws.send(JSON.stringify({ type: "join", chatID }));
+    });
 
-      ws.onmessage = event => {
-        const data = JSON.parse(event.data)
-        if (data.type === "history") {
-          data.messages.forEach(msg => append(msg.content, msg.sender))
-        } else if (data.type === "message") {
-          append(data.message.content, data.message.sender)
-        }
+    ws.addEventListener("message", (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "history") {
+        data.messages.forEach(showMessage);
+      } else if (data.type === "message") {
+        showMessage(data.message);
       }
+    });
 
-      function append(text, sender = "Anonymous") {
-        const div = document.createElement("div")
-        div.textContent = `${sender}: ${text}`
-        document.getElementById("chat").append(div)
+    document.getElementById("sendButton").addEventListener("click", () => {
+      const input = document.getElementById("messageInput");
+      const content = input.value.trim();
+      if (!content) return;
+
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: "message",
+          content: content,
+          sender: "You"
+        }));
+        input.value = "";
+      } else {
+        alert("WebSocket not connected!");
       }
-    </script>
-  </body>
+    });
+
+    function showMessage(message) {
+      const chatBox = document.getElementById("chatBox");
+      const msgDiv = document.createElement("div");
+      msgDiv.textContent = `${message.sender}: ${message.content}`;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
 </html>
