@@ -29,14 +29,28 @@
       font-size: 16px;
       cursor: pointer;
     }
+    #chatUI {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h1>The Testing Area</h1>
-  <div id="chatBox"></div>
-  <div id="inputContainer">
-    <input id="messageInput" type="text" placeholder="Type a message..." />
-    <button id="sendButton">Send</button>
+
+  <!-- Username prompt -->
+  <div id="namePrompt">
+    <label for="nameInput">Enter your name:</label>
+    <input type="text" id="nameInput" />
+    <button id="startChat">Start Chat</button>
+  </div>
+
+  <!-- Chat UI -->
+  <div id="chatUI">
+    <div id="chatBox"></div>
+    <div id="inputContainer">
+      <input id="messageInput" type="text" placeholder="Type a message..." />
+      <button id="sendButton">Send</button>
+    </div>
   </div>
 
   <script>
@@ -48,37 +62,55 @@
       throw new Error("Missing chatID");
     }
 
-    const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}`);
+    let userName = "";
+    let ws;
 
-    ws.addEventListener("open", () => {
-      console.log("Connected to WebSocket");
-      ws.send(JSON.stringify({ type: "join", chatID }));
-    });
-
-    ws.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "history") {
-        data.messages.forEach(showMessage);
-      } else if (data.type === "message") {
-        showMessage(data.message);
+    document.getElementById("startChat").addEventListener("click", () => {
+      const input = document.getElementById("nameInput").value.trim();
+      if (!input) {
+        alert("Please enter a name.");
+        return;
       }
-    });
-    
-    document.getElementById("sendButton").addEventListener("click", () => {
-      const input = document.getElementById("messageInput");
-      const content = input.value.trim();
-      if (!content) return;
 
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: "message",
-          content: content,
-          sender: "You"
-        }));
-        input.value = "";
-      } else {
-        alert("WebSocket not connected!");
-      }
+      userName = input;
+
+      // Hide name prompt and show chat
+      document.getElementById("namePrompt").style.display = "none";
+      document.getElementById("chatUI").style.display = "block";
+
+      // Initialize WebSocket
+      ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}`);
+
+      ws.addEventListener("open", () => {
+        console.log("Connected to WebSocket");
+        ws.send(JSON.stringify({ type: "join", chatID }));
+      });
+
+      ws.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "history") {
+          data.messages.forEach(showMessage);
+        } else if (data.type === "message") {
+          showMessage(data.message);
+        }
+      });
+
+      document.getElementById("sendButton").addEventListener("click", () => {
+        const input = document.getElementById("messageInput");
+        const content = input.value.trim();
+        if (!content) return;
+
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: "message",
+            content: content,
+            sender: userName
+          }));
+          input.value = "";
+        } else {
+          alert("WebSocket not connected!");
+        }
+      });
     });
 
     function showMessage(message) {
