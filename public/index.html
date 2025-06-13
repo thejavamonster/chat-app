@@ -1,14 +1,185 @@
 <!DOCTYPE html>
-<html>
-  <body>
-    <button id="create">Create Chat</button>
-    <p id="link"></p>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Project 25</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .chat-list {
+            list-style: none;
+            padding: 0;
+        }
+        .chat-item {
+            padding: 15px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+        .chat-item:hover {
+            background-color: #f0f0f0;
+        }
+        .chat-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            padding-right: 30px; /* Make room for delete button */
+        }
+        .chat-info {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .create-chat {
+            margin-bottom: 20px;
+        }
+        #chatNameInput {
+            padding: 8px;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .delete-chat-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 5px 10px;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .chat-item:hover .delete-chat-btn {
+            opacity: 1;
+        }
+        .delete-chat-btn:hover {
+            color: #c82333;
+        }
+        .chat-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .chat-link:hover {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Directory</h1>
+    
+    <div class="create-chat">
+        <input type="text" id="chatNameInput" placeholder="Enter chat name">
+        <button onclick="createChat()">Create New Chat</button>
+    </div>
+
+    <ul id="chatList" class="chat-list">
+        <!-- Chat items will be added here dynamically -->
+    </ul>
+
     <script>
-      document.getElementById("create").onclick = async () => {
-        const res = await fetch("/create-chat", { method: "POST" })
-        const data = await res.json()
-        document.getElementById("link").innerText = location.origin + data.url
-      }
+        // Load existing chats when page loads
+        window.onload = loadChats;
+
+        async function loadChats() {
+            try {
+                const response = await fetch('/chats');
+                const chats = await response.json();
+                const chatList = document.getElementById('chatList');
+                chatList.innerHTML = '';
+                
+                chats.forEach(chat => {
+                    const li = document.createElement('li');
+                    li.className = 'chat-item';
+                    
+                    // Create chat content
+                    const chatContent = document.createElement('a');
+                    chatContent.href = `/chat.html?chatID=${chat.id}`;
+                    chatContent.className = 'chat-link';
+                    
+                    chatContent.innerHTML = `
+                        <div class="chat-name">${chat.name}</div>
+                        <div class="chat-info">
+                            Created: ${new Date(chat.createdAt).toLocaleString()}
+                            <br>
+                            Messages: ${chat.messageCount}
+                        </div>
+                    `;
+                    
+                    // Create delete button
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'delete-chat-btn';
+                    deleteButton.textContent = '×';
+                    deleteButton.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (confirm(`Are you sure you want to delete the chat "${chat.name}"?`)) {
+                            deleteChat(chat.id);
+                        }
+                    };
+                    
+                    li.appendChild(chatContent);
+                    li.appendChild(deleteButton);
+                    chatList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error loading chats:', error);
+            }
+        }
+
+        async function createChat() {
+            const chatName = document.getElementById('chatNameInput').value.trim();
+            if (!chatName) {
+                alert('Please enter a chat name');
+                return;
+            }
+
+            try {
+                const response = await fetch('/create-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: chatName })
+                });
+                
+                const data = await response.json();
+                window.location.href = data.url;
+            } catch (error) {
+                console.error('Error creating chat:', error);
+                alert('Failed to create chat');
+            }
+        }
+
+        async function deleteChat(chatId) {
+            try {
+                const response = await fetch(`/delete-chat/${chatId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // Reload the chat list
+                    loadChats();
+                } else {
+                    alert('Failed to delete chat');
+                }
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+                alert('Failed to delete chat');
+            }
+        }
     </script>
-  </body>
+</body>
 </html>
