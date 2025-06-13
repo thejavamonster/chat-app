@@ -119,16 +119,56 @@
     }
 
     let userName = "";
+    let userId = localStorage.getItem('userId');
     let ws;
 
-    document.getElementById("startChat").addEventListener("click", () => {
-      const input = document.getElementById("nameInput").value.trim();
-      if (!input) {
-        alert("Please enter a name.");
+    // Function to register or get user
+    async function initializeUser(name) {
+      if (userId) {
+        // Try to get existing user
+        try {
+          const response = await fetch(`/user/${userId}`);
+          if (response.ok) {
+            const data = await response.json();
+            return data;
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error);
+        }
+      }
+
+      // Register new user
+      try {
+        const response = await fetch('/register-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          userId = data.userId;
+          localStorage.setItem('userId', userId);
+          return data;
+        }
+      } catch (error) {
+        console.error('Error registering user:', error);
+      }
+      
+      return null;
+    }
+
+    // Function to start the chat
+    async function startChat(name) {
+      const userData = await initializeUser(name);
+      if (!userData) {
+        alert("Failed to initialize user. Please try again.");
         return;
       }
 
-      userName = input;
+      userName = userData.name;
 
       // Hide name prompt and show chat
       document.getElementById("namePrompt").style.display = "none";
@@ -139,7 +179,7 @@
 
       ws.addEventListener("open", () => {
         console.log("Connected to WebSocket");
-        ws.send(JSON.stringify({ type: "join", chatID }));
+        ws.send(JSON.stringify({ type: "join", chatID, userId }));
       });
 
       ws.addEventListener("message", (event) => {
@@ -171,14 +211,46 @@
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
             type: "message",
-            content: content,
-            sender: userName
+            content: content
           }));
           input.value = "";
         } else {
           alert("WebSocket not connected!");
         }
       });
+    }
+
+    // Check if we have a stored user ID and try to load the name
+    if (userId) {
+      fetch(`/user/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.name) {
+            // Auto-start chat with existing user
+            startChat(data.name);
+          } else {
+            // Clear invalid user ID
+            localStorage.removeItem('userId');
+            userId = null;
+          }
+        })
+        .catch(error => {
+          console.error('Error loading user:', error);
+          // Clear invalid user ID
+          localStorage.removeItem('userId');
+          userId = null;
+        });
+    }
+
+    // Handle manual name entry
+    document.getElementById("startChat").addEventListener("click", async () => {
+      const input = document.getElementById("nameInput").value.trim();
+      if (!input) {
+        alert("Please enter a name.");
+        return;
+      }
+
+      await startChat(input);
     });
 
     function showMessage(message) {
