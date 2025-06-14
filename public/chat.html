@@ -228,8 +228,11 @@
         document.getElementById("namePrompt").style.display = "none";
         document.getElementById("chatUI").style.display = "block";
 
-        // Initialize WebSocket connection
-        ws = new WebSocket(`ws://${window.location.host}`);
+        // Initialize WebSocket connection with protocol matching the page
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}`;
+        console.log('Connecting to WebSocket at:', wsUrl);
+        ws = new WebSocket(wsUrl);
 
         ws.addEventListener("open", () => {
           console.log("WebSocket connection established");
