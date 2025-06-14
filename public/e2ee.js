@@ -385,5 +385,5 @@ class E2EEMessenger {
 }
 
 // Export the E2EE system
-window.E2EE = E2EE;
+window.E2EE = E2EE;u8
 window.E2EEMessenger = E2EEMessenger; 
