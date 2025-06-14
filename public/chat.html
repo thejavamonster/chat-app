@@ -279,12 +279,15 @@
             // Show message history
             for (const message of data.messages) {
               if (message.userId === userId) {
-                const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
-                if (stored[message.id]) {
-                  message.content = stored[message.id];
-                } else {
-                  message.content = '[You sent an encrypted message]';
+                if (message.encrypted) {
+                  const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
+                  if (stored[message.id]) {
+                    message.content = stored[message.id];
+                  } else {
+                    message.content = '[You sent an encrypted message]';
+                  }
                 }
+                // If not encrypted, use the plaintext content directly
               } else if (message.encrypted) {
                 try {
                   console.log('Decrypting message:', message.id);
@@ -295,6 +298,7 @@
                   message.content = '[Encrypted Message]';
                 }
               }
+              // If not encrypted, use the plaintext content directly
               showMessage(message);
             }
           } else if (data.type === "message") {
@@ -326,6 +330,7 @@
                 data.message.content = '[Encrypted Message]';
               }
             }
+            // If not encrypted, use the plaintext content directly
             showMessage(data.message);
           } else if (data.type === "message_deleted") {
             removeMessage(data.messageId);
