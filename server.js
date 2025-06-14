@@ -12,6 +12,7 @@ const wss = new WebSocket.Server({ server })
 // Initialize chats and users from file if they exist
 let chats = new Map()
 let users = new Map()
+let userKeys = new Map() // Store user public keys
 const CHATS_FILE = path.join(__dirname, 'chats.json')
 const USERS_FILE = path.join(__dirname, 'users.json')
 
@@ -140,25 +141,79 @@ app.get('/user/:userId', (req, res) => {
 wss.on('connection', (ws, req) => {
     let chatID
     let userId
+    let userPublicKey
+
+    console.log('New WebSocket connection established');
+
+    ws.on('close', () => {
+        console.log(`WebSocket connection closed for user ${userId} in chat ${chatID}`);
+    });
+
+    ws.on('error', (error) => {
+        console.error(`WebSocket error for user ${userId} in chat ${chatID}:`, error);
+    });
 
     ws.on('message', msg => {
         const data = JSON.parse(msg)
         if (data.type === 'join') {
             chatID = data.chatID
             userId = data.userId
+            userPublicKey = data.publicKey
             ws.chatID = chatID
             ws.userId = userId
+            
+            console.log(`User ${userId} joining chat ${chatID}`);
+            console.log(`Total active connections: ${wss.clients.size}`);
+            
+            // Store user's public key
+            if (userPublicKey) {
+                console.log(`Storing public key for user ${userId}: ${userPublicKey.substring(0, 20)}...`);
+                userKeys.set(userId, userPublicKey)
+            }
             
             const chat = chats.get(chatID)
             const user = users.get(userId)
             
             if (chat) {
+                // Get active users in the chat (users with open WebSocket connections)
+                const activeUsers = Array.from(wss.clients)
+                    .filter(client => client.readyState === WebSocket.OPEN && 
+                                    client.chatID === chatID && 
+                                    client.userId !== userId)
+                    .map(client => client.userId);
+
+                console.log(`Active users in chat ${chatID}:`, activeUsers);
+                console.log(`Total users in chat: ${activeUsers.length + 1}`);
+
+                // Get public keys of active users
+                const recipientPublicKey = activeUsers.length > 0 ? userKeys.get(activeUsers[0]) : null;
+                console.log(`Recipient public key for user ${userId}: ${recipientPublicKey ? recipientPublicKey.substring(0, 20) + '...' : 'none'}`);
+
                 ws.send(JSON.stringify({ 
                     type: 'history', 
                     messages: chat.messages,
                     chatName: chat.name,
-                    userName: user ? user.name : 'Anonymous'
+                    userName: user ? user.name : 'Anonymous',
+                    recipientPublicKey
                 }))
+
+                // Notify other users about the new user's public key
+                if (userPublicKey) {
+                    console.log(`Broadcasting public key for user ${userId} to other users in chat ${chatID}`);
+                    let broadcastCount = 0;
+                    wss.clients.forEach(client => {
+                        if (client.readyState === WebSocket.OPEN && 
+                            client.chatID === chatID && 
+                            client.userId !== userId) {
+                            client.send(JSON.stringify({
+                                type: 'recipient_public_key',
+                                publicKey: userPublicKey
+                            }))
+                            broadcastCount++;
+                        }
+                    })
+                    console.log(`Broadcasted public key to ${broadcastCount} users`);
+                }
             }
         } else if (data.type === 'message') {
             const chat = chats.get(chatID)
@@ -167,13 +222,40 @@ wss.on('connection', (ws, req) => {
                 return
             }
 
+            // Get active users in the chat
+            const activeUsers = Array.from(wss.clients)
+                .filter(client => client.readyState === WebSocket.OPEN && 
+                                client.chatID === chatID && 
+                                client.userId !== userId)
+                .map(client => client.userId);
+
+            console.log(`Active users when sending message:`, activeUsers);
+
+            // Get the recipient's public key
+            const recipientPublicKey = activeUsers.length > 0 ? userKeys.get(activeUsers[0]) : null;
+
+            // If we have a recipient but no public key, request it
+            if (activeUsers.length > 0 && !recipientPublicKey) {
+                console.log(`No public key found for recipient ${activeUsers[0]}, requesting it...`);
+                wss.clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN && 
+                        client.chatID === chatID && 
+                        client.userId === activeUsers[0]) {
+                        client.send(JSON.stringify({
+                            type: 'request_public_key'
+                        }))
+                    }
+                })
+            }
+
             const user = users.get(userId)
             const message = {
-                id: uuidv4(),
+                id: data.id || uuidv4(),
                 content: data.content,
                 timestamp: Date.now(),
                 sender: user ? user.name : 'Anonymous',
-                userId: userId
+                userId: userId,
+                encrypted: data.encrypted // Store encrypted data if present
             }
             console.log('Created new message:', message);
             
@@ -182,7 +264,11 @@ wss.on('connection', (ws, req) => {
             
             wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
-                    client.send(JSON.stringify({ type: 'message', message }))
+                    client.send(JSON.stringify({ 
+                        type: 'message', 
+                        message,
+                        encrypted: data.encrypted // Forward encrypted data
+                    }))
                 }
             })
         } else if (data.type === 'delete_message') {
