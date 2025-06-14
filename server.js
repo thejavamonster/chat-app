@@ -12,7 +12,7 @@ const wss = new WebSocket.Server({ server })
 // Initialize chats and users from file if they exist
 let chats = new Map()
 let users = new Map()
-let userKeys = new Map() // Store user public keys
+let userKeys = new Map() // Store user public keys in memory for fast access
 const CHATS_FILE = path.join(__dirname, 'chats.json')
 const USERS_FILE = path.join(__dirname, 'users.json')
 
@@ -29,6 +29,12 @@ function loadData() {
         if (fs.existsSync(USERS_FILE)) {
             const data = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'))
             users = new Map(Object.entries(data))
+            // Load public keys from user data into memory
+            for (const [userId, userData] of users.entries()) {
+                if (userData.publicKey) {
+                    userKeys.set(userId, userData.publicKey)
+                }
+            }
             console.log(`Successfully loaded ${users.size} users from file`)
         } else {
             console.log('No existing users file found, starting with empty user list')
@@ -37,6 +43,7 @@ function loadData() {
         console.error('Error loading data:', error)
         chats = new Map()
         users = new Map()
+        userKeys = new Map()
     }
 }
 
@@ -165,10 +172,15 @@ wss.on('connection', (ws, req) => {
             console.log(`User ${userId} joining chat ${chatID}`);
             console.log(`Total active connections: ${wss.clients.size}`);
             
-            // Store user's public key
+            // Store user's public key both in memory and with user data
             if (userPublicKey) {
                 console.log(`Storing public key for user ${userId}: ${userPublicKey.substring(0, 20)}...`);
                 userKeys.set(userId, userPublicKey)
+                const user = users.get(userId)
+                if (user) {
+                    user.publicKey = userPublicKey
+                    saveData() // Save to disk immediately
+                }
             }
             
             const chat = chats.get(chatID)
@@ -251,12 +263,19 @@ wss.on('connection', (ws, req) => {
             const user = users.get(userId)
             const message = {
                 id: data.id || uuidv4(),
-                content: data.content,
                 timestamp: Date.now(),
                 sender: user ? user.name : 'Anonymous',
-                userId: userId,
-                encrypted: data.encrypted // Store encrypted data if present
+                userId: userId
             }
+
+            // If message is encrypted and there are active recipients, store encrypted data
+            if (data.encrypted && activeUsers.length > 0) {
+                message.encrypted = data.encrypted
+            } else {
+                // Store plaintext if no encryption or no recipients
+                message.content = data.content
+            }
+
             console.log('Created new message:', message);
             
             chat.messages.push(message)
@@ -267,7 +286,7 @@ wss.on('connection', (ws, req) => {
                     client.send(JSON.stringify({ 
                         type: 'message', 
                         message,
-                        encrypted: data.encrypted // Forward encrypted data
+                        encrypted: activeUsers.length > 0 ? data.encrypted : null // Only send encrypted data if there are recipients
                     }))
                 }
             })
