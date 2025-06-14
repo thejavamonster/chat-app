@@ -321,9 +321,11 @@ class E2EEMessenger {
                     this.logger.info('E2EE key pair loaded from storage');
                     loaded = true;
                 } catch (e) {
-                    console.warn('Failed to import stored E2EE keys, generating new pair.', e);
-                    localStorage.removeItem('e2ee_priv');
-                    localStorage.removeItem('e2ee_pub');
+                    // Replace silent key rotation with a hard failure
+                    this.logger.error('Stored E2EE key pair could not be imported', { error: e.message });
+                    // Do NOT generate a new pair automatically – this prevents the other party from being able to decrypt
+                    // Throw so that the caller can decide how to recover (e.g., ask user to reset keys manually)
+                    throw new Error('Stored encryption keys are corrupted or unreadable. Please reset your keys before continuing.');
                 }
             }
 
@@ -385,5 +387,5 @@ class E2EEMessenger {
 }
 
 // Export the E2EE system
-window.E2EE = E2EE;u8
+window.E2EE = E2EE;
 window.E2EEMessenger = E2EEMessenger; 
