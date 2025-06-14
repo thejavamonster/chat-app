@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Chat</title>
+  <title>Secure Chat</title>
   <style>
     body {
       font-family: sans-serif;
@@ -87,11 +87,33 @@
     .back-link:hover {
       text-decoration: underline;
     }
+    .encryption-status {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+    }
+    .encryption-status.secure {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+    .encryption-status.insecure {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
   </style>
 </head>
 <body>
   <a href="/" class="back-link">← Back to Chat List</a>
   <h1 id="chatTitle">Loading...</h1>
+
+  <div id="encryptionStatus" class="encryption-status">Initializing encryption...</div>
 
   <!-- Username prompt -->
   <div id="namePrompt">
@@ -109,6 +131,7 @@
     </div>
   </div>
 
+  <script src="/e2ee.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const chatID = params.get("chatID");
@@ -120,7 +143,32 @@
 
     let userName = "";
     let userId = localStorage.getItem('userId');
+    let currentUserName = null; // will hold the logged-in user's name
     let ws;
+    let e2eeMessenger;
+    let recipientPublicKey = null;
+
+    // Initialize E2EE
+    async function initializeE2EE() {
+      try {
+        e2eeMessenger = new E2EEMessenger();
+        await e2eeMessenger.initialize();
+        const publicKey = await e2eeMessenger.getPublicKey();
+        
+        // Store public key in localStorage
+        localStorage.setItem('publicKey', publicKey);
+        
+        document.getElementById('encryptionStatus').className = 'encryption-status secure';
+        document.getElementById('encryptionStatus').textContent = '🔒 End-to-End Encrypted';
+        
+        return publicKey;
+      } catch (error) {
+        console.error('Failed to initialize E2EE:', error);
+        document.getElementById('encryptionStatus').className = 'encryption-status insecure';
+        document.getElementById('encryptionStatus').textContent = '⚠️ Encryption Failed';
+        throw error;
+      }
+    }
 
     // Function to register or get user
     async function initializeUser(name) {
@@ -162,62 +210,226 @@
 
     // Function to start the chat
     async function startChat(name) {
-      const userData = await initializeUser(name);
-      if (!userData) {
-        alert("Failed to initialize user. Please try again.");
-        return;
+      currentUserName = name;
+      try {
+        // Initialize E2EE first
+        await initializeE2EE();
+        
+        // Then initialize user
+        const userData = await initializeUser(name);
+        if (!userData) {
+          alert("Failed to initialize user. Please try again.");
+          return;
+        }
+
+        userName = userData.name;
+
+        // Hide name prompt and show chat
+        document.getElementById("namePrompt").style.display = "none";
+        document.getElementById("chatUI").style.display = "block";
+
+        // Initialize WebSocket connection
+        ws = new WebSocket(`ws://${window.location.host}`);
+
+        ws.addEventListener("open", () => {
+          console.log("WebSocket connection established");
+          // Send join message with public key
+          if (e2eeMessenger) {
+            e2eeMessenger.getPublicKey().then(publicKey => {
+              console.log('Sending public key with join message:', publicKey.substring(0, 20) + '...');
+              ws.send(JSON.stringify({
+                type: "join",
+                chatID: chatID,
+                userId: userId,
+                publicKey: publicKey
+              }));
+            }).catch(error => {
+              console.error('Failed to get public key:', error);
+              // Send join message without public key
+              ws.send(JSON.stringify({
+                type: "join",
+                chatID: chatID,
+                userId: userId
+              }));
+            });
+          } else {
+            console.warn('E2EE not initialized, joining without public key');
+            ws.send(JSON.stringify({
+              type: "join",
+              chatID: chatID,
+              userId: userId
+            }));
+          }
+        });
+
+        ws.addEventListener("message", async (event) => {
+          const data = JSON.parse(event.data);
+          console.log('Received WebSocket message:', data.type);
+          
+          if (data.type === "history") {
+            // Update chat title
+            document.getElementById("chatTitle").textContent = data.chatName;
+            // Store recipient's public key
+            if (data.recipientPublicKey) {
+              console.log('Received recipient public key from history:', data.recipientPublicKey.substring(0, 20) + '...');
+              recipientPublicKey = data.recipientPublicKey;
+            } else {
+              console.log('No recipient public key in history');
+            }
+            // Show message history
+            for (const message of data.messages) {
+              if (message.userId === userId) {
+                const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
+                if (stored[message.id]) {
+                  message.content = stored[message.id];
+                } else {
+                  message.content = '[You sent an encrypted message]';
+                }
+              } else if (message.encrypted) {
+                try {
+                  console.log('Decrypting message:', message.id);
+                  message.content = await e2eeMessenger.decryptMessage(message.encrypted);
+                  console.log('Message decrypted successfully');
+                } catch (error) {
+                  console.error('Failed to decrypt message:', error);
+                  message.content = '[Encrypted Message]';
+                }
+              }
+              showMessage(message);
+            }
+          } else if (data.type === "message") {
+            if (data.message.userId === userId) {
+              if (data.encrypted) {
+                // Replace placeholder with stored plaintext if available
+                const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
+                if (stored[data.message.id]) {
+                  data.message.content = stored[data.message.id];
+                } else {
+                  data.message.content = '[You sent an encrypted message]';
+                }
+                // Update UI by replacing placeholder
+                removeMessage(data.message.id);
+                showMessage(data.message);
+              }
+              // For unencrypted self-messages we already showed plaintext; skip duplicate
+              return;
+            }
+
+            if (data.encrypted) {
+              // Only decrypt if the message was sent by someone else
+              try {
+                console.log('Decrypting new message:', data.message.id);
+                data.message.content = await e2eeMessenger.decryptMessage(data.encrypted);
+                console.log('New message decrypted successfully');
+              } catch (error) {
+                console.error('Failed to decrypt new message:', error);
+                data.message.content = '[Encrypted Message]';
+              }
+            }
+            showMessage(data.message);
+          } else if (data.type === "message_deleted") {
+            removeMessage(data.messageId);
+          } else if (data.type === "recipient_public_key") {
+            console.log('Received new recipient public key:', data.publicKey.substring(0, 20) + '...');
+            recipientPublicKey = data.publicKey;
+          } else if (data.type === "request_public_key") {
+            console.log('Received request for public key, sending...');
+            if (e2eeMessenger) {
+              e2eeMessenger.getPublicKey().then(publicKey => {
+                console.log('Sending public key in response to request:', publicKey.substring(0, 20) + '...');
+                ws.send(JSON.stringify({
+                  type: "public_key",
+                  publicKey: publicKey
+                }));
+              }).catch(error => {
+                console.error('Failed to get public key:', error);
+              });
+            }
+          } else if (data.type === "public_key") {
+            console.log('Received public key in response to request:', data.publicKey.substring(0, 20) + '...');
+            recipientPublicKey = data.publicKey;
+          }
+        });
+
+        // Handle Enter key in message input
+        document.getElementById("messageInput").addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            document.getElementById("sendButton").click();
+          }
+        });
+
+        document.getElementById("sendButton").addEventListener("click", async () => {
+          const input = document.getElementById("messageInput");
+          const content = input.value.trim();
+          if (!content) return;
+
+          if (ws.readyState === WebSocket.OPEN) {
+            try {
+              if (!e2eeMessenger) {
+                throw new Error('E2EE system not initialized');
+              }
+
+              if (!recipientPublicKey) {
+                console.warn('No recipient public key available, sending unencrypted message');
+
+                const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+                ws.send(JSON.stringify({
+                  type: "message",
+                  id: messageId,
+                  content: content
+                }));
+
+                // Show plaintext immediately
+                const localMsg = {
+                  id: messageId,
+                  content: content,
+                  timestamp: Date.now(),
+                  sender: currentUserName || 'You',
+                  userId: userId
+                };
+                showMessage(localMsg);
+              } else {
+                console.log('Encrypting message with recipient key:', recipientPublicKey.substring(0, 20) + '...');
+                const encrypted = await e2eeMessenger.encryptMessage(content, recipientPublicKey);
+                console.log('Message encrypted successfully');
+                // generate deterministic id (uuidv4 via crypto random)
+                const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+                ws.send(JSON.stringify({
+                  type: "message",
+                  id: messageId,
+                  encrypted
+                }));
+
+                // store plaintext locally for future reference
+                const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
+                stored[messageId] = content;
+                localStorage.setItem('sentPlain', JSON.stringify(stored));
+
+                // Optimistically show our own plaintext message locally
+                const tempMessage = {
+                  id: messageId,
+                  content: content,
+                  timestamp: Date.now(),
+                  sender: currentUserName || 'You',
+                  userId: userId
+                };
+                showMessage(tempMessage);
+              }
+              input.value = "";
+            } catch (error) {
+              console.error('Failed to send message:', error);
+              alert('Failed to send message. Please try again.');
+            }
+          } else {
+            alert("WebSocket not connected!");
+          }
+        });
+      } catch (error) {
+        console.error('Failed to start chat:', error);
+        alert('Failed to start chat. Please try again.');
       }
-
-      userName = userData.name;
-
-      // Hide name prompt and show chat
-      document.getElementById("namePrompt").style.display = "none";
-      document.getElementById("chatUI").style.display = "block";
-
-      // Initialize WebSocket
-      ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}`);
-
-      ws.addEventListener("open", () => {
-        console.log("Connected to WebSocket");
-        ws.send(JSON.stringify({ type: "join", chatID, userId }));
-      });
-
-      ws.addEventListener("message", (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === "history") {
-          // Update chat title
-          document.getElementById("chatTitle").textContent = data.chatName;
-          // Show message history
-          data.messages.forEach(showMessage);
-        } else if (data.type === "message") {
-          showMessage(data.message);
-        } else if (data.type === "message_deleted") {
-          removeMessage(data.messageId);
-        }
-      });
-
-      // Handle Enter key in message input
-      document.getElementById("messageInput").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          document.getElementById("sendButton").click();
-        }
-      });
-
-      document.getElementById("sendButton").addEventListener("click", () => {
-        const input = document.getElementById("messageInput");
-        const content = input.value.trim();
-        if (!content) return;
-
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: "message",
-            content: content
-          }));
-          input.value = "";
-        } else {
-          alert("WebSocket not connected!");
-        }
-      });
     }
 
     // Check if we have a stored user ID and try to load the name
@@ -227,7 +439,12 @@
         .then(data => {
           if (data.name) {
             // Auto-start chat with existing user
-            startChat(data.name);
+            startChat(data.name).catch(error => {
+              console.error('Failed to auto-start chat:', error);
+              // Clear invalid user ID
+              localStorage.removeItem('userId');
+              userId = null;
+            });
           } else {
             // Clear invalid user ID
             localStorage.removeItem('userId');
@@ -250,7 +467,12 @@
         return;
       }
 
-      await startChat(input);
+      try {
+        await startChat(input);
+      } catch (error) {
+        console.error('Failed to start chat:', error);
+        alert('Failed to start chat. Please try again.');
+      }
     });
 
     function showMessage(message) {
