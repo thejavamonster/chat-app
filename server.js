@@ -1,13 +1,30 @@
 const express = require('express')
 const { v4: uuidv4 } = require('uuid')
 const http = require('http')
+const https = require('https')
 const WebSocket = require('ws')
 const fs = require('fs')
 const path = require('path')
 
 const app = express()
-const server = http.createServer(app)
-const wss = new WebSocket.Server({ server })
+
+// Create server based on environment
+let server;
+if (process.env.NODE_ENV === 'production') {
+    // In production (e.g. Render), the SSL/TLS is handled by the platform
+    server = http.createServer(app)
+} else {
+    // For local development, use regular HTTP
+    server = http.createServer(app)
+}
+
+const wss = new WebSocket.Server({ 
+    server,
+    // Handle both upgrade events for ws and wss
+    handleProtocols: (protocols, req) => {
+        return protocols[0]
+    }
+})
 
 // Initialize chats and users from file if they exist
 let chats = new Map()
