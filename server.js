@@ -293,15 +293,13 @@ wss.on('connection', (ws, req) => {
                 id: data.id || uuidv4(),
                 timestamp: Date.now(),
                 sender: user ? user.name : 'Anonymous',
-                userId: userId
+                userId: userId,
+                content: data.content // Always store the plaintext content
             }
 
-            // If message is encrypted and there are active recipients, store encrypted data
-            if (data.encrypted && activeUsers.length > 0) {
+            // If message is encrypted, store that too
+            if (data.encrypted) {
                 message.encrypted = data.encrypted
-            } else {
-                // Store plaintext if no encryption or no recipients
-                message.content = data.content
             }
 
             console.log('Created new message:', message);
@@ -314,7 +312,7 @@ wss.on('connection', (ws, req) => {
                     client.send(JSON.stringify({ 
                         type: 'message', 
                         message,
-                        encrypted: activeUsers.length > 0 ? data.encrypted : null // Only send encrypted data if there are recipients
+                        encrypted: data.encrypted // Send encrypted data if available
                     }))
                 }
             })
