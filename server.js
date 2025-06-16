@@ -30,8 +30,19 @@ const wss = new WebSocket.Server({
 let chats = new Map()
 let users = new Map()
 let userKeys = new Map() // Store user public keys in memory for fast access
-const CHATS_FILE = path.join(__dirname, 'chats.json')
-const USERS_FILE = path.join(__dirname, 'users.json')
+
+// Use Render's persistent storage in production, local storage in development
+const DATA_DIR = process.env.NODE_ENV === 'production' 
+    ? '/opt/render/project/src/data'
+    : path.join(__dirname, 'data')
+
+// Create data directory if it doesn't exist
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true })
+}
+
+const CHATS_FILE = path.join(DATA_DIR, 'chats.json')
+const USERS_FILE = path.join(DATA_DIR, 'users.json')
 
 function loadData() {
     try {
