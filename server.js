@@ -62,6 +62,7 @@ async function connectDB() {
         // Create indexes for better query performance
         await db.collection('chats').createIndex({ createdAt: 1 });
         await db.collection('chats').createIndex({ name: 'text' });
+        await db.collection('users').createIndex({ id: 1 }, { unique: true });
     } catch (error) {
         console.error('MongoDB connection error:', error);
         process.exit(1);
@@ -373,28 +374,41 @@ app.get('/api/search-chats', async (req, res) => {
 loadExistingChats();
 
 // Add new endpoints for user management
-app.post('/register-user', (req, res) => {
+app.post('/register-user', async (req, res) => {
     const { name } = req.body
     if (!name) {
         return res.status(400).json({ error: 'Name is required' })
     }
 
     const userId = uuidv4()
-    users.set(userId, { name, createdAt: Date.now() })
-    saveData()
-    
-    res.json({ userId, name })
+    try {
+        await db.collection('users').insertOne({
+            id: userId,
+            name,
+            createdAt: Date.now()
+        })
+        console.log(`Registered new user: ${name} (${userId})`)
+        res.json({ userId, name })
+    } catch (error) {
+        console.error('Error registering user:', error)
+        res.status(500).json({ error: 'Failed to register user' })
+    }
 })
 
-app.get('/user/:userId', (req, res) => {
+app.get('/user/:userId', async (req, res) => {
     const { userId } = req.params
-    const user = users.get(userId)
-    
-    if (!user) {
-        return res.status(404).json({ error: 'User not found' })
+    try {
+        const user = await db.collection('users').findOne({ id: userId })
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' })
+        }
+        
+        res.json({ userId: user.id, name: user.name })
+    } catch (error) {
+        console.error('Error fetching user:', error)
+        res.status(500).json({ error: 'Failed to fetch user' })
     }
-    
-    res.json({ userId, name: user.name })
 })
 
 // WebSocket connection handling
