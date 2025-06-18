@@ -192,22 +192,17 @@ app.get('/search-chats', (req, res) => {
 // Delete a chat
 app.delete('/api/chats/:chatId', async (req, res) => {
     try {
-    const chatId = req.params.chatId;
-    console.log('Attempting to delete chat:', chatId);
-    
-        // Delete from memory
-        chats.delete(chatId);
-
-        // Delete the chat file
-        const chatFilePath = path.join(DATA_DIR, `${chatId}.json`);
-        if (fs.existsSync(chatFilePath)) {
-            fs.unlinkSync(chatFilePath);
-            console.log('Chat file deleted successfully');
-        }
-
-        // Save the updated chats state
-        saveData();
+        const chatId = req.params.chatId;
+        console.log('Attempting to delete chat:', chatId);
         
+        // Delete from MongoDB
+        const result = await db.collection('chats').deleteOne({ id: chatId });
+        
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'Chat not found' });
+        }
+        
+        console.log('Chat deleted successfully from MongoDB');
         res.status(200).json({ message: 'Chat deleted successfully' });
     } catch (error) {
         console.error('Error deleting chat:', error);
@@ -560,6 +555,38 @@ app.get('/api/debug/chats', async (req, res) => {
     } catch (error) {
         console.error('Error listing chats:', error);
         res.status(500).json({ error: 'Failed to list chats' });
+    }
+});
+
+// Get all chats with pagination
+app.get('/api/all-chats', async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        // Get total count of chats
+        const totalChats = await db.collection('chats').countDocuments();
+        
+        // Get paginated chats
+        const chats = await db.collection('chats')
+            .find({})
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .toArray();
+
+        res.json({
+            chats: chats.map(chat => ({
+                id: chat.id,
+                name: chat.name,
+                createdAt: chat.createdAt
+            })),
+            hasMore: skip + chats.length < totalChats
+        });
+    } catch (error) {
+        console.error('Error getting all chats:', error);
+        res.status(500).json({ error: 'Failed to get chats' });
     }
 });
 
