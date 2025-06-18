@@ -5,6 +5,9 @@ const https = require('https')
 const WebSocket = require('ws')
 const fs = require('fs')
 const path = require('path')
+const crypto = require('crypto')
+const { MongoClient } = require('mongodb')
+require('dotenv').config()
 
 const app = express()
 
@@ -43,6 +46,27 @@ if (!fs.existsSync(DATA_DIR)) {
 
 const CHATS_FILE = path.join(DATA_DIR, 'chats.json')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
+
+// MongoDB setup
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/chatapp';
+const client = new MongoClient(mongoUri);
+let db;
+
+// Connect to MongoDB
+async function connectDB() {
+    try {
+        await client.connect();
+        db = client.db();
+        console.log('Connected to MongoDB');
+        
+        // Create indexes for better query performance
+        await db.collection('chats').createIndex({ createdAt: 1 });
+        await db.collection('chats').createIndex({ name: 'text' });
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+}
 
 function loadData() {
     try {
@@ -120,33 +144,238 @@ app.get('/chats', (req, res) => {
     res.json(chatList)
 })
 
+// Search chats
+app.get('/search-chats', (req, res) => {
+    const query = req.query.q?.toLowerCase() || '';
+    
+    if (!query) {
+        return res.json([]);
+    }
+
+    const searchResults = Array.from(chats.entries())
+        .map(([id, chat]) => {
+            // Search in chat name
+            const nameMatch = chat.name.toLowerCase().includes(query);
+            
+            // Search in messages
+            const messageMatches = chat.messages.some(msg => 
+                msg.content?.toLowerCase().includes(query)
+            );
+
+            // If either name or messages match, return the chat
+            if (nameMatch || messageMatches) {
+                return {
+                    id,
+                    name: chat.name,
+                    createdAt: chat.createdAt,
+                    messageCount: chat.messages.length,
+                    // Include preview of matching messages
+                    preview: messageMatches ? 
+                        chat.messages
+                            .filter(msg => msg.content?.toLowerCase().includes(query))
+                            .map(msg => ({
+                                content: msg.content,
+                                sender: msg.sender,
+                                timestamp: msg.timestamp
+                            }))
+                            .slice(0, 3) // Only show up to 3 matching messages
+                        : []
+                };
+            }
+            return null;
+        })
+        .filter(result => result !== null);
+
+    res.json(searchResults);
+});
+
 // Delete a chat
-app.delete('/delete-chat/:chatId', (req, res) => {
+app.delete('/api/chats/:chatId', async (req, res) => {
+    try {
     const chatId = req.params.chatId;
     console.log('Attempting to delete chat:', chatId);
     
-    if (chats.has(chatId)) {
+        // Delete from memory
         chats.delete(chatId);
-        saveData();
-        console.log('Chat deleted successfully');
-        res.status(200).json({ message: 'Chat deleted successfully' });
-    } else {
-        console.log('Chat not found for deletion');
-        res.status(404).json({ error: 'Chat not found' });
-    }
-})
 
-app.post('/create-chat', (req, res) => {
-    const chatID = uuidv4()
-    const chatName = req.body.name || 'Unnamed Chat'
-    chats.set(chatID, {
+        // Delete the chat file
+        const chatFilePath = path.join(DATA_DIR, `${chatId}.json`);
+        if (fs.existsSync(chatFilePath)) {
+            fs.unlinkSync(chatFilePath);
+            console.log('Chat file deleted successfully');
+        }
+
+        // Save the updated chats state
+        saveData();
+        
+        res.status(200).json({ message: 'Chat deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting chat:', error);
+        res.status(500).json({ error: 'Failed to delete chat' });
+    }
+});
+
+// Function to get recent chats (within last 24 hours)
+function getRecentChats() {
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const recentChats = [];
+    
+    for (const [id, chat] of chats.entries()) {
+        if (chat.createdAt && chat.createdAt > twentyFourHoursAgo) {
+            recentChats.push({
+                id,
+                name: chat.name,
+                createdAt: chat.createdAt,
+                // Calculate how long ago the chat was created
+                timeAgo: getTimeAgo(chat.createdAt)
+                });
+            }
+        }
+
+    // Sort by newest first
+    return recentChats.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+// Helper function to format time ago
+function getTimeAgo(timestamp) {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    
+    if (seconds < 60) return 'just now';
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    
+    return 'yesterday';
+}
+
+// Function to generate a unique ID
+function generateUniqueId() {
+    return crypto.randomBytes(16).toString('hex');
+}
+
+// Function to save chat metadata
+function saveChatMetadata(chatId, chatData) {
+    const chatDir = path.join(DATA_DIR, chatId);
+    if (!fs.existsSync(chatDir)) {
+        fs.mkdirSync(chatDir);
+    }
+    fs.writeFileSync(
+        path.join(chatDir, 'metadata.json'),
+        JSON.stringify(chatData, null, 2)
+    );
+}
+
+// Function to load chat metadata
+function loadChatMetadata(chatId) {
+    const metadataPath = path.join(DATA_DIR, chatId, 'metadata.json');
+    if (fs.existsSync(metadataPath)) {
+        try {
+            return JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+        } catch (error) {
+            console.error(`Error loading chat ${chatId}:`, error);
+            return null;
+        }
+    }
+    return null;
+}
+
+// Load existing chats on startup
+function loadExistingChats() {
+    console.log('Loading existing chats...');
+    const chatDirs = fs.readdirSync(DATA_DIR);
+    
+    for (const chatId of chatDirs) {
+        const metadata = loadChatMetadata(chatId);
+        if (metadata) {
+            chats.set(chatId, metadata);
+            console.log(`Loaded chat: ${metadata.name} (created ${new Date(metadata.createdAt).toLocaleString()})`);
+        }
+    }
+    console.log(`Loaded ${chats.size} chats`);
+}
+
+// Create chat endpoint
+app.post('/create-chat', async (req, res) => {
+    const chatName = req.body.name;
+    if (!chatName) {
+        return res.status(400).json({ error: 'Chat name is required' });
+    }
+
+    const chatId = generateUniqueId();
+    const chat = {
+            id: chatId,
         name: chatName,
-        createdAt: Date.now(),
-        messages: []
-    })
-    saveData()
-    res.json({ chatID, url: `/chat.html?chatID=${chatID}` })
-})
+            messages: [],
+        createdAt: Date.now()
+    };
+    
+    try {
+        await db.collection('chats').insertOne(chat);
+        console.log(`Created new chat: ${chatName} (${chatId}) at ${new Date(chat.createdAt).toLocaleString()}`);
+        res.json({ id: chatId, name: chatName });
+    } catch (error) {
+        console.error('Error creating chat:', error);
+        res.status(500).json({ error: 'Failed to create chat' });
+    }
+});
+
+// Get recent chats endpoint
+app.get('/api/recent-chats', async (req, res) => {
+    try {
+        const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+        
+        const recentChats = await db.collection('chats')
+            .find({ createdAt: { $gt: twentyFourHoursAgo } })
+            .sort({ createdAt: -1 })
+            .toArray();
+
+        const formattedChats = recentChats.map(chat => ({
+            id: chat.id,
+            name: chat.name,
+            createdAt: chat.createdAt,
+            timeAgo: getTimeAgo(chat.createdAt)
+        }));
+
+        console.log(`Found ${formattedChats.length} recent chats (within last 24 hours)`);
+        console.log('Recent chats:', formattedChats.map(chat => `${chat.name} (${chat.timeAgo})`));
+        res.json(formattedChats);
+    } catch (error) {
+        console.error('Error getting recent chats:', error);
+        res.status(500).json({ error: 'Failed to get recent chats' });
+    }
+});
+
+// Search chats endpoint
+app.get('/api/search-chats', async (req, res) => {
+    try {
+        const query = req.query.q?.toLowerCase() || '';
+        if (!query) {
+            return res.json([]);
+        }
+
+        const results = await db.collection('chats')
+            .find({ name: { $regex: query, $options: 'i' } })
+            .sort({ createdAt: -1 })
+            .toArray();
+
+        const formattedResults = results.map(chat => ({
+            id: chat.id,
+            name: chat.name,
+            createdAt: chat.createdAt
+        }));
+
+        res.json(formattedResults);
+    } catch (error) {
+        console.error('Error searching chats:', error);
+        res.status(500).json({ error: 'Failed to search chats' });
+    }
+});
+
+// Load chats on startup
+loadExistingChats();
 
 // Add new endpoints for user management
 app.post('/register-user', (req, res) => {
@@ -173,180 +402,171 @@ app.get('/user/:userId', (req, res) => {
     res.json({ userId, name: user.name })
 })
 
-wss.on('connection', (ws, req) => {
-    let chatID
-    let userId
-    let userPublicKey
+// WebSocket connection handling
+wss.on('connection', async (ws) => {
+    console.log('New WebSocket connection');
+    let chatID;
+    let userId;
 
-    console.log('New WebSocket connection established');
+    ws.on('message', async (message) => {
+        try {
+            const data = JSON.parse(message);
+            console.log('Received WebSocket message:', data.type);
+
+            if (data.type === 'join') {
+                chatID = data.chatID;
+                userId = data.userId;
+                ws.chatID = chatID;
+                ws.userId = userId;
+
+                console.log(`User ${userId} joining chat ${chatID}`);
+
+                // Load chat history from MongoDB
+                const chat = await db.collection('chats').findOne({ id: chatID });
+                if (chat) {
+                    console.log(`Sending chat history for ${chat.name} (${chat.messages?.length || 0} messages)`);
+                    ws.send(JSON.stringify({
+                        type: 'history',
+                        messages: chat.messages || [],
+                        chatName: chat.name
+                    }));
+                }
+            } else if (data.type === 'message') {
+                // Add message to MongoDB
+                const message = {
+                    id: data.id || generateUniqueId(),
+                    sender: data.sender,
+                    content: data.content,
+                    timestamp: Date.now(),
+                    encrypted: data.encrypted,
+                    userId: userId
+                };
+
+                await db.collection('chats').updateOne(
+                    { id: chatID },
+                    { 
+                        $push: { 
+                            messages: message
+                        }
+                    }
+                );
+                
+                // Broadcast to all clients
+                wss.clients.forEach((client) => {
+                    if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
+                        client.send(JSON.stringify({
+                            type: 'message',
+                            message
+                        }));
+                    }
+                });
+            } else if (data.type === 'delete_message') {
+                // Remove message from MongoDB
+                await db.collection('chats').updateOne(
+                    { id: chatID },
+                    { 
+                        $pull: { 
+                            messages: { id: data.messageId }
+                        }
+                    }
+                );
+                
+                // Broadcast deletion to all clients
+                wss.clients.forEach((client) => {
+                    if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
+                        client.send(JSON.stringify({
+                            type: 'message_deleted',
+                            messageId: data.messageId
+                        }));
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error handling WebSocket message:', error);
+        }
+    });
 
     ws.on('close', () => {
         console.log(`WebSocket connection closed for user ${userId} in chat ${chatID}`);
     });
+});
 
-    ws.on('error', (error) => {
-        console.error(`WebSocket error for user ${userId} in chat ${chatID}:`, error);
-    });
-
-    ws.on('message', msg => {
-        const data = JSON.parse(msg)
-        if (data.type === 'join') {
-            chatID = data.chatID
-            userId = data.userId
-            userPublicKey = data.publicKey
-            ws.chatID = chatID
-            ws.userId = userId
-            
-            console.log(`User ${userId} joining chat ${chatID}`);
-            console.log(`Total active connections: ${wss.clients.size}`);
-            
-            // Store user's public key both in memory and with user data
-            if (userPublicKey) {
-                console.log(`Storing public key for user ${userId}: ${userPublicKey.substring(0, 20)}...`);
-                userKeys.set(userId, userPublicKey)
-                const user = users.get(userId)
-                if (user) {
-                    user.publicKey = userPublicKey
-                    saveData() // Save to disk immediately
-                }
-            }
-            
-            const chat = chats.get(chatID)
-            const user = users.get(userId)
-            
-            if (chat) {
-                // Get active users in the chat (users with open WebSocket connections)
-                const activeUsers = Array.from(wss.clients)
-                    .filter(client => client.readyState === WebSocket.OPEN && 
-                                    client.chatID === chatID && 
-                                    client.userId !== userId)
-                    .map(client => client.userId);
-
-                console.log(`Active users in chat ${chatID}:`, activeUsers);
-                console.log(`Total users in chat: ${activeUsers.length + 1}`);
-
-                // Get public keys of active users
-                const recipientPublicKey = activeUsers.length > 0 ? userKeys.get(activeUsers[0]) : null;
-                console.log(`Recipient public key for user ${userId}: ${recipientPublicKey ? recipientPublicKey.substring(0, 20) + '...' : 'none'}`);
-
-                ws.send(JSON.stringify({ 
-                    type: 'history', 
-                    messages: chat.messages,
-                    chatName: chat.name,
-                    userName: user ? user.name : 'Anonymous',
-                    recipientPublicKey
-                }))
-
-                // Notify other users about the new user's public key
-                if (userPublicKey) {
-                    console.log(`Broadcasting public key for user ${userId} to other users in chat ${chatID}`);
-                    let broadcastCount = 0;
-                    wss.clients.forEach(client => {
-                        if (client.readyState === WebSocket.OPEN && 
-                            client.chatID === chatID && 
-                            client.userId !== userId) {
-                            client.send(JSON.stringify({
-                                type: 'recipient_public_key',
-                                publicKey: userPublicKey
-                            }))
-                            broadcastCount++;
-                        }
-                    })
-                    console.log(`Broadcasted public key to ${broadcastCount} users`);
-                }
-            }
-        } else if (data.type === 'message') {
-            const chat = chats.get(chatID)
-            if (!chat) {
-                console.warn(`Chat ${chatID} not found. Ignoring message.`)
-                return
-            }
-
-            // Get active users in the chat
-            const activeUsers = Array.from(wss.clients)
-                .filter(client => client.readyState === WebSocket.OPEN && 
-                                client.chatID === chatID && 
-                                client.userId !== userId)
-                .map(client => client.userId);
-
-            console.log(`Active users when sending message:`, activeUsers);
-
-            // Get the recipient's public key
-            const recipientPublicKey = activeUsers.length > 0 ? userKeys.get(activeUsers[0]) : null;
-
-            // If we have a recipient but no public key, request it
-            if (activeUsers.length > 0 && !recipientPublicKey) {
-                console.log(`No public key found for recipient ${activeUsers[0]}, requesting it...`);
-                wss.clients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN && 
-                        client.chatID === chatID && 
-                        client.userId === activeUsers[0]) {
-                        client.send(JSON.stringify({
-                            type: 'request_public_key'
-                        }))
-                    }
-                })
-            }
-
-            const user = users.get(userId)
-            const message = {
-                id: data.id || uuidv4(),
-                timestamp: Date.now(),
-                sender: user ? user.name : 'Anonymous',
-                userId: userId,
-                content: data.content // Always store the plaintext content
-            }
-
-            // If message is encrypted, store that too
-            if (data.encrypted) {
-                message.encrypted = data.encrypted
-            }
-
-            console.log('Created new message:', message);
-            
-            chat.messages.push(message)
-            saveData()
-            
-            wss.clients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
-                    client.send(JSON.stringify({ 
-                        type: 'message', 
-                        message,
-                        encrypted: data.encrypted // Send encrypted data if available
-                    }))
-                }
-            })
-        } else if (data.type === 'delete_message') {
-            console.log('Received delete request:', data);
-            const chat = chats.get(chatID)
-            if (!chat) {
-                console.warn(`Chat ${chatID} not found. Ignoring delete request.`)
-                return
-            }
-
-            // Find and remove the message
-            const messageIndex = chat.messages.findIndex(m => m.id === data.messageId)
-            console.log('Message index to delete:', messageIndex);
-            if (messageIndex !== -1) {
-                chat.messages.splice(messageIndex, 1)
-                saveData()
-                console.log('Message deleted and saved');
-                
-                // Notify all clients about the deletion
-                wss.clients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
-                        console.log('Notifying client about deletion');
-                        client.send(JSON.stringify({ 
-                            type: 'message_deleted', 
-                            messageId: data.messageId 
-                        }))
-                    }
-                })
-            } else {
-                console.warn('Message not found for deletion:', data.messageId);
-            }
+// Get chat messages endpoint
+app.get('/api/chats/:chatId', async (req, res) => {
+    try {
+        const chatId = req.params.chatId;
+        const chat = await db.collection('chats').findOne({ id: chatId });
+        
+        if (!chat) {
+            return res.status(404).json({ error: 'Chat not found' });
         }
-    })
-})
+        
+        res.json({
+            id: chat.id,
+            name: chat.name,
+            messages: chat.messages || [],
+            createdAt: chat.createdAt
+        });
+    } catch (error) {
+        console.error('Error getting chat:', error);
+        res.status(500).json({ error: 'Failed to get chat' });
+    }
+});
 
-server.listen(3000)
+// Get chat details endpoint
+app.get('/api/chat/:chatId', async (req, res) => {
+    try {
+        const chatId = req.params.chatId;
+        console.log('Fetching chat with ID:', chatId);
+        
+        const chat = await db.collection('chats').findOne({ id: chatId });
+        console.log('Found chat:', chat ? `${chat.name} (${chat.id})` : 'null');
+        
+            if (!chat) {
+            console.log('Chat not found in MongoDB');
+            return res.status(404).json({ error: 'Chat not found' });
+        }
+        
+        const response = {
+            id: chat.id,
+            name: chat.name,
+            messages: chat.messages || [],
+            createdAt: chat.createdAt
+        };
+        console.log('Sending chat data:', {
+            id: response.id,
+            name: response.name,
+            messageCount: response.messages.length,
+            createdAt: new Date(response.createdAt).toISOString()
+        });
+        
+        res.json(response);
+    } catch (error) {
+        console.error('Error getting chat:', error);
+        res.status(500).json({ error: 'Failed to get chat' });
+    }
+});
+
+// Debug endpoint to list all chats in MongoDB
+app.get('/api/debug/chats', async (req, res) => {
+    try {
+        const chats = await db.collection('chats').find({}).toArray();
+        console.log('All chats in MongoDB:', chats.map(chat => ({
+            id: chat.id,
+            name: chat.name,
+            messageCount: chat.messages ? chat.messages.length : 0
+        })));
+        res.json(chats);
+    } catch (error) {
+        console.error('Error listing chats:', error);
+        res.status(500).json({ error: 'Failed to list chats' });
+    }
+});
+
+// Connect to MongoDB and start the server
+const PORT = process.env.PORT || 3000;
+connectDB().then(() => {
+    server.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+});
