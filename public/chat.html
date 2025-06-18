@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Secure Chat</title>
+  <title>Enkryptonite</title>
   <style>
     body {
       font-family: sans-serif;
@@ -133,12 +133,12 @@
 
   <script src="/e2ee.js"></script>
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const chatID = params.get("chatID");
+    // Get chat ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatID = urlParams.get('chatID') || urlParams.get('id'); // Check both parameter names
 
     if (!chatID) {
-      alert("No chatID in URL. Please create a chat first.");
-      throw new Error("Missing chatID");
+      throw new Error('Missing chat ID');
     }
 
     let userName = "";
@@ -208,6 +208,63 @@
       return null;
     }
 
+    // Helper function to escape HTML and prevent XSS
+    function escapeHtml(unsafe) {
+      return unsafe
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Function to load chat data
+    async function loadChatData() {
+      try {
+        console.log('Attempting to load chat data for ID:', chatID);
+        const response = await fetch(`/api/chat/${chatID}`);
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to load chat: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Received chat data:', {
+          id: data.id,
+          name: data.name,
+          messageCount: data.messages ? data.messages.length : 0
+        });
+        
+        // Update chat title
+        document.getElementById('chatTitle').textContent = data.name;
+        console.log('Updated chat title to:', data.name);
+        
+        // Update chat messages if we have them
+        if (data.messages && data.messages.length > 0) {
+          console.log('Rendering', data.messages.length, 'messages');
+          const chatBox = document.getElementById('chatBox');
+          chatBox.innerHTML = data.messages.map(message => `
+            <div class="message" data-message-id="${message.id}">
+              <span class="sender">${escapeHtml(message.sender)}</span>
+              <span class="timestamp">${new Date(message.timestamp).toLocaleString()}</span>
+              ${currentUserName === message.sender ? 
+                `<button class="delete-btn" onclick="deleteMessage('${message.id}')">×</button>` : 
+                ''}
+              <div class="content">${escapeHtml(message.content)}</div>
+            </div>
+          `).join('');
+          chatBox.scrollTop = chatBox.scrollHeight;
+        } else {
+          console.log('No messages to display');
+        }
+      } catch (error) {
+        console.error('Error loading chat:', error);
+        document.getElementById('chatTitle').textContent = 'Error loading chat';
+      }
+    }
+
     // Function to start the chat
     async function startChat(name) {
       currentUserName = name;
@@ -227,6 +284,9 @@
         // Hide name prompt and show chat
         document.getElementById("namePrompt").style.display = "none";
         document.getElementById("chatUI").style.display = "block";
+
+        // Load chat data
+        await loadChatData();
 
         // Initialize WebSocket connection with protocol matching the page
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -272,69 +332,56 @@
           if (data.type === "history") {
             // Update chat title
             document.getElementById("chatTitle").textContent = data.chatName;
-            // Store recipient's public key
+            
+            // Store recipient's public key if available
             if (data.recipientPublicKey) {
-              console.log('Received recipient public key from history:', data.recipientPublicKey.substring(0, 20) + '...');
-              recipientPublicKey = data.recipientPublicKey;
-            } else {
-              console.log('No recipient public key in history');
+                console.log('Received recipient public key from history:', data.recipientPublicKey.substring(0, 20) + '...');
+                recipientPublicKey = data.recipientPublicKey;
             }
+            
+            // Clear existing messages
+            document.getElementById("chatBox").innerHTML = '';
+            
             // Show message history
-            for (const message of data.messages) {
-              if (message.userId === userId) {
-                if (message.encrypted) {
-                  const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
-                  if (stored[message.id]) {
-                    message.content = stored[message.id];
-                  } else {
-                    message.content = '[You sent an encrypted message]';
-                  }
+            if (data.messages && data.messages.length > 0) {
+                console.log('Displaying', data.messages.length, 'messages from history');
+                for (const message of data.messages) {
+                    // Handle encrypted messages
+                    if (message.encrypted) {
+                        if (message.userId === userId) {
+                            // For our own encrypted messages
+                            const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
+                            if (stored[message.id]) {
+                                message.content = stored[message.id];
+                            } else {
+                                message.content = '[You sent an encrypted message]';
+                            }
+                        } else {
+                            // For encrypted messages from others
+                            try {
+                                message.content = await e2eeMessenger.decryptMessage(message.encrypted);
+                            } catch (error) {
+                                console.error('Failed to decrypt message:', error);
+                                message.content = '[Encrypted Message]';
+                            }
+                        }
+                    }
+                    showMessage(message);
                 }
-                // If not encrypted, use the plaintext content directly
-              } else if (message.encrypted) {
-                try {
-                  console.log('Decrypting message:', message.id);
-                  message.content = await e2eeMessenger.decryptMessage(message.encrypted);
-                  console.log('Message decrypted successfully');
-                } catch (error) {
-                  console.error('Failed to decrypt message:', error);
-                  message.content = '[Encrypted Message]';
-                }
-              }
-              // If not encrypted, use the plaintext content directly
-              showMessage(message);
+                // Scroll to bottom after loading history
+                const chatBox = document.getElementById("chatBox");
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } else {
+                console.log('No messages in history');
             }
           } else if (data.type === "message") {
-            if (data.message.userId === userId) {
-              if (data.encrypted) {
-                // Replace placeholder with stored plaintext if available
-                const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
-                if (stored[data.message.id]) {
-                  data.message.content = stored[data.message.id];
-                } else {
-                  data.message.content = '[You sent an encrypted message]';
-                }
-                // Update UI by replacing placeholder
-                removeMessage(data.message.id);
+            // Only show messages from other users
+            if (data.message.userId !== userId) {
                 showMessage(data.message);
-              }
-              // For unencrypted self-messages we already showed plaintext; skip duplicate
-              return;
+                // Scroll to bottom for new messages
+                const chatBox = document.getElementById("chatBox");
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
-
-            if (data.encrypted) {
-              // Only decrypt if the message was sent by someone else
-              try {
-                console.log('Decrypting new message:', data.message.id);
-                data.message.content = await e2eeMessenger.decryptMessage(data.encrypted);
-                console.log('New message decrypted successfully');
-              } catch (error) {
-                console.error('Failed to decrypt new message:', error);
-                data.message.content = '[Encrypted Message]';
-              }
-            }
-            // If not encrypted, use the plaintext content directly
-            showMessage(data.message);
           } else if (data.type === "message_deleted") {
             removeMessage(data.messageId);
           } else if (data.type === "recipient_public_key") {
@@ -373,58 +420,27 @@
 
           if (ws.readyState === WebSocket.OPEN) {
             try {
-              if (!e2eeMessenger) {
-                throw new Error('E2EE system not initialized');
-              }
+              const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+              
+              // Show message immediately in UI
+              const localMsg = {
+                id: messageId,
+                content: content,
+                timestamp: Date.now(),
+                sender: currentUserName || 'You',
+                userId: userId
+              };
+              showMessage(localMsg);
 
-              if (!recipientPublicKey) {
-                console.warn('No recipient public key available, sending unencrypted message');
+              // Send message through WebSocket
+              ws.send(JSON.stringify({
+                type: "message",
+                id: messageId,
+                content: content,
+                sender: currentUserName,
+                userId: userId
+              }));
 
-                const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-                ws.send(JSON.stringify({
-                  type: "message",
-                  id: messageId,
-                  content: content
-                }));
-
-                // Show plaintext immediately
-                const localMsg = {
-                  id: messageId,
-                  content: content,
-                  timestamp: Date.now(),
-                  sender: currentUserName || 'You',
-                  userId: userId
-                };
-                showMessage(localMsg);
-              } else {
-                console.log('Encrypting message with recipient key:', recipientPublicKey.substring(0, 20) + '...');
-                const encrypted = await e2eeMessenger.encryptMessage(content, recipientPublicKey);
-                console.log('Message encrypted successfully');
-                // generate deterministic id (uuidv4 via crypto random)
-                const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-                ws.send(JSON.stringify({
-                  type: "message",
-                  id: messageId,
-                  encrypted
-                }));
-
-                // store plaintext locally for future reference
-                const stored = JSON.parse(localStorage.getItem('sentPlain') || '{}');
-                stored[messageId] = content;
-                localStorage.setItem('sentPlain', JSON.stringify(stored));
-
-                // Optimistically show our own plaintext message locally
-                const tempMessage = {
-                  id: messageId,
-                  content: content,
-                  timestamp: Date.now(),
-                  sender: currentUserName || 'You',
-                  userId: userId
-                };
-                showMessage(tempMessage);
-              }
               input.value = "";
             } catch (error) {
               console.error('Failed to send message:', error);
@@ -435,7 +451,7 @@
           }
         });
       } catch (error) {
-        console.error('Failed to start chat:', error);
+        console.error('Error starting chat:', error);
         alert('Failed to start chat. Please try again.');
       }
     }
