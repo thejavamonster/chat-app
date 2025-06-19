@@ -54,6 +54,7 @@
     .message .sender {
       font-weight: bold;
       color: #007bff;
+      margin-right: 0.5em;
     }
     .message .timestamp {
       font-size: 0.8em;
@@ -180,6 +181,9 @@
 </head>
 <body>
   <a href="/" class="back-link">← Back to Chat List</a>
+  <button id="accountBtn" style="float:right; margin-top:10px; background:none; border:none; cursor:pointer; padding:4px 8px;">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="8" r="5"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+  </button>
   <h1 id="chatTitle">Loading...</h1>
 
   <div id="encryptionStatus" class="encryption-status">Initializing encryption...</div>
@@ -207,6 +211,19 @@
         <span class="drop-zone-icon">��</span>
         <p>Drag and drop images here</p>
       </div>
+    </div>
+  </div>
+
+  <div id="accountModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2000; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
+      <button id="closeAccountModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
+      <h2>Account</h2>
+      <div id="profilePicContainer" style="margin:1.5rem 0 0.5rem 0;"></div>
+      <div id="accountNameDisplay" style="font-weight:bold; font-size:1.2em; margin-bottom:1rem; text-align:center;"></div>
+      <form id="profilePicForm" enctype="multipart/form-data" style="margin-top:1rem;">
+        <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
+        <label for="profilePicInput" style="cursor:pointer; color:#007bff; text-decoration:underline;">Upload/Change Profile Picture</label>
+      </form>
     </div>
   </div>
 
@@ -393,6 +410,18 @@
         }
 
         userName = userData.name;
+        // Fetch and set currentUserProfilePic from backend
+        let profilePic = null;
+        try {
+          if (userId) {
+            const res = await fetch(`/user/${userId}`);
+            if (res.ok) {
+              const data = await res.json();
+              profilePic = data.profilePic;
+              currentUserProfilePic = profilePic;
+            }
+          }
+        } catch {}
 
         // Hide name prompt and show chat
         document.getElementById("namePrompt").style.display = "none";
@@ -727,37 +756,131 @@
       }
     });
 
-    function showMessage(message) {
+    // Helper: get initials
+    function getInitials(name) {
+      if (!name) return '';
+      const parts = name.trim().split(' ');
+      if (parts.length === 1) return parts[0][0].toUpperCase();
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+
+    // Cache for user info (profilePic, initials)
+    const userInfoCache = {};
+
+    // Helper: get user info (profilePic, initials) by name (fetches from backend if needed)
+    async function getUserInfoByName(name) {
+      if (!name) return { initials: '', profilePic: null };
+      if (userInfoCache[name]) return userInfoCache[name];
+      // Try to find user by name (case-insensitive)
+      try {
+        const res = await fetch('/api/users');
+        if (res.ok) {
+          const users = await res.json();
+          const user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
+          if (user) {
+            // Fetch full user info
+            const userRes = await fetch(`/user/${user.id}`);
+            if (userRes.ok) {
+              const userData = await userRes.json();
+              const info = { initials: getInitials(userData.name), profilePic: userData.profilePic || null };
+              userInfoCache[name] = info;
+              return info;
+            }
+          }
+        }
+      } catch {}
+      // Fallback: just initials
+      const info = { initials: getInitials(name), profilePic: null };
+      userInfoCache[name] = info;
+      return info;
+    }
+
+    // Update showMessage to display avatar next to sender's name
+    async function showMessage(message) {
       const chatBox = document.getElementById('chatBox');
       const messageDiv = document.createElement('div');
       messageDiv.className = 'message';
       messageDiv.dataset.messageId = message.id;
-      
+
+      // Avatar (profile pic or initials)
+      const avatarSpan = document.createElement('span');
+      avatarSpan.className = 'avatar-circle';
+      avatarSpan.style.display = 'inline-block';
+      avatarSpan.style.width = '28px';
+      avatarSpan.style.height = '28px';
+      avatarSpan.style.borderRadius = '50%';
+      avatarSpan.style.overflow = 'hidden';
+      avatarSpan.style.verticalAlign = 'middle';
+      avatarSpan.style.marginRight = '8px';
+      avatarSpan.style.background = '#e0e7ef';
+      avatarSpan.style.border = '1.5px solid #007bff';
+      avatarSpan.style.textAlign = 'center';
+      avatarSpan.style.fontWeight = 'bold';
+      avatarSpan.style.fontSize = '1rem';
+      avatarSpan.style.color = '#007bff';
+      avatarSpan.style.lineHeight = '28px';
+
+      // Use userId to check if this is the current user's message
+      if (message.userId && userId && message.userId === userId) {
+        if (currentUserProfilePic) {
+          const initials = getInitials(currentUserName);
+          const lastUploadTime = localStorage.getItem('profilePicLastUpload');
+          let profilePicUrl = currentUserProfilePic.split('?')[0]; // Remove any existing query string
+          if (lastUploadTime) {
+            profilePicUrl += '?t=' + lastUploadTime;
+          }
+          console.log('[SHOW MESSAGE] Rendering avatar for self:', {profilePicUrl, lastUploadTime, currentUserProfilePic});
+          avatarSpan.innerHTML = `<img src="${profilePicUrl}" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;" onerror=\"this.onerror=null;this.style.display='none';this.parentNode.textContent='${initials}';\" />`;
+        } else {
+          avatarSpan.textContent = getInitials(currentUserName);
+        }
+      } else {
+        // Fetch user info (profilePic, initials) for others
+        getUserInfoByName(message.sender).then(info => {
+          if (info.profilePic) {
+            const initials = info.initials;
+            console.log('[SHOW MESSAGE] Rendering avatar for', message.sender, ':', info.profilePic);
+            avatarSpan.innerHTML = `<img src="${info.profilePic}" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;" onerror=\"this.onerror=null;this.style.display='none';this.parentNode.textContent='${initials}';\" />`;
+          } else {
+            avatarSpan.textContent = info.initials;
+          }
+        });
+      }
+
+      // Sender name
       const senderSpan = document.createElement('span');
       senderSpan.className = 'sender';
       senderSpan.textContent = message.sender;
-      
+
+      // Timestamp
       const timestampSpan = document.createElement('span');
       timestampSpan.className = 'timestamp';
       timestampSpan.textContent = new Date(message.timestamp).toLocaleString();
-      
+
+      // Message content
       const contentDiv = document.createElement('div');
       contentDiv.className = 'content';
       contentDiv.textContent = message.content;
-      
-      messageDiv.appendChild(senderSpan);
-      messageDiv.appendChild(timestampSpan);
-      
-      if (currentUserName === message.sender) {
+
+      // Layout: avatar + sender + timestamp + (delete button if own message)
+      const headerDiv = document.createElement('div');
+      headerDiv.style.display = 'flex';
+      headerDiv.style.alignItems = 'center';
+      headerDiv.appendChild(avatarSpan);
+      headerDiv.appendChild(senderSpan);
+      headerDiv.appendChild(timestampSpan);
+
+      if (message.userId && userId && message.userId === userId) {
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
         deleteBtn.textContent = '×';
         deleteBtn.onclick = () => deleteMessage(message.id);
-        messageDiv.appendChild(deleteBtn);
+        headerDiv.appendChild(deleteBtn);
       }
-      
+
+      messageDiv.appendChild(headerDiv);
       messageDiv.appendChild(contentDiv);
-      
+
       // Add image if present
       if (message.imageUrl) {
         const img = document.createElement('img');
@@ -766,7 +889,7 @@
         img.onclick = () => window.open(message.imageUrl, '_blank');
         messageDiv.appendChild(img);
       }
-      
+
       chatBox.appendChild(messageDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -794,6 +917,119 @@
         alert('WebSocket not connected!');
       }
     }
+
+    // Account modal logic (profile pic + initials)
+    const accountBtn = document.getElementById('accountBtn');
+    const accountModal = document.getElementById('accountModal');
+    const closeAccountModal = document.getElementById('closeAccountModal');
+    const accountNameDisplay = document.getElementById('accountNameDisplay');
+    const profilePicContainer = document.getElementById('profilePicContainer');
+    const profilePicInput = document.getElementById('profilePicInput');
+    const profilePicForm = document.getElementById('profilePicForm');
+
+    let currentUserProfilePic = null;
+
+    function renderProfilePicOrInitials(name, profilePicUrl) {
+      if (profilePicUrl) {
+        const initials = getInitials(name);
+        let url = profilePicUrl.split('?')[0]; // Remove any existing query string
+        if (name === currentUserName) {
+          const lastUploadTime = localStorage.getItem('profilePicLastUpload');
+          if (lastUploadTime) {
+            url += '?t=' + lastUploadTime;
+          }
+        }
+        // Force reload: remove any existing img, then add new img
+        profilePicContainer.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Profile';
+        img.style.width = '72px';
+        img.style.height = '72px';
+        img.style.borderRadius = '50%';
+        img.style.objectFit = 'cover';
+        img.style.border = '2px solid #007bff';
+        img.onerror = function() {
+          this.onerror = null;
+          this.style.display = 'none';
+          profilePicContainer.innerHTML = `<div style=\'width:72px; height:72px; border-radius:50%; background:#e0e7ef; color:#007bff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; border:2px solid #007bff;\'>${initials}</div>`;
+        };
+        profilePicContainer.appendChild(img);
+      } else {
+        const initials = getInitials(name);
+        profilePicContainer.innerHTML = `<div style="width:72px; height:72px; border-radius:50%; background:#e0e7ef; color:#007bff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; border:2px solid #007bff;">${initials}</div>`;
+      }
+    }
+
+    accountBtn.onclick = async () => {
+      // Fetch user info (including profilePic) from backend
+      let name = currentUserName || '';
+      let profilePic = null;
+      try {
+        if (userId) {
+          const res = await fetch(`/user/${userId}`);
+          if (res.ok) {
+            const data = await res.json();
+            name = data.name;
+            profilePic = data.profilePic;
+            currentUserProfilePic = profilePic;
+          }
+        }
+      } catch {}
+      accountNameDisplay.textContent = name;
+      renderProfilePicOrInitials(name, profilePic);
+      accountModal.style.display = 'flex';
+    };
+    closeAccountModal.onclick = () => {
+      accountModal.style.display = 'none';
+    };
+    accountModal.onclick = (e) => {
+      if (e.target === accountModal) accountModal.style.display = 'none';
+    };
+
+    profilePicInput.onchange = async function() {
+      const file = this.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('profilePic', file);
+      console.log('[PFP UPLOAD] Uploading new profile picture...');
+      try {
+        const res = await fetch(`/upload-profile-pic/${userId}`, {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          console.log('[PFP UPLOAD] Upload successful, waiting 500ms before fetching updated user info...');
+          // Wait 500ms to ensure the file is available
+          await new Promise(resolve => setTimeout(resolve, 500));
+          // After upload, fetch the latest user info to get the new profilePic
+          const userRes = await fetch(`/user/${userId}`);
+          if (userRes.ok) {
+            const userData = await userRes.json();
+            const lastUploadTime = Date.now();
+            localStorage.setItem('profilePicLastUpload', lastUploadTime);
+            currentUserProfilePic = userData.profilePic;
+            // Clear and update userInfoCache for your username
+            delete userInfoCache[currentUserName];
+            userInfoCache[currentUserName] = { initials: getInitials(currentUserName), profilePic: currentUserProfilePic };
+            console.log('[PFP UPLOAD] Updated currentUserProfilePic:', currentUserProfilePic);
+            console.log('[PFP UPLOAD] Updated lastUploadTime:', lastUploadTime);
+            console.log('[PFP UPLOAD] Updated userInfoCache:', userInfoCache[currentUserName]);
+            renderProfilePicOrInitials(currentUserName, currentUserProfilePic + '?t=' + lastUploadTime);
+            await loadChatData();
+          } else {
+            alert('Profile picture uploaded, but failed to fetch updated user info.');
+            console.error('[PFP UPLOAD] Failed to fetch updated user info after upload.');
+          }
+        } else {
+          alert('Failed to upload profile picture.');
+          console.error('[PFP UPLOAD] Upload failed.');
+        }
+      } catch (err) {
+        alert('Failed to upload profile picture.');
+        console.error('[PFP UPLOAD] Exception during upload:', err);
+      }
+    };
   </script>
 </body>
 </html>
