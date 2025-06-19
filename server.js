@@ -7,6 +7,7 @@ const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
 const { MongoClient } = require('mongodb')
+const multer = require('multer')
 require('dotenv').config()
 
 const app = express()
@@ -133,6 +134,38 @@ loadData()
 
 app.use(express.static('public'))
 app.use(express.json())
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(DATA_DIR, 'uploads')
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true })
+        }
+        cb(null, uploadDir)
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, uniqueSuffix + path.extname(file.originalname))
+    }
+})
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: function (req, file, cb) {
+        // Accept only image files
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+            return cb(new Error('Only image files are allowed!'), false)
+        }
+        cb(null, true)
+    }
+})
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(DATA_DIR, 'uploads')))
 
 // Get all chats
 app.get('/chats', (req, res) => {
@@ -448,15 +481,22 @@ wss.on('connection', async (ws) => {
                     content: data.content,
                     timestamp: Date.now(),
                     encrypted: data.encrypted,
-                    userId: userId
+                    userId: userId,
+                    imageUrl: data.imageUrl // Add support for image URLs
                 };
+
+                // First get the current chat to preserve its name
+                const currentChat = await db.collection('chats').findOne({ id: chatID });
+                if (!currentChat) {
+                    console.error('Chat not found:', chatID);
+                    return;
+                }
 
                 await db.collection('chats').updateOne(
                     { id: chatID },
                     { 
-                        $push: { 
-                            messages: message
-                        }
+                        $set: { name: currentChat.name },
+                        $push: { messages: message }
                     }
                 );
                 
@@ -470,15 +510,43 @@ wss.on('connection', async (ws) => {
                     }
                 });
             } else if (data.type === 'delete_message') {
+                console.log(`Deleting message ${data.messageId} from chat ${chatID}`);
+                
+                // First get the current chat to preserve its name
+                const currentChat = await db.collection('chats').findOne({ id: chatID });
+                if (!currentChat) {
+                    console.error('Chat not found:', chatID);
+                    return;
+                }
+
+                // Find the message to verify ownership
+                const messageToDelete = currentChat.messages.find(m => m.id === data.messageId);
+                if (!messageToDelete) {
+                    console.error('Message not found:', data.messageId);
+                    return;
+                }
+
+                // Verify that the user is the sender of the message
+                if (messageToDelete.userId !== userId) {
+                    console.error('User not authorized to delete this message');
+                    return;
+                }
+
                 // Remove message from MongoDB
-                await db.collection('chats').updateOne(
+                const result = await db.collection('chats').updateOne(
                     { id: chatID },
                     { 
-                        $pull: { 
-                            messages: { id: data.messageId }
-                        }
+                        $set: { name: currentChat.name },
+                        $pull: { messages: { id: data.messageId } }
                     }
                 );
+
+                if (result.modifiedCount === 0) {
+                    console.error('Failed to delete message from database');
+                    return;
+                }
+                
+                console.log('Message deleted successfully, broadcasting to all clients');
                 
                 // Broadcast deletion to all clients
                 wss.clients.forEach((client) => {
@@ -603,6 +671,21 @@ app.get('/api/all-chats', async (req, res) => {
         res.status(500).json({ error: 'Failed to get chats' });
     }
 });
+
+// Add file upload endpoint
+app.post('/upload-image', upload.single('image'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' })
+    }
+
+    try {
+        const imageUrl = `/uploads/${req.file.filename}`
+        res.json({ url: imageUrl })
+    } catch (error) {
+        console.error('Error uploading file:', error)
+        res.status(500).json({ error: 'Failed to upload file' })
+    }
+})
 
 // Connect to MongoDB and start the server
 const PORT = process.env.PORT || 3000;
