@@ -107,6 +107,75 @@
       border-color: #f5c6cb;
       color: #721c24;
     }
+    .image-upload-btn {
+      cursor: pointer;
+      padding: 8px 12px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      margin: 0 8px;
+      transition: background-color 0.2s;
+    }
+    .image-upload-btn:hover {
+      background: #e0e0e0;
+    }
+    .message img {
+      max-width: 300px;
+      max-height: 300px;
+      border-radius: 8px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    .message img:hover {
+      opacity: 0.9;
+    }
+    .image-preview {
+      max-width: 200px;
+      max-height: 200px;
+      margin: 10px 0;
+      border-radius: 4px;
+      display: none;
+    }
+    .drop-zone {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .drop-zone.active {
+      display: flex;
+      pointer-events: all;
+    }
+    .drop-zone-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .drop-zone-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .drop-zone p {
+      margin: 0;
+      color: #666;
+    }
+    .drop-zone.drag-over {
+      background: rgba(0, 0, 0, 0.7);
+    }
+    .drop-zone.drag-over .drop-zone-content {
+      transform: scale(1.1);
+      transition: transform 0.2s ease;
+    }
   </style>
 </head>
 <body>
@@ -127,7 +196,17 @@
     <div id="chatBox"></div>
     <div id="inputContainer">
       <input id="messageInput" type="text" placeholder="Type a message..." />
+      <label for="imageUpload" class="image-upload-btn">
+        <span>📷</span>
+        <input type="file" id="imageUpload" accept="image/*" style="display: none;" />
+      </label>
       <button id="sendButton">Send</button>
+    </div>
+    <div id="dropZone" class="drop-zone">
+      <div class="drop-zone-content">
+        <span class="drop-zone-icon">��</span>
+        <p>Drag and drop images here</p>
+      </div>
     </div>
   </div>
 
@@ -245,16 +324,50 @@
         if (data.messages && data.messages.length > 0) {
           console.log('Rendering', data.messages.length, 'messages');
           const chatBox = document.getElementById('chatBox');
-          chatBox.innerHTML = data.messages.map(message => `
-            <div class="message" data-message-id="${message.id}">
-              <span class="sender">${escapeHtml(message.sender)}</span>
-              <span class="timestamp">${new Date(message.timestamp).toLocaleString()}</span>
-              ${currentUserName === message.sender ? 
-                `<button class="delete-btn" onclick="deleteMessage('${message.id}')">×</button>` : 
-                ''}
-              <div class="content">${escapeHtml(message.content)}</div>
-            </div>
-          `).join('');
+          chatBox.innerHTML = '';
+          
+          data.messages.forEach(message => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.dataset.messageId = message.id;
+            
+            const senderSpan = document.createElement('span');
+            senderSpan.className = 'sender';
+            senderSpan.textContent = message.sender;
+            
+            const timestampSpan = document.createElement('span');
+            timestampSpan.className = 'timestamp';
+            timestampSpan.textContent = new Date(message.timestamp).toLocaleString();
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'content';
+            contentDiv.textContent = message.content;
+            
+            messageDiv.appendChild(senderSpan);
+            messageDiv.appendChild(timestampSpan);
+            
+            if (currentUserName === message.sender) {
+              const deleteBtn = document.createElement('button');
+              deleteBtn.className = 'delete-btn';
+              deleteBtn.textContent = '×';
+              deleteBtn.onclick = () => deleteMessage(message.id);
+              messageDiv.appendChild(deleteBtn);
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            
+            // Add image if present
+            if (message.imageUrl) {
+              const img = document.createElement('img');
+              img.src = message.imageUrl;
+              img.alt = 'Shared image';
+              img.onclick = () => window.open(message.imageUrl, '_blank');
+              messageDiv.appendChild(img);
+            }
+            
+            chatBox.appendChild(messageDiv);
+          });
+          
           chatBox.scrollTop = chatBox.scrollHeight;
         } else {
           console.log('No messages to display');
@@ -413,14 +526,54 @@
           }
         });
 
+        // Add image upload handling
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.createElement('img');
+        imagePreview.className = 'image-preview';
+        document.getElementById('inputContainer').insertBefore(imagePreview, document.getElementById('sendButton'));
+
+        imageUpload.addEventListener('change', async function(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          // Show preview
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        });
+
         document.getElementById("sendButton").addEventListener("click", async () => {
           const input = document.getElementById("messageInput");
           const content = input.value.trim();
-          if (!content) return;
+          const file = imageUpload.files[0];
+          
+          if (!content && !file) return;
 
           if (ws.readyState === WebSocket.OPEN) {
             try {
               const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+              let imageUrl = null;
+
+              // Upload image if present
+              if (file) {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const uploadResponse = await fetch('/upload-image', {
+                  method: 'POST',
+                  body: formData
+                });
+                
+                if (!uploadResponse.ok) {
+                  throw new Error('Failed to upload image');
+                }
+                
+                const uploadResult = await uploadResponse.json();
+                imageUrl = uploadResult.url;
+              }
               
               // Show message immediately in UI
               const localMsg = {
@@ -428,7 +581,8 @@
                 content: content,
                 timestamp: Date.now(),
                 sender: currentUserName || 'You',
-                userId: userId
+                userId: userId,
+                imageUrl: imageUrl
               };
               showMessage(localMsg);
 
@@ -438,10 +592,14 @@
                 id: messageId,
                 content: content,
                 sender: currentUserName,
-                userId: userId
+                userId: userId,
+                imageUrl: imageUrl
               }));
 
+              // Clear inputs
               input.value = "";
+              imageUpload.value = "";
+              imagePreview.style.display = 'none';
             } catch (error) {
               console.error('Failed to send message:', error);
               alert('Failed to send message. Please try again.');
@@ -449,6 +607,76 @@
           } else {
             alert("WebSocket not connected!");
           }
+        });
+
+        // Add drag and drop functionality
+        const dropZone = document.getElementById('dropZone');
+        const chatUI = document.getElementById('chatUI');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+          chatUI.addEventListener(eventName, preventDefaults, false);
+          document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Highlight drop zone when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+          chatUI.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          chatUI.addEventListener(eventName, unhighlight, false);
+        });
+
+        // Handle dropped files
+        chatUI.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
+        function highlight(e) {
+          dropZone.classList.add('active', 'drag-over');
+        }
+
+        function unhighlight(e) {
+          dropZone.classList.remove('active', 'drag-over');
+        }
+
+        function handleDrop(e) {
+          const dt = e.dataTransfer;
+          const files = dt.files;
+
+          if (files.length > 0) {
+            const file = files[0];
+            if (file.type.startsWith('image/')) {
+              // Set the file in the file input
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              imageUpload.files = dataTransfer.files;
+
+              // Trigger the file input change event
+              const event = new Event('change', { bubbles: true });
+              imageUpload.dispatchEvent(event);
+            } else {
+              alert('Please drop an image file');
+            }
+          }
+        }
+
+        // Update image upload handling to show drop zone
+        imageUpload.addEventListener('change', async function(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          // Show preview
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
         });
       } catch (error) {
         console.error('Error starting chat:', error);
@@ -500,53 +728,70 @@
     });
 
     function showMessage(message) {
-      const chatBox = document.getElementById("chatBox");
-      const msgDiv = document.createElement("div");
-      msgDiv.className = "message";
-      msgDiv.id = `message-${message.id}`;
+      const chatBox = document.getElementById('chatBox');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message';
+      messageDiv.dataset.messageId = message.id;
       
-      const timestamp = new Date(message.timestamp).toLocaleTimeString();
+      const senderSpan = document.createElement('span');
+      senderSpan.className = 'sender';
+      senderSpan.textContent = message.sender;
       
-      // Create delete button separately to properly bind the message ID
-      const deleteButton = document.createElement("button");
-      deleteButton.className = "delete-btn";
-      deleteButton.textContent = "×";
-      deleteButton.onclick = () => deleteMessage(message.id);
+      const timestampSpan = document.createElement('span');
+      timestampSpan.className = 'timestamp';
+      timestampSpan.textContent = new Date(message.timestamp).toLocaleString();
       
-      msgDiv.innerHTML = `
-        <span class="sender">${message.sender}</span>
-        <span class="timestamp">${timestamp}</span>
-        <div>${message.content}</div>
-      `;
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'content';
+      contentDiv.textContent = message.content;
       
-      msgDiv.appendChild(deleteButton);
-      chatBox.appendChild(msgDiv);
+      messageDiv.appendChild(senderSpan);
+      messageDiv.appendChild(timestampSpan);
+      
+      if (currentUserName === message.sender) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = '×';
+        deleteBtn.onclick = () => deleteMessage(message.id);
+        messageDiv.appendChild(deleteBtn);
+      }
+      
+      messageDiv.appendChild(contentDiv);
+      
+      // Add image if present
+      if (message.imageUrl) {
+        const img = document.createElement('img');
+        img.src = message.imageUrl;
+        img.alt = 'Shared image';
+        img.onclick = () => window.open(message.imageUrl, '_blank');
+        messageDiv.appendChild(img);
+      }
+      
+      chatBox.appendChild(messageDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     function removeMessage(messageId) {
-      console.log('Attempting to remove message:', messageId);
-      const messageElement = document.getElementById(`message-${messageId}`);
+      console.log('Removing message:', messageId);
+      const messageElement = document.querySelector(`.message[data-message-id="${messageId}"]`);
       if (messageElement) {
-        console.log('Found message element, removing...');
         messageElement.remove();
       } else {
-        console.warn('Message element not found:', `message-${messageId}`);
+        console.warn('Message element not found:', messageId);
       }
     }
 
     function deleteMessage(messageId) {
-      console.log('Delete button clicked for message:', messageId);
+      // Remove confirmation dialog, delete immediately
       if (ws.readyState === WebSocket.OPEN) {
-        const deleteRequest = {
-          type: "delete_message",
+        console.log('Sending delete request for message:', messageId);
+        ws.send(JSON.stringify({
+          type: 'delete_message',
           messageId: messageId
-        };
-        console.log('Sending delete request:', deleteRequest);
-        ws.send(JSON.stringify(deleteRequest));
+        }));
       } else {
         console.error('WebSocket not connected. State:', ws.readyState);
-        alert("WebSocket not connected!");
+        alert('WebSocket not connected!');
       }
     }
   </script>
