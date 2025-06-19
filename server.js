@@ -122,7 +122,7 @@ function saveData() {
             if (fs.existsSync(USERS_FILE)) {
                 fs.copyFileSync(USERS_FILE, `${USERS_FILE}.backup-${timestamp}`)
             }
-            console.log('Created backups of data files')
+            console.logn('Created backups of data files')
         } catch (backupError) {
             console.error('Failed to create backups:', backupError)
         }
@@ -326,21 +326,47 @@ function loadExistingChats() {
     console.log(`Loaded ${chats.size} chats`);
 }
 
-// Create chat endpoint
+// Endpoint to find a private chat between two users
+app.get('/api/private-chat', async (req, res) => {
+    const { user1, user2 } = req.query;
+    if (!user1 || !user2) {
+        return res.status(400).json({ error: 'Both user1 and user2 are required' });
+    }
+    try {
+        // Find a chat that is private and has exactly these two members
+        const chat = await db.collection('chats').findOne({
+            isPrivate: true,
+            members: { $all: [user1, user2], $size: 2 }
+        });
+        if (chat) {
+            return res.json({ chatId: chat.id });
+        } else {
+            return res.json({ chatId: null });
+        }
+    } catch (error) {
+        console.error('Error finding private chat:', error);
+        res.status(500).json({ error: 'Failed to find private chat' });
+    }
+});
+
+// Update create-chat endpoint to support private chats
 app.post('/create-chat', async (req, res) => {
     const chatName = req.body.name;
+    const isPrivate = req.body.isPrivate || false;
+    const members = req.body.members || [];
     if (!chatName) {
         return res.status(400).json({ error: 'Chat name is required' });
     }
 
     const chatId = generateUniqueId();
     const chat = {
-            id: chatId,
+        id: chatId,
         name: chatName,
-            messages: [],
-        createdAt: Date.now()
+        messages: [],
+        createdAt: Date.now(),
+        isPrivate,
+        members: isPrivate ? members : undefined
     };
-    
     try {
         await db.collection('chats').insertOne(chat);
         console.log(`Created new chat: ${chatName} (${chatId}) at ${new Date(chat.createdAt).toLocaleString()}`);
@@ -357,7 +383,7 @@ app.get('/api/recent-chats', async (req, res) => {
         const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
         
         const recentChats = await db.collection('chats')
-            .find({ createdAt: { $gt: twentyFourHoursAgo } })
+            .find({ createdAt: { $gt: twentyFourHoursAgo }, $or: [{ isPrivate: { $exists: false } }, { isPrivate: false }] })
             .sort({ createdAt: -1 })
             .toArray();
 
@@ -386,7 +412,7 @@ app.get('/api/search-chats', async (req, res) => {
         }
 
         const results = await db.collection('chats')
-            .find({ name: { $regex: query, $options: 'i' } })
+            .find({ name: { $regex: query, $options: 'i' }, $or: [{ isPrivate: { $exists: false } }, { isPrivate: false }] })
             .sort({ createdAt: -1 })
             .toArray();
 
@@ -437,12 +463,34 @@ app.get('/user/:userId', async (req, res) => {
             return res.status(404).json({ error: 'User not found' })
         }
         
-        res.json({ userId: user.id, name: user.name })
+        res.json({ userId: user.id, name: user.name, profilePic: user.profilePic || null })
     } catch (error) {
         console.error('Error fetching user:', error)
         res.status(500).json({ error: 'Failed to fetch user' })
     }
 })
+
+// Endpoint to update user name
+app.post('/user/:userId/update-name', async (req, res) => {
+    const { userId } = req.params;
+    const { name } = req.body;
+    if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+    }
+    try {
+        const result = await db.collection('users').updateOne(
+            { id: userId },
+            { $set: { name } }
+        );
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ success: true, name });
+    } catch (error) {
+        console.error('Error updating user name:', error);
+        res.status(500).json({ error: 'Failed to update user name' });
+    }
+});
 
 // WebSocket connection handling
 wss.on('connection', async (ws) => {
@@ -647,12 +695,12 @@ app.get('/api/all-chats', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get total count of chats
-        const totalChats = await db.collection('chats').countDocuments();
+        // Get total count of chats (excluding private)
+        const totalChats = await db.collection('chats').countDocuments({ $or: [{ isPrivate: { $exists: false } }, { isPrivate: false }] });
         
-        // Get paginated chats
+        // Get paginated chats (excluding private)
         const chats = await db.collection('chats')
-            .find({})
+            .find({ $or: [{ isPrivate: { $exists: false } }, { isPrivate: false }] })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -686,6 +734,79 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
         res.status(500).json({ error: 'Failed to upload file' })
     }
 })
+
+// Endpoint to get all users (for private messaging)
+app.get('/api/users', async (req, res) => {
+    try {
+        const users = await db.collection('users').find({}, { projection: { id: 1, name: 1, _id: 0 } }).toArray();
+        res.json(users);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+// Endpoint to get all private chats for a user
+app.get('/api/my-private-chats/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const chats = await db.collection('chats')
+            .find({ isPrivate: true, members: userId })
+            .sort({ createdAt: -1 })
+            .toArray();
+        res.json(chats.map(chat => ({ id: chat.id, name: chat.name, members: chat.members, createdAt: chat.createdAt })));
+    } catch (error) {
+        console.error('Error fetching private chats:', error);
+        res.status(500).json({ error: 'Failed to fetch private chats' });
+    }
+});
+
+// Add multer for profile picture uploads
+const profilePicStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(DATA_DIR, 'uploads', 'profile-pics');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const uploadProfilePic = multer({
+    storage: profilePicStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: function (req, file, cb) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+            return cb(new Error('Only image files are allowed!'), false);
+        }
+        cb(null, true);
+    }
+});
+
+// Serve profile pictures
+app.use('/uploads/profile-pics', express.static(path.join(DATA_DIR, 'uploads', 'profile-pics')));
+
+// Endpoint to upload a profile picture for a user
+app.post('/upload-profile-pic/:userId', uploadProfilePic.single('profilePic'), async (req, res) => {
+    const { userId } = req.params;
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    try {
+        const imageUrl = `/uploads/profile-pics/${req.file.filename}`;
+        await db.collection('users').updateOne(
+            { id: userId },
+            { $set: { profilePic: imageUrl } }
+        );
+        res.json({ url: imageUrl });
+    } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        res.status(500).json({ error: 'Failed to upload profile picture' });
+    }
+});
 
 // Connect to MongoDB and start the server
 const PORT = process.env.PORT || 3000;
