@@ -8,6 +8,8 @@ const path = require('path')
 const crypto = require('crypto')
 const { MongoClient } = require('mongodb')
 const multer = require('multer')
+const { getDefaultAutoSelectFamily } = require('net')
+const { ObjectId } = require('mongodb')
 require('dotenv').config()
 
 const app = express()
@@ -167,6 +169,11 @@ const upload = multer({
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(DATA_DIR, 'uploads')))
 
+// Serve welcome page
+app.get('/welcome', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'welcome.html'))
+})
+
 // Get all chats
 app.get('/chats', (req, res) => {
     const chatList = Array.from(chats.entries()).map(([id, chat]) => ({
@@ -228,14 +235,24 @@ app.delete('/api/chats/:chatId', async (req, res) => {
     try {
         const chatId = req.params.chatId;
         console.log('Attempting to delete chat:', chatId);
-        
-        // Delete from MongoDB
-        const result = await db.collection('chats').deleteOne({ id: chatId });
-        
+
+        // Try deleting by our custom id field first
+        let result = await db.collection('chats').deleteOne({ id: chatId });
+
+        // If not found, attempt deletion by MongoDB _id (covers older records)
+        if (result.deletedCount === 0) {
+            try {
+                const objId = new ObjectId(chatId);
+                result = await db.collection('chats').deleteOne({ _id: objId });
+            } catch (err) {
+                // chatId is not a valid ObjectId string – ignore
+            }
+        }
+
         if (result.deletedCount === 0) {
             return res.status(404).json({ error: 'Chat not found' });
         }
-        
+
         console.log('Chat deleted successfully from MongoDB');
         res.status(200).json({ message: 'Chat deleted successfully' });
     } catch (error) {
@@ -434,20 +451,35 @@ loadExistingChats();
 
 // Add new endpoints for user management
 app.post('/register-user', async (req, res) => {
-    const { name } = req.body
-    if (!name) {
+    const { displayName, userId, profilePic } = req.body
+    if (!displayName) {
         return res.status(400).json({ error: 'Name is required' })
     }
 
-    const userId = uuidv4()
+    const newUserId = userId || uuidv4()
+    
+    // Generate a random 4-digit code
+    const randomCode = Math.floor(1000 + Math.random() * 9000).toString()
+    const fullDisplayName = `${displayName}#${randomCode}`
+    
     try {
-        await db.collection('users').insertOne({
-            id: userId,
-            name,
-            createdAt: Date.now()
-        })
-        console.log(`Registered new user: ${name} (${userId})`)
-        res.json({ userId, name })
+        const userData = {
+            id: newUserId,
+            name: displayName, // Store just the display name for messages
+            fullName: fullDisplayName, // Store full name with code for profiles
+            displayName: displayName, // Store original name without code
+            code: randomCode, // Store the code separately
+            createdAt: Date.now(),
+            starredChats: []
+        }
+        
+        if (profilePic) {
+            userData.profilePic = profilePic
+        }
+        
+        await db.collection('users').insertOne(userData)
+        console.log(`Registered new user: ${fullDisplayName} (${newUserId})`)
+        res.json({ userId: newUserId, displayName: displayName, profilePic: userData.profilePic || null })
     } catch (error) {
         console.error('Error registering user:', error)
         res.status(500).json({ error: 'Failed to register user' })
@@ -463,12 +495,86 @@ app.get('/user/:userId', async (req, res) => {
             return res.status(404).json({ error: 'User not found' })
         }
         
-        res.json({ userId: user.id, name: user.name, profilePic: user.profilePic || null })
+        res.json({ 
+            userId: user.id, 
+            name: user.name, // Display name for messages
+            fullName: user.fullName || user.name, // Full name with code for profiles
+            displayName: user.displayName || user.name,
+            code: user.code || null,
+            profilePic: user.profilePic || null 
+        })
     } catch (error) {
         console.error('Error fetching user:', error)
         res.status(500).json({ error: 'Failed to fetch user' })
     }
 })
+
+// Star a chat for a user
+app.post('/api/user/:userId/star', async (req, res) => {
+    const { userId } = req.params;
+    const { chatId } = req.body;
+    if (!chatId) {
+        return res.status(400).json({ error: 'chatId is required' });
+    }
+    try {
+        const result = await db.collection('users').updateOne(
+            { id: userId },
+            { $addToSet: { starredChats: chatId } }
+        );
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error starring chat:', error);
+        res.status(500).json({ error: 'Failed to star chat' });
+    }
+});
+
+// Unstar a chat for a user
+app.post('/api/user/:userId/unstar', async (req, res) => {
+    const { userId } = req.params;
+    const { chatId } = req.body;
+    if (!chatId) {
+        return res.status(400).json({ error: 'chatId is required' });
+    }
+    try {
+        const result = await db.collection('users').updateOne(
+            { id: userId },
+            { $pull: { starredChats: chatId } }
+        );
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error unstarring chat:', error);
+        res.status(500).json({ error: 'Failed to unstar chat' });
+    }
+});
+
+// Get starred chats for a user
+app.get('/api/user/:userId/starred-chats', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const user = await db.collection('users').findOne({ id: userId });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        if (!user.starredChats || user.starredChats.length === 0) {
+            return res.json([]);
+        }
+
+        const starredChats = await db.collection('chats').find({
+            id: { $in: user.starredChats }
+        }).toArray();
+        
+        res.json(starredChats);
+    } catch (error) {
+        console.error('Error fetching starred chats:', error);
+        res.status(500).json({ error: 'Failed to fetch starred chats' });
+    }
+});
 
 // Endpoint to update user name
 app.post('/user/:userId/update-name', async (req, res) => {
@@ -789,6 +895,20 @@ const uploadProfilePic = multer({
 // Serve profile pictures
 app.use('/uploads/profile-pics', express.static(path.join(DATA_DIR, 'uploads', 'profile-pics')));
 
+// Endpoint to upload a profile picture for new users (no userId required)
+app.post('/upload-profile-pic', uploadProfilePic.single('profilePic'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    try {
+        const imageUrl = `/uploads/profile-pics/${req.file.filename}`;
+        res.json({ url: imageUrl });
+    } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        res.status(500).json({ error: 'Failed to upload profile picture' });
+    }
+});
+
 // Endpoint to upload a profile picture for a user
 app.post('/upload-profile-pic/:userId', uploadProfilePic.single('profilePic'), async (req, res) => {
     const { userId } = req.params;
@@ -801,6 +921,22 @@ app.post('/upload-profile-pic/:userId', uploadProfilePic.single('profilePic'), a
             { id: userId },
             { $set: { profilePic: imageUrl } }
         );
+
+        // Notify all connected clients that this user's profile picture changed
+        try {
+            wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: 'user_profile_pic_updated',
+                        userId,
+                        profilePic: imageUrl
+                    }));
+                }
+            });
+        } catch (broadcastErr) {
+            console.error('Failed to broadcast profile pic update:', broadcastErr);
+        }
+
         res.json({ url: imageUrl });
     } catch (error) {
         console.error('Error uploading profile picture:', error);
