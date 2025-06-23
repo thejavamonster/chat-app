@@ -165,6 +165,33 @@
         .secondary:hover {
             background-color: #5a6268;
         }
+
+        .star-btn {
+            background-color: transparent;
+            color: #ffc107;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            cursor: pointer;
+            margin-left: 4px;
+            opacity: 0.6;
+            transition: all 0.2s;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .star-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .star-btn.starred {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -194,9 +221,15 @@
                 </div>
             </div>
         </div>
-        <div id="privateSidebar" style="width:300px; min-width:220px; max-width:100vw; background:#f8f9fa; border-left:1px solid #dee2e6; padding:20px 10px; border-radius:8px; height:fit-content;">
-            <h3 style="margin-top:0;">Private Messages</h3>
-            <div id="privateMsgList" style="display:flex; flex-direction:column; gap:8px;"></div>
+        <div id="sidebar" style="width:300px; min-width:220px; max-width:100vw; background:#f8f9fa; border-left:1px solid #dee2e6; padding:20px 10px; border-radius:8px; height:fit-content; display: flex; flex-direction: column; gap: 20px;">
+            <div>
+                <h3 style="margin-top:0;">My Chats</h3>
+                <div id="myChatsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+            <div id="privateSidebar">
+                <h3 style="margin-top:0;">Private Messages</h3>
+                <div id="privateMsgList" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
         </div>
     </div>
 
@@ -263,15 +296,20 @@
                     return;
                 }
 
-                chatList.innerHTML = chats.map(chat => `
+                chatList.innerHTML = chats.map(chat => {
+                    const isStarred = starredChatIds.has(chat.id);
+                    return `
                     <div class="chat-card">
                         <div class="chat-content" onclick="window.location.href='/chat.html?chatID=${chat.id}'">
                             <div class="chat-name">${escapeHtml(chat.name)}</div>
                             <div class="chat-time">${chat.timeAgo}</div>
                         </div>
-                        <button class="delete-btn" onclick="deleteChat('${chat.id}', event)">×</button>
+                        <div style="display: flex; align-items: center;">
+                            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${chat.id}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
+                            <button class="delete-btn" onclick="deleteChat('${chat.id}', event)">×</button>
+                        </div>
                     </div>
-                `).join('');
+                `}).join('');
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('chatList').innerHTML = 
@@ -306,8 +344,15 @@
                     throw new Error('Failed to delete chat');
                 }
 
-                // Refresh the recent chats list
+                // Remove the card from the DOM immediately for better UX
+                if (event) {
+                    const card = event.target.closest('.chat-card, .private-msg-item');
+                    if (card) card.remove();
+                }
+
+                // Refresh chat lists
                 loadRecentChats();
+                loadPrivateMessages && loadPrivateMessages();
             } catch (error) {
                 console.error('Error:', error);
                 alert('Failed to delete chat');
@@ -365,6 +410,56 @@
             if (e.target === privateMsgModal) privateMsgModal.style.display = 'none';
         };
 
+        async function loadMyStarredChats() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                console.log('No userId found, skipping starred chats load');
+                const myChatsList = document.getElementById('myChatsList');
+                myChatsList.innerHTML = '<div style="color:#888;">Please log in to see your starred chats.</div>';
+                return;
+            }
+
+            const myChatsList = document.getElementById('myChatsList');
+            myChatsList.innerHTML = '<div style="color:#888;">Loading...</div>';
+
+            try {
+                const res = await fetch(`/api/user/${userId}/starred-chats`);
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        myChatsList.innerHTML = '<div style="color:#888;">No starred chats. Click the &#9734; on any chat to add it here.</div>';
+                        return;
+                    }
+                    throw new Error('Failed to fetch starred chats');
+                }
+                const chats = await res.json();
+
+                if (chats.length === 0) {
+                    myChatsList.innerHTML = '<div style="color:#888;">No starred chats. Click the &#9734; on any chat to add it here.</div>';
+                    return;
+                }
+
+                myChatsList.innerHTML = chats.map(chat => {
+                    const cid = chat.id || chat._id;
+                    const isStarred = starredChatIds.has(cid);
+                    return `
+                    <div class="private-msg-item" style="background:#fff; border-radius:6px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,0.03); cursor:pointer; border:1px solid #e0e0e0; display:flex; align-items:center; justify-content:space-between; gap:8px;" onclick="window.location.href='/chat.html?chatID=${cid}'">
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:bold; color:#007bff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(chat.name)}</div>
+                            <div style="font-size:0.9em; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${new Date(chat.createdAt).toLocaleString()}</div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                             <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
+                             <button class="delete-btn" onclick="deleteChat('${cid}', event)">×</button>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (err) {
+                myChatsList.innerHTML = '<div style="color:red;">Failed to load starred chats.</div>';
+                console.error(err);
+            }
+        }
+
         async function showPrivateMsgModal() {
             userListContainer.innerHTML = 'Loading...';
             privateMsgModal.style.display = 'flex';
@@ -377,7 +472,9 @@
                     userListContainer.innerHTML = '<div style="color:#888;">No other users found.</div>';
                     return;
                 }
-                userListContainer.innerHTML = filtered.map(u => `<div class="user-list-item" style="padding:8px 0; border-bottom:1px solid #eee; cursor:pointer;" data-uid="${u.id}">${u.name}</div>`).join('');
+                // Fetch full user info for all users
+                const userInfos = await Promise.all(filtered.map(u => fetch(`/user/${u.id}`).then(r => r.json())));
+                userListContainer.innerHTML = userInfos.map(u => `<div class="user-list-item" style="padding:8px 0; border-bottom:1px solid #eee; cursor:pointer;" data-uid="${u.userId}">${u.fullName || u.name}</div>`).join('');
                 // Add click handlers
                 Array.from(userListContainer.querySelectorAll('.user-list-item')).forEach(item => {
                     item.onclick = async () => {
@@ -424,22 +521,57 @@
         // Private messages sidebar logic
         async function loadPrivateMessages() {
             const userId = localStorage.getItem('userId');
-            if (!userId) return;
+            if (!userId) {
+                console.log('No userId found, skipping private messages load');
+                const privateMsgList = document.getElementById('privateMsgList');
+                privateMsgList.innerHTML = '<div style="color:#888;">Please log in to see your private messages.</div>';
+                return;
+            }
+            
             const privateMsgList = document.getElementById('privateMsgList');
             privateMsgList.innerHTML = '<div style="color:#888;">Loading...</div>';
             try {
                 const res = await fetch(`/api/my-private-chats/${userId}`);
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        privateMsgList.innerHTML = '<div style="color:#888;">No private messages</div>';
+                        return;
+                    }
+                    throw new Error('Failed to fetch private chats');
+                }
                 const chats = await res.json();
                 if (!chats.length) {
                     privateMsgList.innerHTML = '<div style="color:#888;">No private messages</div>';
                     return;
                 }
-                privateMsgList.innerHTML = chats.map(chat =>
-                    `<div class="private-msg-item" style="background:#fff; border-radius:6px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,0.03); cursor:pointer; border:1px solid #e0e0e0;" onclick="window.location.href='/chat.html?chatID=${chat.id}'">
-                        <div style="font-weight:bold; color:#007bff;">${escapeHtml(chat.name)}</div>
-                        <div style="font-size:0.9em; color:#666;">${new Date(chat.createdAt).toLocaleString()}</div>
+                // For each chat, get the other user's fullName
+                const chatTitles = await Promise.all(chats.map(async chat => {
+                    // Find the other user in the chat
+                    const otherUserId = (chat.members || []).find(uid => uid !== userId);
+                    if (otherUserId) {
+                        const userRes = await fetch(`/user/${otherUserId}`);
+                        if (userRes.ok) {
+                            const userData = await userRes.json();
+                            return { ...chat, displayTitle: userData.fullName || userData.name };
+                        }
+                    }
+                    return { ...chat, displayTitle: chat.name };
+                }));
+                privateMsgList.innerHTML = chatTitles.map(chat => {
+                    const cid = chat.id || chat._id;
+                    const isStarred = starredChatIds.has(cid);
+                    return `
+                    <div class="private-msg-item" style="background:#fff; border-radius:6px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,0.03); cursor:pointer; border:1px solid #e0e0e0; display:flex; align-items:center; justify-content:space-between; gap:8px;" onclick="window.location.href='/chat.html?chatID=${cid}'">
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:bold; color:#007bff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(chat.displayTitle)}</div>
+                            <div style="font-size:0.9em; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${new Date(chat.createdAt).toLocaleString()}</div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
+                            <button class="delete-btn" onclick="deleteChat('${cid}', event)">×</button>
+                        </div>
                     </div>`
-                ).join('');
+                }).join('');
             } catch (err) {
                 privateMsgList.innerHTML = '<div style="color:red;">Failed to load private messages</div>';
             }
@@ -450,6 +582,88 @@
 
         // Optionally, refresh every 60s
         setInterval(loadPrivateMessages, 60000);
+
+        // A simple client-side router/logic for handling cross-page actions
+        function handleAction(params) {
+            const action = params.get('action');
+            if (action === 'start_dm' && params.has('withUserId') && params.has('withUserName')) {
+                const myUserId = localStorage.getItem('userId');
+                const myUserName = localStorage.getItem('userName');
+                if (!myUserId || !myUserName) {
+                    // Redirect to welcome page instead of showing modal
+                    window.location.href = '/welcome';
+                    return;
+                }
+                findOrCreatePrivateChat(params.get('withUserId'), params.get('withUserName'))
+                    .then(chatId => {
+                        if (chatId) {
+                            window.location.href = `/chat.html?chatID=${chatId}`;
+                        }
+                    })
+                    .catch(err => {
+                        alert('Could not start private message.');
+                        console.error(err);
+                    })
+                    .finally(() => {
+                        // Clean up URL params
+                        const newUrl = window.location.pathname;
+                        window.history.replaceState({}, '', newUrl);
+                    });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userId = localStorage.getItem('userId');
+            const userName = localStorage.getItem('userName');
+
+            if (!userId || !userName) {
+                // Redirect to welcome page instead of showing modal
+                window.location.href = '/welcome';
+                return;
+            }
+
+            // If user exists, verify they're still valid and load their chats
+            try {
+                const userResponse = await fetch(`/user/${userId}`);
+                if (userResponse.ok) {
+                    // User exists, load their chats
+                    await fetchStarredChatIds();
+                    refreshChatLists();
+                } else {
+                    // User not found, clear localStorage and redirect to welcome page
+                    console.log('User not found on server, clearing localStorage');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('userName');
+                    window.location.href = '/welcome';
+                    return;
+                }
+            } catch (error) {
+                console.error('Error verifying user:', error);
+                // On error, redirect to welcome page
+                window.location.href = '/welcome';
+                return;
+            }
+
+            // Existing logic for handling actions from other pages
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('action')) {
+                handleAction(params);
+            }
+        });
+
+        function refreshChatLists() {
+            loadMyStarredChats();
+            loadRecentChats();
+            loadPrivateMessages();
+        }
+
+        // Override the refreshChatLists function from utils.js to include starred chats
+        window.refreshChatLists = function() {
+            loadMyStarredChats();
+            loadRecentChats();
+            loadPrivateMessages();
+        };
     </script>
+    <script src="/js/utils.js"></script>
 </body>
 </html>
