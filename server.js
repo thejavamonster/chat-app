@@ -43,8 +43,23 @@ const DATA_DIR = process.env.NODE_ENV === 'production'
     : path.join(__dirname, 'data')
 
 // Create data directory if it doesn't exist
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true })
+try {
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true })
+        console.log(`Created data directory: ${DATA_DIR}`)
+    }
+} catch (error) {
+    console.error('Failed to create data directory:', error)
+    // Fall back to a directory we know we can write to
+    const fallbackDir = path.join(__dirname, 'data')
+    if (!fs.existsSync(fallbackDir)) {
+        try {
+            fs.mkdirSync(fallbackDir, { recursive: true })
+            console.log(`Created fallback data directory: ${fallbackDir}`)
+        } catch (fallbackError) {
+            console.error('Failed to create fallback data directory:', fallbackError)
+        }
+    }
 }
 
 const CHATS_FILE = path.join(DATA_DIR, 'chats.json')
@@ -68,7 +83,10 @@ async function connectDB() {
         await db.collection('users').createIndex({ id: 1 }, { unique: true });
     } catch (error) {
         console.error('MongoDB connection error:', error);
-        process.exit(1);
+        // Don't exit the process, just log the error and continue
+        // The app will fall back to in-memory storage
+        console.log('Falling back to in-memory storage due to MongoDB connection failure');
+        db = null;
     }
 }
 
@@ -141,10 +159,25 @@ app.use(express.json())
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = path.join(DATA_DIR, 'uploads')
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true })
+        try {
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true })
+            }
+            cb(null, uploadDir)
+        } catch (error) {
+            console.error('Failed to create upload directory:', error)
+            // Fall back to a directory we know we can write to
+            const fallbackDir = path.join(__dirname, 'data', 'uploads')
+            try {
+                if (!fs.existsSync(fallbackDir)) {
+                    fs.mkdirSync(fallbackDir, { recursive: true })
+                }
+                cb(null, fallbackDir)
+            } catch (fallbackError) {
+                console.error('Failed to create fallback upload directory:', fallbackError)
+                cb(new Error('Unable to create upload directory'), null)
+            }
         }
-        cb(null, uploadDir)
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
@@ -477,11 +510,48 @@ app.post('/register-user', async (req, res) => {
             userData.profilePic = profilePic
         }
         
-        await db.collection('users').insertOne(userData)
-        console.log(`Registered new user: ${fullDisplayName} (${newUserId})`)
+        // Try MongoDB first, fall back to in-memory storage
+        if (db) {
+            await db.collection('users').insertOne(userData)
+            console.log(`Registered new user in MongoDB: ${fullDisplayName} (${newUserId})`)
+        } else {
+            // Fall back to in-memory storage
+            users.set(newUserId, userData)
+            saveData() // Save to file
+            console.log(`Registered new user in memory: ${fullDisplayName} (${newUserId})`)
+        }
+        
         res.json({ userId: newUserId, displayName: displayName, profilePic: userData.profilePic || null })
     } catch (error) {
         console.error('Error registering user:', error)
+        
+        // If MongoDB fails, try in-memory storage as fallback
+        if (db && error.code !== 'ECONNREFUSED') {
+            try {
+                const userData = {
+                    id: newUserId,
+                    name: displayName,
+                    fullName: fullDisplayName,
+                    displayName: displayName,
+                    code: randomCode,
+                    createdAt: Date.now(),
+                    starredChats: []
+                }
+                
+                if (profilePic) {
+                    userData.profilePic = profilePic
+                }
+                
+                users.set(newUserId, userData)
+                saveData()
+                console.log(`Registered new user in memory (fallback): ${fullDisplayName} (${newUserId})`)
+                res.json({ userId: newUserId, displayName: displayName, profilePic: userData.profilePic || null })
+                return
+            } catch (fallbackError) {
+                console.error('Fallback registration also failed:', fallbackError)
+            }
+        }
+        
         res.status(500).json({ error: 'Failed to register user' })
     }
 })
@@ -871,10 +941,25 @@ app.get('/api/my-private-chats/:userId', async (req, res) => {
 const profilePicStorage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = path.join(DATA_DIR, 'uploads', 'profile-pics');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+        try {
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+            cb(null, uploadDir);
+        } catch (error) {
+            console.error('Failed to create profile pics directory:', error);
+            // Fall back to a directory we know we can write to
+            const fallbackDir = path.join(__dirname, 'data', 'uploads', 'profile-pics');
+            try {
+                if (!fs.existsSync(fallbackDir)) {
+                    fs.mkdirSync(fallbackDir, { recursive: true });
+                }
+                cb(null, fallbackDir);
+            } catch (fallbackError) {
+                console.error('Failed to create fallback profile pics directory:', fallbackError);
+                cb(new Error('Unable to create profile pics directory'), null);
+            }
         }
-        cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -946,8 +1031,34 @@ app.post('/upload-profile-pic/:userId', uploadProfilePic.single('profilePic'), a
 
 // Connect to MongoDB and start the server
 const PORT = process.env.PORT || 3000;
-connectDB().then(() => {
-    server.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
-    });
-});
+
+// Improved server startup with better error handling
+async function startServer() {
+    try {
+        // Connect to MongoDB (this won't fail the server startup)
+        await connectDB();
+        
+        // Start the server
+        server.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+            console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`MongoDB: ${db ? 'Connected' : 'Not available (using fallback storage)'}`);
+            console.log(`Data directory: ${DATA_DIR}`);
+        });
+        
+        // Handle server errors
+        server.on('error', (error) => {
+            console.error('Server error:', error);
+            if (error.code === 'EADDRINUSE') {
+                console.error(`Port ${PORT} is already in use`);
+                process.exit(1);
+            }
+        });
+        
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+}
+
+startServer();
