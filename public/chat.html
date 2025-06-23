@@ -45,20 +45,50 @@
       display: none;
     }
     .message {
-      margin-bottom: 10px;
-      padding: 8px;
-      border-radius: 5px;
-      background-color: #f8f9fa;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background-color: #ffffff;
       position: relative;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      font-size: 1.05rem;
+      display: flex;
+      gap: 12px;
+      align-items: center;
     }
     .message .sender {
-      font-weight: bold;
+      font-weight: 600;
       color: #007bff;
-      margin-right: 0.5em;
+      margin-right: 0.6em;
+      font-size: 1.1rem;
     }
     .message .timestamp {
       font-size: 0.8em;
       color: #6c757d;
+    }
+    .message .content {
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+    .avatar-circle {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #007bff;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      flex-shrink: 0;
+      overflow: hidden;
+
+      /* For initials */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #007bff;
     }
     .message .delete-btn {
       position: absolute;
@@ -177,6 +207,9 @@
       transform: scale(1.1);
       transition: transform 0.2s ease;
     }
+    .message-body {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -227,7 +260,19 @@
     </div>
   </div>
 
+  <!-- User Profile Modal -->
+  <div id="userProfileModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2100; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
+      <button id="closeUserProfileModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
+      <h2 style="margin-top:0;">User Profile</h2>
+      <div id="userProfilePicContainer" style="margin:1.5rem 0 0.5rem 0;"></div>
+      <div id="userProfileNameDisplay" style="font-weight:bold; font-size:1.2em; margin-bottom:1rem; text-align:center;"></div>
+      <button id="directMessageBtn" style="background-color:#007bff; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Direct Message</button>
+    </div>
+  </div>
+
   <script src="/e2ee.js"></script>
+  <script src="/js/utils.js"></script>
   <script>
     // Get chat ID from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -343,48 +388,11 @@
           const chatBox = document.getElementById('chatBox');
           chatBox.innerHTML = '';
           
-          data.messages.forEach(message => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message';
-            messageDiv.dataset.messageId = message.id;
-            
-            const senderSpan = document.createElement('span');
-            senderSpan.className = 'sender';
-            senderSpan.textContent = message.sender;
-            
-            const timestampSpan = document.createElement('span');
-            timestampSpan.className = 'timestamp';
-            timestampSpan.textContent = new Date(message.timestamp).toLocaleString();
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'content';
-            contentDiv.textContent = message.content;
-            
-            messageDiv.appendChild(senderSpan);
-            messageDiv.appendChild(timestampSpan);
-            
-            if (currentUserName === message.sender) {
-              const deleteBtn = document.createElement('button');
-              deleteBtn.className = 'delete-btn';
-              deleteBtn.textContent = '×';
-              deleteBtn.onclick = () => deleteMessage(message.id);
-              messageDiv.appendChild(deleteBtn);
-            }
-            
-            messageDiv.appendChild(contentDiv);
-            
-            // Add image if present
-            if (message.imageUrl) {
-              const img = document.createElement('img');
-              img.src = message.imageUrl;
-              img.alt = 'Shared image';
-              img.onclick = () => window.open(message.imageUrl, '_blank');
-              messageDiv.appendChild(img);
-            }
-            
-            chatBox.appendChild(messageDiv);
-          });
+          for (const message of data.messages) {
+            await showMessage(message);
+          }
           
+          // Scroll to bottom after loading messages
           chatBox.scrollTop = chatBox.scrollHeight;
         } else {
           console.log('No messages to display');
@@ -508,7 +516,7 @@
                             }
                         }
                     }
-                    showMessage(message);
+                    await showMessage(message);
                 }
                 // Scroll to bottom after loading history
                 const chatBox = document.getElementById("chatBox");
@@ -519,7 +527,7 @@
           } else if (data.type === "message") {
             // Only show messages from other users
             if (data.message.userId !== userId) {
-                showMessage(data.message);
+                await showMessage(data.message);
                 // Scroll to bottom for new messages
                 const chatBox = document.getElementById("chatBox");
                 chatBox.scrollTop = chatBox.scrollHeight;
@@ -542,6 +550,18 @@
                 console.error('Failed to get public key:', error);
               });
             }
+          } else if (data.type === "user_profile_pic_updated") {
+            console.log('Received profile pic update for user', data.userId);
+
+            // Update caches for that user
+            const initials = getInitials(currentUserName || '');
+            userInfoByIdCache[data.userId] = { initials, profilePic: data.profilePic };
+            // also drop name cache to refetch correctly next time
+            Object.keys(userInfoCache).forEach(k => delete userInfoCache[k]);
+
+            // Reload chat data to update avatars
+            await loadChatData();
+
           } else if (data.type === "public_key") {
             console.log('Received public key in response to request:', data.publicKey.substring(0, 20) + '...');
             recipientPublicKey = data.publicKey;
@@ -613,7 +633,7 @@
                 userId: userId,
                 imageUrl: imageUrl
               };
-              showMessage(localMsg);
+              await showMessage(localMsg);
 
               // Send message through WebSocket
               ws.send(JSON.stringify({
@@ -764,13 +784,126 @@
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
 
-    // Cache for user info (profilePic, initials)
+    // Cache for user info (profilePic, initials) keyed by name (legacy) and by userId
     const userInfoCache = {};
+    const userInfoByIdCache = {};
+
+    async function getUserInfoById(uid, fallbackName = '') {
+      if (!uid) return { initials: getInitials(fallbackName), profilePic: null, code: null, name: fallbackName, fullName: fallbackName };
+
+      // Always fetch fresh for current user to keep avatar current
+      if (uid === userId) {
+        try {
+          const res = await fetch(`/user/${uid}`);
+          if (res.ok) {
+            const data = await res.json();
+            const info = { 
+              initials: getInitials(data.name), 
+              profilePic: data.profilePic || null,
+              code: data.code || null,
+              name: data.name, // Display name for messages
+              fullName: data.fullName || data.name // Full name with code for profiles
+            };
+            userInfoByIdCache[uid] = info;
+            return info;
+          }
+        } catch {}
+      }
+
+      if (userInfoByIdCache[uid]) return userInfoByIdCache[uid];
+
+      try {
+        const res = await fetch(`/user/${uid}`);
+        if (res.ok) {
+          const data = await res.json();
+          const info = { 
+            initials: getInitials(data.name), 
+            profilePic: data.profilePic || null,
+            code: data.code || null,
+            name: data.name, // Display name for messages
+            fullName: data.fullName || data.name // Full name with code for profiles
+          };
+          userInfoByIdCache[uid] = info;
+          return info;
+        }
+      } catch {}
+
+      // Fallback to initials only
+      const info = { initials: getInitials(fallbackName), profilePic: null, code: null, name: fallbackName, fullName: fallbackName };
+      userInfoByIdCache[uid] = info;
+      return info;
+    }
+
+    // Helper: attach avatar image with retry and fallback
+    function setAvatarWithRetry(avatarSpan, profilePicUrl, initials) {
+        if (!profilePicUrl) {
+            // Fallback for initials
+            avatarSpan.style.backgroundImage = 'none';
+            avatarSpan.style.backgroundColor = '#e0e7ef';
+            avatarSpan.textContent = initials;
+            return;
+        }
+
+        let retryCount = 0;
+        const maxRetries = 5;
+        const retryDelay = 1500;
+
+        const preloader = (src) => {
+            const img = new Image();
+            img.src = src;
+
+            img.onload = () => {
+                // Image loaded, apply as background
+                avatarSpan.textContent = '';
+                avatarSpan.style.backgroundColor = 'transparent';
+                avatarSpan.style.backgroundImage = `url('${src}')`;
+            };
+
+            img.onerror = () => {
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(() => {
+                        const newSrc = src + (src.includes('?') ? '&' : '?') + 'retry=' + Date.now();
+                        preloader(newSrc);
+                    }, retryDelay);
+                } else {
+                    // All retries failed, fallback to initials
+                    avatarSpan.style.backgroundImage = 'none';
+                    avatarSpan.style.backgroundColor = '#e0e7ef';
+                    avatarSpan.textContent = initials;
+                }
+            };
+        };
+
+        preloader(profilePicUrl);
+    }
 
     // Helper: get user info (profilePic, initials) by name (fetches from backend if needed)
     async function getUserInfoByName(name) {
-      if (!name) return { initials: '', profilePic: null };
+      if (!name) return { initials: '', profilePic: null, code: null, name: '', fullName: '' };
+      
+      // Always fetch fresh data if it's the current user
+      if (name === currentUserName) {
+        try {
+          const res = await fetch(`/user/${userId}`);
+          if (res.ok) {
+            const userData = await res.json();
+            const info = { 
+              initials: getInitials(userData.name), 
+              profilePic: userData.profilePic || null,
+              code: userData.code || null,
+              name: userData.name,
+              fullName: userData.fullName || userData.name
+            };
+            userInfoCache[name] = info;
+            return info;
+          }
+        } catch {}
+      }
+      
+      // Return cached data for other users if available
       if (userInfoCache[name]) return userInfoCache[name];
+      
       // Try to find user by name (case-insensitive)
       try {
         const res = await fetch('/api/users');
@@ -782,15 +915,22 @@
             const userRes = await fetch(`/user/${user.id}`);
             if (userRes.ok) {
               const userData = await userRes.json();
-              const info = { initials: getInitials(userData.name), profilePic: userData.profilePic || null };
+              const info = { 
+                initials: getInitials(userData.name), 
+                profilePic: userData.profilePic || null,
+                code: userData.code || null,
+                name: userData.name,
+                fullName: userData.fullName || userData.name
+              };
               userInfoCache[name] = info;
               return info;
             }
           }
         }
       } catch {}
+      
       // Fallback: just initials
-      const info = { initials: getInitials(name), profilePic: null };
+      const info = { initials: getInitials(name), profilePic: null, code: null, name: name, fullName: name };
       userInfoCache[name] = info;
       return info;
     }
@@ -802,47 +942,47 @@
       messageDiv.className = 'message';
       messageDiv.dataset.messageId = message.id;
 
+      const bodyDiv = document.createElement('div');
+      bodyDiv.className = 'message-body';
+
       // Avatar (profile pic or initials)
       const avatarSpan = document.createElement('span');
       avatarSpan.className = 'avatar-circle';
-      avatarSpan.style.display = 'inline-block';
-      avatarSpan.style.width = '28px';
-      avatarSpan.style.height = '28px';
-      avatarSpan.style.borderRadius = '50%';
-      avatarSpan.style.overflow = 'hidden';
-      avatarSpan.style.verticalAlign = 'middle';
-      avatarSpan.style.marginRight = '8px';
-      avatarSpan.style.background = '#e0e7ef';
-      avatarSpan.style.border = '1.5px solid #007bff';
-      avatarSpan.style.textAlign = 'center';
-      avatarSpan.style.fontWeight = 'bold';
-      avatarSpan.style.fontSize = '1rem';
-      avatarSpan.style.color = '#007bff';
-      avatarSpan.style.lineHeight = '28px';
+      avatarSpan.style.cursor = 'pointer'; // Make it look clickable
 
-      // Use userId to check if this is the current user's message
+      // Handle avatar display based on whether it's the current user's message or not
       if (message.userId && userId && message.userId === userId) {
+        // Current user's message
+        const initials = getInitials(currentUserName);
         if (currentUserProfilePic) {
-          const initials = getInitials(currentUserName);
           const lastUploadTime = localStorage.getItem('profilePicLastUpload');
           let profilePicUrl = currentUserProfilePic.split('?')[0]; // Remove any existing query string
           if (lastUploadTime) {
             profilePicUrl += '?t=' + lastUploadTime;
           }
-          console.log('[SHOW MESSAGE] Rendering avatar for self:', {profilePicUrl, lastUploadTime, currentUserProfilePic});
-          avatarSpan.innerHTML = `<img src="${profilePicUrl}" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;" onerror=\"this.onerror=null;this.style.display='none';this.parentNode.textContent='${initials}';\" />`;
+          console.log('[SHOW MESSAGE] Rendering avatar for self with retry:', profilePicUrl);
+          setAvatarWithRetry(avatarSpan, profilePicUrl, initials);
         } else {
-          avatarSpan.textContent = getInitials(currentUserName);
+          avatarSpan.textContent = initials;
+          avatarSpan.style.background = '#e0e7ef';
         }
       } else {
-        // Fetch user info (profilePic, initials) for others
-        getUserInfoByName(message.sender).then(info => {
+        // Other user's message
+        avatarSpan.onclick = () => showUserProfileModal(message.userId, message.sender);
+        const infoPromise = message.userId ? getUserInfoById(message.userId, message.sender) : getUserInfoByName(message.sender);
+        infoPromise.then(info => {
+          const initials = info.initials;
           if (info.profilePic) {
-            const initials = info.initials;
-            console.log('[SHOW MESSAGE] Rendering avatar for', message.sender, ':', info.profilePic);
-            avatarSpan.innerHTML = `<img src="${info.profilePic}" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;" onerror=\"this.onerror=null;this.style.display='none';this.parentNode.textContent='${initials}';\" />`;
+            const lastUploadTime = localStorage.getItem('profilePicLastUpload');
+            let profilePicUrl = info.profilePic.split('?')[0]; // Remove any existing query string
+            if (lastUploadTime) {
+              profilePicUrl += '?t=' + lastUploadTime;
+            }
+            console.log('[SHOW MESSAGE] Rendering avatar for', message.sender, 'with retry:', profilePicUrl);
+            setAvatarWithRetry(avatarSpan, profilePicUrl, initials);
           } else {
-            avatarSpan.textContent = info.initials;
+            avatarSpan.textContent = initials;
+            avatarSpan.style.background = '#e0e7ef';
           }
         });
       }
@@ -866,6 +1006,7 @@
       const headerDiv = document.createElement('div');
       headerDiv.style.display = 'flex';
       headerDiv.style.alignItems = 'center';
+      headerDiv.style.gap = '8px';
       headerDiv.appendChild(avatarSpan);
       headerDiv.appendChild(senderSpan);
       headerDiv.appendChild(timestampSpan);
@@ -878,8 +1019,11 @@
         headerDiv.appendChild(deleteBtn);
       }
 
-      messageDiv.appendChild(headerDiv);
-      messageDiv.appendChild(contentDiv);
+      bodyDiv.appendChild(headerDiv);
+      bodyDiv.appendChild(contentDiv);
+
+      messageDiv.appendChild(avatarSpan);
+      messageDiv.appendChild(bodyDiv);
 
       // Add image if present
       if (message.imageUrl) {
@@ -930,35 +1074,69 @@
     let currentUserProfilePic = null;
 
     function renderProfilePicOrInitials(name, profilePicUrl) {
-      if (profilePicUrl) {
+        profilePicContainer.innerHTML = ''; // Clear previous content
+
+        const circle = document.createElement('div');
+        circle.style.width = '72px';
+        circle.style.height = '72px';
+        circle.style.borderRadius = '50%';
+        circle.style.border = '2px solid #007bff';
+        circle.style.overflow = 'hidden';
+        circle.style.position = 'relative';
+
         const initials = getInitials(name);
-        let url = profilePicUrl.split('?')[0]; // Remove any existing query string
-        if (name === currentUserName) {
-          const lastUploadTime = localStorage.getItem('profilePicLastUpload');
-          if (lastUploadTime) {
-            url += '?t=' + lastUploadTime;
-          }
+
+        if (profilePicUrl) {
+            let url = profilePicUrl.split('?')[0];
+            if (name === currentUserName) {
+                const lastUploadTime = localStorage.getItem('profilePicLastUpload');
+                if (lastUploadTime) {
+                    url += '?t=' + lastUploadTime;
+                }
+            }
+
+            // Use background image with preloader and retry
+            let retryCount = 0;
+            const maxRetries = 5;
+            const retryDelay = 1000;
+
+            const preloader = (src) => {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => {
+                    circle.style.backgroundImage = `url('${src}')`;
+                    circle.style.backgroundSize = 'cover';
+                    circle.style.backgroundPosition = 'center';
+                };
+                img.onerror = function() {
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        setTimeout(() => {
+                            preloader(src + '&retry=' + Date.now());
+                        }, retryDelay);
+                    } else {
+                        // Fallback to initials
+                        circle.style.backgroundImage = 'none';
+                        circle.style.backgroundColor = '#e0e7ef';
+                        circle.style.display = 'flex';
+                        circle.style.alignItems = 'center';
+                        circle.style.justifyContent = 'center';
+                        circle.innerHTML = `<span style="color:#007bff; font-size:2rem; font-weight:bold;">${initials}</span>`;
+                    }
+                };
+            };
+            preloader(url);
+
+        } else {
+            // Initials only
+            circle.style.backgroundColor = '#e0e7ef';
+            circle.style.display = 'flex';
+            circle.style.alignItems = 'center';
+            circle.style.justifyContent = 'center';
+            circle.innerHTML = `<span style="color:#007bff; font-size:2rem; font-weight:bold;">${initials}</span>`;
         }
-        // Force reload: remove any existing img, then add new img
-        profilePicContainer.innerHTML = '';
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = 'Profile';
-        img.style.width = '72px';
-        img.style.height = '72px';
-        img.style.borderRadius = '50%';
-        img.style.objectFit = 'cover';
-        img.style.border = '2px solid #007bff';
-        img.onerror = function() {
-          this.onerror = null;
-          this.style.display = 'none';
-          profilePicContainer.innerHTML = `<div style=\'width:72px; height:72px; border-radius:50%; background:#e0e7ef; color:#007bff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; border:2px solid #007bff;\'>${initials}</div>`;
-        };
-        profilePicContainer.appendChild(img);
-      } else {
-        const initials = getInitials(name);
-        profilePicContainer.innerHTML = `<div style="width:72px; height:72px; border-radius:50%; background:#e0e7ef; color:#007bff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; border:2px solid #007bff;">${initials}</div>`;
-      }
+        
+        profilePicContainer.appendChild(circle);
     }
 
     accountBtn.onclick = async () => {
@@ -970,7 +1148,7 @@
           const res = await fetch(`/user/${userId}`);
           if (res.ok) {
             const data = await res.json();
-            name = data.name;
+            name = data.fullName || data.name; // Use fullName with code for your own profile
             profilePic = data.profilePic;
             currentUserProfilePic = profilePic;
           }
@@ -999,24 +1177,43 @@
           body: formData
         });
         if (res.ok) {
-          console.log('[PFP UPLOAD] Upload successful, waiting 500ms before fetching updated user info...');
-          // Wait 500ms to ensure the file is available
-          await new Promise(resolve => setTimeout(resolve, 500));
+          console.log('[PFP UPLOAD] Upload successful, waiting 2000ms before fetching updated user info...');
+          // Wait 2 seconds to ensure the file is available
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
           // After upload, fetch the latest user info to get the new profilePic
           const userRes = await fetch(`/user/${userId}`);
           if (userRes.ok) {
             const userData = await userRes.json();
             const lastUploadTime = Date.now();
+            
+            // Update local storage timestamp
             localStorage.setItem('profilePicLastUpload', lastUploadTime);
+            
+            // Update current user's profile pic
             currentUserProfilePic = userData.profilePic;
-            // Clear and update userInfoCache for your username
+            
+            // Clear and update userInfoCache for current user
             delete userInfoCache[currentUserName];
-            userInfoCache[currentUserName] = { initials: getInitials(currentUserName), profilePic: currentUserProfilePic };
+            userInfoCache[currentUserName] = { 
+              initials: getInitials(currentUserName), 
+              profilePic: currentUserProfilePic 
+            };
+            
             console.log('[PFP UPLOAD] Updated currentUserProfilePic:', currentUserProfilePic);
             console.log('[PFP UPLOAD] Updated lastUploadTime:', lastUploadTime);
             console.log('[PFP UPLOAD] Updated userInfoCache:', userInfoCache[currentUserName]);
+            
+            // Update profile picture in account modal
             renderProfilePicOrInitials(currentUserName, currentUserProfilePic + '?t=' + lastUploadTime);
+            
+            // Clear all cached user info to force fresh fetches
+            Object.keys(userInfoCache).forEach(key => delete userInfoCache[key]);
+            
+            // Reload all chat messages to update avatars
             await loadChatData();
+            
+            alert('Profile picture updated successfully!');
           } else {
             alert('Profile picture uploaded, but failed to fetch updated user info.');
             console.error('[PFP UPLOAD] Failed to fetch updated user info after upload.');
@@ -1030,6 +1227,74 @@
         console.error('[PFP UPLOAD] Exception during upload:', err);
       }
     };
+
+    // User Profile Modal Logic
+    const userProfileModal = document.getElementById('userProfileModal');
+    const closeUserProfileModal = document.getElementById('closeUserProfileModal');
+    const userProfilePicContainer = document.getElementById('userProfilePicContainer');
+    const userProfileNameDisplay = document.getElementById('userProfileNameDisplay');
+    const directMessageBtn = document.getElementById('directMessageBtn');
+
+    closeUserProfileModal.onclick = () => userProfileModal.style.display = 'none';
+    userProfileModal.onclick = (e) => {
+        if (e.target === userProfileModal) userProfileModal.style.display = 'none';
+    };
+
+    async function showUserProfileModal(uid, fallbackName) {
+        if (!uid) return;
+
+        // Show loading state
+        userProfileNameDisplay.textContent = 'Loading...';
+        userProfilePicContainer.innerHTML = '';
+        directMessageBtn.style.display = 'none';
+        userProfileModal.style.display = 'flex';
+
+        try {
+            const info = await getUserInfoById(uid, fallbackName);
+            
+            // Display full name with code in profile popup
+            userProfileNameDisplay.textContent = info.fullName || fallbackName;
+
+            // Render profile picture (or initials) in the modal
+            const picCircle = document.createElement('div');
+            picCircle.style.width = '96px';
+            picCircle.style.height = '96px';
+            picCircle.style.borderRadius = '50%';
+            picCircle.style.border = '3px solid #007bff';
+            picCircle.style.backgroundSize = 'cover';
+            picCircle.style.backgroundPosition = 'center';
+            picCircle.style.backgroundColor = '#e0e7ef';
+            picCircle.style.display = 'flex';
+            picCircle.style.alignItems = 'center';
+            picCircle.style.justifyContent = 'center';
+
+            if (info.profilePic) {
+                picCircle.style.backgroundImage = `url('${info.profilePic}')`;
+            } else {
+                picCircle.innerHTML = `<span style="color:#007bff; font-size:2.5rem; font-weight:bold;">${info.initials}</span>`;
+            }
+            userProfilePicContainer.innerHTML = '';
+            userProfilePicContainer.appendChild(picCircle);
+
+            // Configure and show DM button
+            directMessageBtn.style.display = 'block';
+            directMessageBtn.onclick = async () => {
+                try {
+                    const chatId = await findOrCreatePrivateChat(uid, info.name || fallbackName);
+                    if (chatId) {
+                        window.location.href = `/chat.html?chatID=${chatId}`;
+                    }
+                } catch (err) {
+                    alert('Could not start a private message. Please try again.');
+                    console.error('DM Error:', err);
+                }
+            };
+
+        } catch (error) {
+            userProfileNameDisplay.textContent = 'Could not load profile.';
+            console.error('Error showing user profile modal:', error);
+        }
+    }
   </script>
 </body>
 </html>
