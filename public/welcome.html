@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Enkryptonite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .welcome-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .profile-section {
+            margin-bottom: 30px;
+        }
+
+        .profile-pic-container {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-pic-container:hover {
+            border-color: #007bff;
+            background: #f0f2ff;
+        }
+
+        .profile-pic-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .profile-pic-placeholder {
+            font-size: 3rem;
+            color: #adb5bd;
+        }
+
+        .upload-text {
+            color: #007bff;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            transition: border-color 0.2s;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            min-height: 1.2em;
+        }
+
+        .start-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        .start-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .start-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .features {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .features h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            text-align: left;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            color: #666;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        @media (max-width: 480px) {
+            .welcome-container {
+                padding: 30px 20px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .profile-pic-container {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="logo">Enkryptonite</div>
+        <p class="subtitle">Create your identity to start chatting securely</p>
+        
+        <div class="profile-section">
+            <div class="profile-pic-container" id="profilePicContainer">
+                <div class="profile-pic-placeholder">👤</div>
+            </div>
+            <p class="upload-text">Click to upload a profile picture (optional)</p>
+            <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+        </div>
+        
+        <div class="form-section">
+            <input type="text" id="nameInput" class="name-input" placeholder="Choose your display name" maxlength="32">
+            <div id="errorMessage" class="error-message"></div>
+            <button id="startBtn" class="start-btn">Start Chatting</button>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Setting up your account...</p>
+        </div>
+        
+        <div class="features">
+            <h3>What you get:</h3>
+            <ul class="feature-list">
+                <li>End-to-end encrypted messaging</li>
+                <li>Private conversations</li>
+                <li>Star your favorite chats</li>
+                <li>No registration required</li>
+                <li>Instant setup</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const profilePicContainer = document.getElementById('profilePicContainer');
+        const profilePicInput = document.getElementById('profilePicInput');
+        const nameInput = document.getElementById('nameInput');
+        const errorMessage = document.getElementById('errorMessage');
+        const startBtn = document.getElementById('startBtn');
+        const loading = document.getElementById('loading');
+
+        let selectedProfilePic = null;
+
+        // Handle profile picture selection
+        profilePicContainer.onclick = () => {
+            profilePicInput.click();
+        };
+
+        profilePicInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // Check file type
+                if (!file.type.startsWith('image/')) {
+                    showError('Please select an image file.');
+                    profilePicInput.value = '';
+                    return;
+                }
+
+                // Display image without compression
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    selectedProfilePic = event.target.result;
+                    profilePicContainer.innerHTML = `<img src="${selectedProfilePic}" alt="Profile Picture">`;
+                    clearError();
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // Validate display name in real-time
+        nameInput.oninput = () => {
+            const displayName = nameInput.value.trim();
+            clearError();
+            
+            if (displayName.length > 0) {
+                if (displayName.length < 2) {
+                    showError('Display name must be at least 2 characters');
+                } else if (displayName.length > 32) {
+                    showError('Display name must be 32 characters or less');
+                } else {
+                    const reservedNames = ['admin', 'moderator', 'support', 'administrator', 'mod', 'help', 'system'];
+                    if (reservedNames.includes(displayName.toLowerCase())) {
+                        showError('This display name is reserved');
+                    }
+                }
+            }
+        };
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            startBtn.disabled = true;
+        }
+
+        function clearError() {
+            errorMessage.textContent = '';
+            startBtn.disabled = false;
+        }
+
+        // Handle form submission
+        startBtn.onclick = async () => {
+            const displayName = nameInput.value.trim();
+            
+            if (!displayName) {
+                showError('Please enter a display name.');
+                return;
+            }
+
+            if (errorMessage.textContent) {
+                return; // Don't proceed if there are validation errors
+            }
+
+            // Show loading state
+            startBtn.disabled = true;
+            loading.style.display = 'block';
+
+            try {
+                // Check if we have an existing userId
+                const existingUserId = localStorage.getItem('userId');
+                
+                // First, upload profile picture if selected
+                let profilePicUrl = null;
+                if (selectedProfilePic) {
+                    try {
+                        // Convert data URL to blob
+                        const response = await fetch(selectedProfilePic);
+                        const blob = await response.blob();
+                        const file = new File([blob], 'profile-pic.jpg', { type: 'image/jpeg' });
+                        
+                        const formData = new FormData();
+                        formData.append('profilePic', file);
+                        
+                        const uploadResponse = await fetch('/upload-profile-pic', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const uploadResult = await uploadResponse.json();
+                            profilePicUrl = uploadResult.url;
+                        } else {
+                            console.warn('Failed to upload profile picture, continuing without it');
+                        }
+                    } catch (uploadError) {
+                        console.warn('Profile picture upload failed:', uploadError);
+                        // Continue without profile picture
+                    }
+                }
+                
+                const response = await fetch('/register-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        displayName,
+                        userId: existingUserId,
+                        profilePic: profilePicUrl
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMessage = 'Failed to register user.';
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (parseError) {
+                        // If response is not JSON, check for specific error codes
+                        if (response.status === 413) {
+                            errorMessage = 'Profile picture is too large. Please choose a smaller image.';
+                        } else if (response.status === 400) {
+                            errorMessage = 'Invalid display name. Please try again.';
+                        }
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+                
+                const userData = await response.json();
+                localStorage.setItem('userId', userData.userId);
+                localStorage.setItem('userName', userData.displayName);
+                if (userData.profilePic) {
+                    localStorage.setItem('profilePic', userData.profilePic);
+                }
+                
+                // Redirect to homepage
+                window.location.href = '/';
+                
+            } catch (error) {
+                console.error('Error registering user:', error);
+                showError(error.message || 'Could not start your session. Please try again.');
+                loading.style.display = 'none';
+                startBtn.disabled = false;
+            }
+        };
+
+        // Handle Enter key
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !startBtn.disabled) {
+                startBtn.click();
+            }
+        });
+
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', () => {
+            const userId = localStorage.getItem('userId');
+            const userName = localStorage.getItem('userName');
+            
+            if (userId && userName) {
+                // User is already logged in, redirect to homepage
+                window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html> 
