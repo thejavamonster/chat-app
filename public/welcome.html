@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Enkryptonite</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,8 +13,8 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -22,51 +23,58 @@
         }
 
         .welcome-container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 48px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
             max-width: 500px;
             width: 100%;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .logo {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 10px;
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
         }
 
         .subtitle {
-            color: #666;
-            margin-bottom: 40px;
+            color: #718096;
+            margin-bottom: 48px;
             font-size: 1.1rem;
+            font-weight: 500;
         }
 
         .profile-section {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .profile-pic-container {
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            margin: 0 auto 20px;
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border: 3px dashed #cbd5e0;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
         .profile-pic-container:hover {
-            border-color: #007bff;
-            background: #f0f2ff;
+            border-color: #667eea;
+            background: linear-gradient(135deg, #ebf4ff 0%, #c3dafe 100%);
+            transform: scale(1.05);
         }
 
         .profile-pic-container img {
@@ -78,69 +86,115 @@
 
         .profile-pic-placeholder {
             font-size: 3rem;
-            color: #adb5bd;
+            color: #a0aec0;
         }
 
         .upload-text {
-            color: #007bff;
+            color: #667eea;
             font-size: 0.9rem;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .name-input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
             font-size: 16px;
-            margin-bottom: 10px;
-            transition: border-color 0.2s;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            background: white;
+            font-weight: 500;
         }
 
         .name-input:focus {
             outline: none;
-            border-color: #007bff;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .error-message {
-            color: #dc3545;
+            color: #e53e3e;
             font-size: 0.9rem;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             min-height: 1.2em;
+            font-weight: 500;
         }
 
         .start-btn {
-            background-color: #007bff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            padding: 16px 24px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.2s;
+            font-weight: 600;
+            transition: all 0.3s ease;
             width: 100%;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .start-btn:hover {
-            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
         .start-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-toggle {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .form-toggle a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .form-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin: 0;
         }
 
         .loading {
             display: none;
-            margin-top: 20px;
+            margin-top: 24px;
         }
 
         .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #007bff;
+            border: 3px solid rgba(102, 126, 234, 0.1);
+            border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
@@ -150,15 +204,22 @@
             100% { transform: rotate(360deg); }
         }
 
+        .loading p {
+            margin-top: 12px;
+            color: #718096;
+            font-weight: 500;
+        }
+
         .features {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 40px;
+            padding-top: 32px;
+            border-top: 1px solid #e2e8f0;
         }
 
         .features h3 {
-            color: #333;
-            margin-bottom: 15px;
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-weight: 600;
         }
 
         .feature-list {
@@ -167,27 +228,47 @@
         }
 
         .feature-list li {
-            padding: 8px 0;
-            color: #666;
+            padding: 12px 0;
+            color: #4a5568;
             position: relative;
-            padding-left: 25px;
+            padding-left: 32px;
+            font-weight: 500;
         }
 
         .feature-list li:before {
-            content: "✓";
+            content: "";
             position: absolute;
             left: 0;
-            color: #28a745;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feature-list li:after {
+            content: "✓";
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
             font-weight: bold;
+            font-size: 12px;
         }
 
         @media (max-width: 480px) {
             .welcome-container {
-                padding: 30px 20px;
+                padding: 32px 24px;
+                margin: 16px;
             }
             
             .logo {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
             
             .profile-pic-container {
@@ -204,9 +285,14 @@
         
         <div class="profile-section">
             <div class="profile-pic-container" id="profilePicContainer">
-                <div class="profile-pic-placeholder">👤</div>
+                <div class="profile-pic-placeholder">
+                    <i class="fas fa-user"></i>
+                </div>
             </div>
-            <p class="upload-text">Click to upload a profile picture (optional)</p>
+            <p class="upload-text">
+                <i class="fas fa-camera"></i>
+                Click to upload a profile picture (optional)
+            </p>
             <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
         </div>
         
@@ -214,25 +300,32 @@
         <div class="form-section" id="registerSection">
             <input type="text" id="nameInput" class="name-input" placeholder="Choose your display name" maxlength="32">
             <div id="errorMessage" class="error-message"></div>
-            <button id="startBtn" class="start-btn">Start Chatting</button>
-            <p style="margin-top:12px;font-size:14px;">Already have an account? <a href="#" id="showSignIn">Sign in</a></p>
+            <button id="startBtn" class="start-btn">
+                <i class="fas fa-rocket"></i>
+                Start Chatting
+            </button>
+            <p class="form-toggle">Already have an account? <a href="#" id="showSignIn">Sign in</a></p>
         </div>
 
         <!-- Sign-in form (hidden by default) -->
         <div class="form-section" id="signInSection" style="display:none;">
-            <input type="text" id="signInName" class="name-input" placeholder="Display name" maxlength="32" style="margin-bottom:10px;">
-            <input type="text" id="signInCode" class="name-input" placeholder="Secret word (not 4-digit code)" style="margin-bottom:6px;">
-            <label style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-              <input type="checkbox" id="keepSignedIn"> Keep me signed in
-            </label>
+            <input type="text" id="signInName" class="name-input" placeholder="Display name" maxlength="32">
+            <input type="text" id="signInCode" class="name-input" placeholder="Secret word (not 4-digit code)">
+            <div class="checkbox-container">
+                <input type="checkbox" id="keepSignedIn">
+                <label for="keepSignedIn">Keep me signed in</label>
+            </div>
             <div id="signInError" class="error-message"></div>
-            <button id="signInBtn" class="start-btn">Sign In</button>
-            <p style="margin-top:12px;font-size:14px;">New here? <a href="#" id="showRegister">Create account</a></p>
+            <button id="signInBtn" class="start-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </button>
+            <p class="form-toggle">New here? <a href="#" id="showRegister">Create account</a></p>
         </div>
         
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: #666;">Setting up your account...</p>
+            <p>Setting up your account...</p>
         </div>
         
         <div class="features">
@@ -470,4 +563,4 @@
         };
     </script>
 </body>
-</html> 
+</html>

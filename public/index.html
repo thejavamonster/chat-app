@@ -4,99 +4,202 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enkryptonite</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            padding: 24px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
 
         .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         h1 {
-            color: #333;
-            margin-bottom: 30px;
+            color: #1a202c;
+            margin-bottom: 32px;
+            font-weight: 700;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .account-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .account-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .account-btn i {
+            color: white;
+            font-size: 1.2rem;
         }
 
         .actions-row {
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
+            gap: 16px;
+            margin-bottom: 40px;
+            align-items: stretch;
         }
 
         .chat-form {
             flex: 1;
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            align-items: center;
         }
 
         input[type="text"] {
             flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
             font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         button {
-            padding: 10px 20px;
+            padding: 14px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 16px;
+            font-weight: 600;
             color: white;
-            transition: background-color 0.2s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         button.primary {
-            background-color: #007bff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        button.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
         button.secondary {
-            background-color: #6c757d;
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+            box-shadow: 0 4px 15px rgba(113, 128, 150, 0.3);
         }
 
-        button:hover {
-            opacity: 0.9;
+        button.secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(113, 128, 150, 0.4);
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            min-width: 160px;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #4a5568;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f7fafc;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
         }
 
         .recent-chats {
-            margin-top: 30px;
+            margin-top: 40px;
         }
 
         .recent-chats h2 {
-            color: #333;
-            margin-bottom: 20px;
+            color: #2d3748;
+            margin-bottom: 24px;
+            font-weight: 600;
+            font-size: 1.5rem;
         }
 
         .chat-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
         .chat-card {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.3s ease;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .chat-card:hover {
-            background-color: #e9ecef;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
         }
 
         .chat-content {
@@ -104,121 +207,405 @@
         }
 
         .chat-name {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-size: 1.1rem;
         }
 
         .chat-time {
-            color: #6c757d;
-            font-size: 0.9em;
+            color: #718096;
+            font-size: 0.9rem;
         }
 
         .no-chats {
             text-align: center;
-            color: #666;
-            padding: 20px;
+            color: #718096;
+            padding: 40px;
             font-style: italic;
+            background: white;
+            border-radius: 16px;
+            border: 2px dashed #e2e8f0;
         }
 
         .error {
-            color: #dc3545;
-            margin-top: 10px;
+            color: #e53e3e;
+            margin-top: 16px;
+            padding: 12px;
+            background: #fed7d7;
+            border-radius: 8px;
+            border: 1px solid #feb2b2;
         }
 
-        .delete-btn {
-            background-color: transparent;
-            color: #dc3545;
+        .icon-btn {
+            background: transparent;
             border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
             padding: 0;
             cursor: pointer;
-            margin-left: 10px;
-            opacity: 0.5;
-            transition: all 0.2s;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .delete-btn:hover {
-            opacity: 1;
-            background-color: rgba(220, 53, 69, 0.1);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .secondary {
-            padding: 8px 16px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .secondary:hover {
-            background-color: #5a6268;
-        }
-
-        .star-btn {
-            background-color: transparent;
-            color: #ffc107;
-            border: none;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            padding: 0;
-            cursor: pointer;
-            margin-left: 4px;
+            margin-left: 8px;
             opacity: 0.6;
-            transition: all 0.2s;
-            font-size: 20px;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .star-btn:hover {
+        .icon-btn:hover {
             opacity: 1;
             transform: scale(1.1);
         }
 
+        .delete-btn {
+            color: #e53e3e;
+        }
+
+        .delete-btn:hover {
+            background: rgba(229, 62, 62, 0.1);
+        }
+
+        .star-btn {
+            color: #d69e2e;
+        }
+
+        .star-btn:hover {
+            background: rgba(214, 158, 46, 0.1);
+        }
+
         .star-btn.starred {
             opacity: 1;
+            color: #d69e2e;
+        }
+
+        .sidebar {
+            width: 320px;
+            min-width: 280px;
+            max-width: 100vw;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid #e2e8f0;
+            padding: 24px;
+            border-radius: 16px;
+            height: fit-content;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .sidebar h3 {
+            margin: 0 0 16px 0;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sidebar-item {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .sidebar-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar-item-title {
+            font-weight: 600;
+            color: #667eea;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-item-subtitle {
+            font-size: 0.85rem;
+            color: #718096;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-empty {
+            color: #a0aec0;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            min-width: 400px;
+            max-width: 90vw;
+            margin: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #718096;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+        .modal h2 {
+            margin: 0 0 24px 0;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .user-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 16px 0;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .user-item:hover {
+            background: #f7fafc;
+        }
+
+        .user-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 24px 0;
+        }
+
+        .profile-pic {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .profile-initials {
+            color: #667eea;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            text-align: center;
+            color: #2d3748;
+        }
+
+        .info-box {
+            background: #f7fafc;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .info-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            background: white;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .info-value:hover {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .warning-text {
+            margin-top: 16px;
+            color: #e53e3e;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: center;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 62, 62, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            .container {
+                padding: 20px;
+                display: block;
+            }
+
+            .sidebar {
+                width: 100%;
+                margin-top: 24px;
+            }
+
+            .actions-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .chat-form {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                justify-content: center;
+            }
+
+            h1 {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container" style="display: flex; gap: 32px;">
         <div style="flex: 1;">
-            <h1 style="display:flex;align-items:center;justify-content:space-between;">
-                <span>Enkryptonite</span>
-                <button id="accountBtn" style="background:none; border:none; cursor:pointer; padding:4px 8px;">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+            <h1>
+                <span class="logo-text">Enkryptonite</span>
+                <button id="accountBtn" class="account-btn">
+                    <i class="fas fa-user"></i>
                 </button>
             </h1>
+            
             <div class="actions-row">
-                <div class="chat-form" style="display: flex; gap: 8px; align-items: center;">
+                <div class="chat-form">
                     <input type="text" id="chatName" placeholder="Enter chat name">
-                    <div class="dropdown" style="position: relative;">
-                        <button class="primary" id="createDropdownBtn">Create ▼</button>
-                        <div id="createDropdown" class="dropdown-content" style="display:none; position:absolute; top:100%; left:0; background:#fff; border:1px solid #ccc; border-radius:4px; min-width:140px; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                            <a href="#" id="createChatOption" style="display:block; padding:8px 16px; text-decoration:none; color:#333; cursor:pointer;">Chat</a>
-                            <a href="#" id="privateMsgOption" style="display:block; padding:8px 16px; text-decoration:none; color:#333; cursor:pointer;">Private Message</a>
+                    <div class="dropdown">
+                        <button class="primary" id="createDropdownBtn">
+                            <i class="fas fa-plus"></i>
+                            Create
+                            <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                        </button>
+                        <div id="createDropdown" class="dropdown-content" style="display:none;">
+                            <a href="#" id="createChatOption">
+                                <i class="fas fa-comments" style="margin-right: 8px;"></i>
+                                Chat
+                            </a>
+                            <a href="#" id="privateMsgOption">
+                                <i class="fas fa-lock" style="margin-right: 8px;"></i>
+                                Private Message
+                            </a>
                         </div>
                     </div>
                 </div>
                 <div class="action-buttons">
-                    <button class="secondary" onclick="window.location.href='/search.html'">Search Chats</button>
-                    <button class="secondary" onclick="window.location.href='/all-chats.html'">View All Chats</button>
+                    <button class="secondary" onclick="window.location.href='/search.html'">
+                        <i class="fas fa-search"></i>
+                        Search
+                    </button>
+                    <button class="secondary" onclick="window.location.href='/all-chats.html'">
+                        <i class="fas fa-list"></i>
+                        View All
+                    </button>
                 </div>
             </div>
+            
             <div class="recent-chats">
                 <h2>Recent Chats (Last 24 Hours)</h2>
                 <div id="chatList" class="chat-list">
@@ -226,78 +613,120 @@
                 </div>
             </div>
         </div>
-        <div id="sidebar" style="width:300px; min-width:220px; max-width:100vw; background:#f8f9fa; border-left:1px solid #dee2e6; padding:20px 10px; border-radius:8px; height:fit-content; display: flex; flex-direction: column; gap: 20px;">
+        
+        <div class="sidebar">
             <div>
-                <h3 style="margin-top:0;">My Chats</h3>
-                <div id="myChatsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+                <h3>
+                    <i class="fas fa-star" style="margin-right: 8px; color: #d69e2e;"></i>
+                    My Chats
+                </h3>
+                <div id="myChatsList" class="sidebar-list"></div>
             </div>
             <div id="privateSidebar">
-                <h3 style="margin-top:0;">Private Messages</h3>
-                <div id="privateMsgList" style="display:flex; flex-direction:column; gap:8px;"></div>
+                <h3>
+                    <i class="fas fa-lock" style="margin-right: 8px; color: #667eea;"></i>
+                    Private Messages
+                </h3>
+                <div id="privateMsgList" class="sidebar-list"></div>
             </div>
         </div>
     </div>
 
     <!-- Private Message Modal -->
-    <div id="privateMsgModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2000; justify-content:center; align-items:center;">
-        <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative;">
-            <button id="closePrivateMsgModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
-            <h2>Start Private Message</h2>
-            <div id="userListContainer" style="max-height:300px; overflow-y:auto; margin-top:1rem;"></div>
-            <button id="startGroupDMBtn" style="margin-top:1.2rem; background:#007bff; color:white; border:none; border-radius:6px; padding:10px 24px; font-size:1.1em; display:none;">Start Group DM</button>
+    <div id="privateMsgModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <button id="closePrivateMsgModal" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2>
+                <i class="fas fa-paper-plane" style="margin-right: 8px; color: #667eea;"></i>
+                Start Private Message
+            </h2>
+            <div id="userListContainer" class="user-list"></div>
+            <button id="startGroupDMBtn" class="primary" style="margin-top: 20px; display: none;">
+                <i class="fas fa-users"></i>
+                Start Group DM
+            </button>
         </div>
     </div>
 
     <!-- Account Modal -->
-    <div id="accountModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2000; justify-content:center; align-items:center;">
-      <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
-        <button id="closeAccountModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
-        <h2>Account</h2>
-        <div id="profilePicContainer" style="margin:1.5rem 0 0.5rem 0;"></div>
-        <div id="accountNameDisplay" style="font-weight:bold; font-size:1.2em; margin-bottom:1rem; text-align:center;"></div>
-        <form id="profilePicForm" enctype="multipart/form-data" style="margin-top:1rem;">
-          <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
-          <label for="profilePicInput" style="cursor:pointer; color:#007bff; text-decoration:underline;">Upload/Change Profile Picture</label>
-        </form>
-        <button id="logoutButton" style="background:#dc3545;color:white;border:none;border-radius:8px;padding:10px 20px;font-size:16px;cursor:pointer;margin-top:1rem;">Logout</button>
-      </div>
+    <div id="accountModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <button id="closeAccountModal" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2>
+                <i class="fas fa-user-circle" style="margin-right: 8px; color: #667eea;"></i>
+                Account
+            </h2>
+            <div class="profile-section">
+                <div id="profilePicContainer" class="profile-pic"></div>
+                <div id="accountNameDisplay" class="profile-name"></div>
+                <form id="profilePicForm" enctype="multipart/form-data">
+                    <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
+                    <label for="profilePicInput" style="cursor:pointer; color:#667eea; text-decoration:underline; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-camera"></i>
+                        Upload/Change Profile Picture
+                    </label>
+                </form>
+                <button id="logoutButton" class="btn-danger" style="margin-top: 24px;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Logout Warning Modal -->
-    <div id="logoutModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2100; justify-content:center; align-items:center;">
-      <div style="background:#fff; padding:2rem; border-radius:8px; min-width:400px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
-        <button id="closeLogoutModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
-        <h2 style="margin-top:0; color:#dc3545;">⚠️ Logout Warning</h2>
-        
-        <div style="width:100%; margin:1rem 0; text-align:center;">
-          <p style="margin-bottom:1rem; color:#666;">Please copy your login information before logging out. You'll need this to log back in:</p>
-          
-          <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
-            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">Display Name:</label>
-            <div id="logoutDisplayName" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
-          </div>
-          
-          <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
-            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">4-Digit Code (for display):</label>
-            <div id="logoutCode" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
-          </div>
-          
-          <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
-            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">Secret Word (for login):</label>
-            <div id="logoutSecretWord" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
-          </div>
-          
-          <p style="margin-top:1rem; color:#dc3545; font-size:14px;">
-            <strong>⚠️ Warning:</strong> If you don't save this information, you may not be able to log back in with the same account!
-          </p>
-        </div>
+    <div id="logoutModal" class="modal" style="display:none;">
+        <div class="modal-content" style="min-width: 500px;">
+            <button id="closeLogoutModal" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 style="color:#e53e3e;">
+                <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                Logout Warning
+            </h2>
+            
+            <div style="margin: 24px 0; text-align: center;">
+                <p style="margin-bottom: 16px; color: #718096;">Please copy your login information before logging out. You'll need this to log back in:</p>
+                
+                <div class="info-box">
+                    <label class="info-label">Display Name:</label>
+                    <div id="logoutDisplayName" class="info-value" onclick="copyToClipboard(this.textContent)"></div>
+                </div>
+                
+                <div class="info-box">
+                    <label class="info-label">4-Digit Code (for display):</label>
+                    <div id="logoutCode" class="info-value" onclick="copyToClipboard(this.textContent)"></div>
+                </div>
+                
+                <div class="info-box">
+                    <label class="info-label">Secret Word (for login):</label>
+                    <div id="logoutSecretWord" class="info-value" onclick="copyToClipboard(this.textContent)"></div>
+                </div>
+                
+                <p class="warning-text">
+                    <strong><i class="fas fa-exclamation-triangle"></i> Warning:</strong> If you don't save this information, you may not be able to log back in with the same account!
+                </p>
+            </div>
 
-        <div style="display:flex; gap:10px; margin-top:1rem;">
-          <button id="confirmLogout" style="background-color:#dc3545; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Logout</button>
-          <button id="backToAccount" style="background-color:#6c757d; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Back to Account</button>
-          <button id="cancelLogout" style="background-color:#6c757d; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Cancel</button>
+            <div class="button-group">
+                <button id="confirmLogout" class="btn-danger">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+                <button id="backToAccount" class="secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Account
+                </button>
+                <button id="cancelLogout" class="secondary">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+            </div>
         </div>
-      </div>
     </div>
 
     <script>
@@ -362,7 +791,7 @@
                 chatList.innerHTML = chats.map(chat => {
                     const isStarred = starredChatIds.has(chat.id);
                     const isCreator = chat.creatorId === currentUserId;
-                    const deleteButton = isCreator ? `<button class="delete-btn" onclick="deleteChat('${chat.id}', event)">×</button>` : '';
+                    const deleteButton = isCreator ? `<button class="icon-btn delete-btn" onclick="deleteChat('${chat.id}', event)"><i class="fas fa-trash"></i></button>` : '';
                     
                     return `
                     <div class="chat-card">
@@ -371,7 +800,9 @@
                             <div class="chat-time">${chat.timeAgo}</div>
                         </div>
                         <div style="display: flex; align-items: center;">
-                            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${chat.id}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
+                            <button class="icon-btn star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${chat.id}', event)">
+                                <i class="fas fa-star"></i>
+                            </button>
                             ${deleteButton}
                         </div>
                     </div>
@@ -414,7 +845,7 @@
 
                 // Remove the card from the DOM immediately for better UX
                 if (event) {
-                    const card = event.target.closest('.chat-card, .private-msg-item');
+                    const card = event.target.closest('.chat-card, .sidebar-item');
                     if (card) card.remove();
                 }
 
@@ -483,18 +914,18 @@
             if (!userId) {
                 console.log('No userId found, skipping starred chats load');
                 const myChatsList = document.getElementById('myChatsList');
-                myChatsList.innerHTML = '<div style="color:#888;">Please log in to see your starred chats.</div>';
+                myChatsList.innerHTML = '<div class="sidebar-empty">Please log in to see your starred chats.</div>';
                 return;
             }
 
             const myChatsList = document.getElementById('myChatsList');
-            myChatsList.innerHTML = '<div style="color:#888;">Loading...</div>';
+            myChatsList.innerHTML = '<div class="sidebar-empty">Loading...</div>';
 
             try {
                 const res = await fetch(`/api/user/${userId}/starred-chats`);
                 if (!res.ok) {
                     if (res.status === 404) {
-                        myChatsList.innerHTML = '<div style="color:#888;">No starred chats. Click the &#9734; on any chat to add it here.</div>';
+                        myChatsList.innerHTML = '<div class="sidebar-empty">No starred chats. Click the <i class="fas fa-star"></i> on any chat to add it here.</div>';
                         return;
                     }
                     throw new Error('Failed to fetch starred chats');
@@ -502,7 +933,7 @@
                 const chats = await res.json();
 
                 if (chats.length === 0) {
-                    myChatsList.innerHTML = '<div style="color:#888;">No starred chats. Click the &#9734; on any chat to add it here.</div>';
+                    myChatsList.innerHTML = '<div class="sidebar-empty">No starred chats. Click the <i class="fas fa-star"></i> on any chat to add it here.</div>';
                     return;
                 }
 
@@ -510,29 +941,31 @@
                     const cid = chat.id || chat._id;
                     const isStarred = starredChatIds.has(cid);
                     const isCreator = chat.creatorId === userId;
-                    const deleteButton = isCreator ? `<button class="delete-btn" onclick="deleteChat('${cid}', event)">×</button>` : '';
+                    const deleteButton = isCreator ? `<button class="icon-btn delete-btn" onclick="deleteChat('${cid}', event)"><i class="fas fa-trash"></i></button>` : '';
                     
                     return `
-                    <div class="private-msg-item" style="background:#fff; border-radius:6px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,0.03); cursor:pointer; border:1px solid #e0e0e0; display:flex; align-items:center; justify-content:space-between; gap:8px;" onclick="window.location.href='/chat.html?chatID=${cid}'">
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-weight:bold; color:#007bff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(chat.name)}</div>
-                            <div style="font-size:0.9em; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${new Date(chat.createdAt).toLocaleString()}</div>
+                    <div class="sidebar-item" onclick="window.location.href='/chat.html?chatID=${cid}'">
+                        <div class="sidebar-item-content">
+                            <div class="sidebar-item-title">${escapeHtml(chat.name)}</div>
+                            <div class="sidebar-item-subtitle">${new Date(chat.createdAt).toLocaleString()}</div>
                         </div>
                         <div style="display: flex; align-items: center;">
-                             <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
+                             <button class="icon-btn star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)">
+                                <i class="fas fa-star"></i>
+                             </button>
                              ${deleteButton}
                         </div>
                     </div>`;
                 }).join('');
 
             } catch (err) {
-                myChatsList.innerHTML = '<div style="color:red;">Failed to load starred chats.</div>';
+                myChatsList.innerHTML = '<div class="sidebar-empty" style="color: #e53e3e;">Failed to load starred chats.</div>';
                 console.error(err);
             }
         }
 
         async function showPrivateMsgModal() {
-            userListContainer.innerHTML = 'Loading...';
+            userListContainer.innerHTML = '<div class="sidebar-empty">Loading...</div>';
             privateMsgModal.style.display = 'flex';
             try {
                 const res = await fetch(`/api/users`);
@@ -541,14 +974,14 @@
                 const myUserId = localStorage.getItem('userId');
                 const filtered = users.filter(u => u.id !== myUserId);
                 if (filtered.length === 0) {
-                    userListContainer.innerHTML = '<div style="color:#888;">No other users found.</div>';
+                    userListContainer.innerHTML = '<div class="sidebar-empty">No other users found.</div>';
                     return;
                 }
                 // Fetch full user info for all users
                 const userInfos = await Promise.all(filtered.map(u => fetch(`/user/${u.id}`).then(r => r.json())));
                 // Render checkboxes for each user with fullName (display name + code)
                 userListContainer.innerHTML = userInfos.map(u =>
-                    `<label style='display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;'>
+                    `<label class="user-item">
                         <input type='checkbox' class='dm-user-checkbox' value='${u.userId || u.id}'>
                         <span>${u.fullName || (u.name + (u.code ? '#' + u.code : ''))}</span>
                     </label>`
@@ -559,7 +992,7 @@
                 function updateBtn() {
                     const checked = checkboxes.filter(cb => cb.checked);
                     startBtn.style.display = checked.length >= 1 ? 'block' : 'none';
-                    startBtn.textContent = checked.length > 1 ? 'Start Group DM' : 'Start DM';
+                    startBtn.innerHTML = checked.length > 1 ? '<i class="fas fa-users"></i> Start Group DM' : '<i class="fas fa-comment"></i> Start DM';
                 }
                 checkboxes.forEach(cb => cb.onchange = updateBtn);
                 updateBtn();
@@ -598,7 +1031,7 @@
                     }
                 };
             } catch (err) {
-                userListContainer.innerHTML = '<div style="color:red;">Failed to load users.</div>';
+                userListContainer.innerHTML = '<div class="sidebar-empty" style="color: #e53e3e;">Failed to load users.</div>';
             }
         }
 
@@ -608,24 +1041,24 @@
             if (!userId) {
                 console.log('No userId found, skipping private messages load');
                 const privateMsgList = document.getElementById('privateMsgList');
-                privateMsgList.innerHTML = '<div style="color:#888;">Please log in to see your private messages.</div>';
+                privateMsgList.innerHTML = '<div class="sidebar-empty">Please log in to see your private messages.</div>';
                 return;
             }
             
             const privateMsgList = document.getElementById('privateMsgList');
-            privateMsgList.innerHTML = '<div style="color:#888;">Loading...</div>';
+            privateMsgList.innerHTML = '<div class="sidebar-empty">Loading...</div>';
             try {
                 const res = await fetch(`/api/my-private-chats/${userId}`);
                 if (!res.ok) {
                     if (res.status === 404) {
-                        privateMsgList.innerHTML = '<div style="color:#888;">No private messages</div>';
+                        privateMsgList.innerHTML = '<div class="sidebar-empty">No private messages</div>';
                         return;
                     }
                     throw new Error('Failed to fetch private chats');
                 }
                 const chats = await res.json();
                 if (!chats.length) {
-                    privateMsgList.innerHTML = '<div style="color:#888;">No private messages</div>';
+                    privateMsgList.innerHTML = '<div class="sidebar-empty">No private messages</div>';
                     return;
                 }
                 // For each chat, get the other user's fullName or show group DM title
@@ -650,22 +1083,24 @@
                     const cid = chat.id || chat._id;
                     const isStarred = starredChatIds.has(cid);
                     const isCreator = chat.creatorId === userId;
-                    const deleteButton = isCreator ? `<button class="delete-btn" onclick="deleteChat('${cid}', event)">×</button>` : '';
+                    const deleteButton = isCreator ? `<button class="icon-btn delete-btn" onclick="deleteChat('${cid}', event)"><i class="fas fa-trash"></i></button>` : '';
                     
                     return `
-                    <div class="private-msg-item" style="background:#fff; border-radius:6px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,0.03); cursor:pointer; border:1px solid #e0e0e0; display:flex; align-items:center; justify-content:space-between; gap:8px;" onclick="window.location.href='/chat.html?chatID=${cid}'">
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-weight:bold; color:#007bff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(chat.displayTitle)}</div>
-                            <div style="font-size:0.9em; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${new Date(chat.createdAt).toLocaleString()}</div>
+                    <div class="sidebar-item" onclick="window.location.href='/chat.html?chatID=${cid}'">
+                        <div class="sidebar-item-content">
+                            <div class="sidebar-item-title">${escapeHtml(chat.displayTitle)}</div>
+                            <div class="sidebar-item-subtitle">${new Date(chat.createdAt).toLocaleString()}</div>
                         </div>
                         <div style="display: flex; align-items: center;">
-                            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
+                            <button class="icon-btn star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)">
+                                <i class="fas fa-star"></i>
+                            </button>
                             ${deleteButton}
                         </div>
                     </div>`
                 }).join('');
             } catch (err) {
-                privateMsgList.innerHTML = '<div style="color:red;">Failed to load private messages</div>';
+                privateMsgList.innerHTML = '<div class="sidebar-empty" style="color: #e53e3e;">Failed to load private messages</div>';
             }
         }
 
@@ -775,10 +1210,15 @@
 
         function renderProfilePicOrInitials(name, url) {
           profilePicContainer.innerHTML='';
-          const circle=document.createElement('div');
-          circle.style.width='96px';circle.style.height='96px';circle.style.borderRadius='50%';circle.style.border='3px solid #007bff';circle.style.backgroundSize='cover';circle.style.backgroundPosition='center';
-          if(url){circle.style.backgroundImage=`url('${url}')`;} else {circle.style.backgroundColor='#e0e7ef';circle.style.display='flex';circle.style.alignItems='center';circle.style.justifyContent='center';circle.innerHTML=`<span style="color:#007bff;font-size:2.5rem;font-weight:bold;">${getInitials(name)}</span>`;}
-          profilePicContainer.appendChild(circle);
+          if(url){
+            profilePicContainer.style.backgroundImage=`url('${url}')`;
+            profilePicContainer.style.backgroundSize='cover';
+            profilePicContainer.style.backgroundPosition='center';
+          } else {
+            profilePicContainer.style.backgroundImage='none';
+            profilePicContainer.style.backgroundColor='#e2e8f0';
+            profilePicContainer.innerHTML=`<span class="profile-initials">${getInitials(name)}</span>`;
+          }
         }
 
         accountBtn.onclick = async ()=>{
