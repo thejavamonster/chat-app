@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enkryptonite</title>
+    <title>Enkryptonite - Secure Chat</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -45,279 +45,201 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 2rem;
             min-height: 100vh;
         }
 
-        /* Main Content */
-        .main-content {
+        /* Header */
+        .header {
             background: var(--card-background);
             backdrop-filter: blur(20px);
             border-radius: var(--radius-xl);
-            padding: 2.5rem;
-            box-shadow: var(--shadow-xl);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
             border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
         }
 
-        .header {
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo-section {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 1rem;
         }
 
         .logo {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: -0.02em;
         }
 
-        .account-btn {
-            background: var(--primary-light);
-            border: 2px solid transparent;
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            width: 52px;
-            height: 52px;
+            background: var(--primary-light);
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--primary-color);
-            font-size: 1.2rem;
-        }
-
-        .account-btn:hover {
-            background: var(--primary-color);
-            color: white;
-            transform: scale(1.05);
-            box-shadow: var(--shadow-lg);
-        }
-
-        /* Actions Section */
-        .actions-section {
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .actions-row {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .chat-form {
-            flex: 1;
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .name-input {
-            flex: 1;
-            padding: 1rem 1.5rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            font-size: 1rem;
-            background: white;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .name-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .name-input::placeholder {
-            color: var(--text-secondary);
-        }
-
-        .dropdown {
-            position: relative;
-        }
-
-        .create-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 1.5rem;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
             font-weight: 600;
+            color: var(--primary-color);
+            border: 2px solid var(--border-color);
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 1rem;
             font-family: inherit;
-            box-shadow: var(--shadow-md);
-        }
-
-        .create-btn:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .create-btn:active {
-            transform: translateY(0);
-        }
-
-        .dropdown-content {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            min-width: 200px;
-            z-index: 100;
-            box-shadow: var(--shadow-xl);
-            overflow: hidden;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .dropdown-content.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .dropdown-content a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 1.5rem;
             text-decoration: none;
-            color: var(--text-primary);
-            transition: all 0.2s ease;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 500;
+            font-size: 0.9rem;
         }
 
-        .dropdown-content a:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-content a:hover {
-            background: var(--primary-light);
-            color: var(--primary-color);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .secondary-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 1.5rem;
-            background: white;
-            color: var(--text-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-family: inherit;
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
             box-shadow: var(--shadow-sm);
         }
 
-        .secondary-btn:hover {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
+        .btn-primary:hover {
+            background: var(--primary-hover);
             transform: translateY(-1px);
             box-shadow: var(--shadow-md);
         }
 
-        /* Quick Actions */
-        .quick-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-
-        .quick-action {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1rem;
+        .btn-secondary {
             background: white;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            text-decoration: none;
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
         }
 
-        .quick-action:hover {
+        .btn-secondary:hover {
             background: var(--primary-light);
             color: var(--primary-color);
             border-color: var(--primary-color);
         }
 
-        /* Recent Chats Section */
-        .recent-chats {
-            flex: 1;
+        /* Navigation */
+        .nav-section {
+            background: var(--card-background);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .nav-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .nav-card i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .nav-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .nav-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Chat Sections */
+        .chat-section {
+            background: var(--card-background);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
         }
 
         .section-title {
             font-size: 1.5rem;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .section-title i {
-            color: var(--primary-color);
         }
 
         .chat-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
         }
 
         .chat-card {
             background: white;
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
+            border-radius: var(--radius-md);
             padding: 1.5rem;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            box-shadow: var(--shadow-sm);
         }
 
         .chat-card::before {
@@ -333,8 +255,8 @@
         }
 
         .chat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
             border-color: var(--primary-color);
         }
 
@@ -342,44 +264,27 @@
             transform: scaleX(1);
         }
 
-        .chat-content {
-            flex: 1;
-            min-width: 0;
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
         }
 
         .chat-name {
             font-weight: 600;
-            font-size: 1.1rem;
             color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-time {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            font-size: 1.1rem;
         }
 
         .chat-actions {
             display: flex;
-            align-items: center;
             gap: 0.5rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
 
-        .chat-card:hover .chat-actions {
-            opacity: 1;
-        }
-
-        .action-icon {
-            width: 36px;
-            height: 36px;
+        .action-btn {
+            width: 32px;
+            height: 32px;
             border: none;
             border-radius: 50%;
             display: flex;
@@ -391,18 +296,17 @@
         }
 
         .star-btn {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning-color);
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
         }
 
         .star-btn:hover {
-            background: var(--warning-color);
-            color: white;
+            background: rgba(255, 193, 7, 0.2);
             transform: scale(1.1);
         }
 
         .star-btn.starred {
-            background: var(--warning-color);
+            background: #ffc107;
             color: white;
         }
 
@@ -412,103 +316,33 @@
         }
 
         .delete-btn:hover {
-            background: var(--danger-color);
-            color: white;
+            background: rgba(239, 68, 68, 0.2);
             transform: scale(1.1);
         }
 
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .sidebar-card {
-            background: var(--card-background);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius-xl);
-            padding: 2rem;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border-color);
-        }
-
-        .sidebar-section h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
+        .chat-info {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .sidebar-section h3 i {
-            color: var(--primary-color);
-        }
-
-        .sidebar-item {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .sidebar-item:hover {
-            background: var(--primary-light);
-            border-color: var(--primary-color);
-            transform: translateX(4px);
-        }
-
-        .sidebar-item-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .sidebar-item-title {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .sidebar-item-time {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-        }
-
-        .sidebar-item-actions {
-            display: flex;
-            gap: 0.25rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar-item:hover .sidebar-item-actions {
-            opacity: 1;
-        }
-
-        .no-items {
+        .empty-state {
             text-align: center;
+            padding: 3rem;
             color: var(--text-secondary);
-            font-style: italic;
-            padding: 2rem 1rem;
-            background: rgba(148, 163, 184, 0.05);
-            border-radius: var(--radius-md);
-            border: 1px dashed var(--border-color);
         }
 
-        /* Modals */
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Modal */
         .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -517,45 +351,28 @@
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(8px);
             z-index: 1000;
-            display: none;
             justify-content: center;
             align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .modal.show {
-            opacity: 1;
         }
 
         .modal-content {
             background: white;
             border-radius: var(--radius-xl);
-            padding: 2.5rem;
+            padding: 2rem;
             max-width: 500px;
             width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
             box-shadow: var(--shadow-xl);
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .modal.show .modal-content {
-            transform: scale(1);
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
         }
 
         .modal-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 600;
             color: var(--text-primary);
         }
@@ -566,7 +383,7 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: var(--text-secondary);
-            padding: 0.5rem;
+            padding: 0.25rem;
             border-radius: 50%;
             transition: all 0.2s ease;
             width: 40px;
@@ -581,7 +398,32 @@
             color: var(--danger-color);
         }
 
-        /* Loading States */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
         .loading {
             display: flex;
             align-items: center;
@@ -589,7 +431,7 @@
             gap: 1rem;
             color: var(--text-secondary);
             font-style: italic;
-            padding: 3rem;
+            padding: 2rem;
         }
 
         .spinner {
@@ -607,55 +449,33 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 1200px) {
-            .container {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
             }
 
-            .main-content, .sidebar-card {
-                padding: 1.5rem;
-            }
-
-            .actions-row {
+            .header-content {
                 flex-direction: column;
-                gap: 1rem;
+                text-align: center;
             }
 
-            .chat-form {
-                width: 100%;
-            }
-
-            .action-buttons {
-                width: 100%;
-                justify-content: center;
+            .nav-grid {
+                grid-template-columns: 1fr;
             }
 
             .chat-grid {
                 grid-template-columns: 1fr;
             }
 
-            .logo {
-                font-size: 2rem;
-            }
-
-            .chat-actions {
-                opacity: 1;
-            }
-
-            .sidebar-item-actions {
-                opacity: 1;
+            .section-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
             }
         }
 
         /* Animations */
-        @keyframes fadeInUp {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(20px);
@@ -666,364 +486,391 @@
             }
         }
 
-        @keyframes fadeInScale {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+        .chat-card, .nav-card {
+            animation: fadeIn 0.3s ease;
         }
 
-        .chat-card {
-            animation: fadeInUp 0.3s ease;
+        /* Tooltip */
+        .tooltip {
+            position: relative;
         }
 
-        .sidebar-item {
-            animation: fadeInUp 0.3s ease;
-        }
-
-        .main-content, .sidebar-card {
-            animation: fadeInScale 0.5s ease;
-        }
-
-        /* Status Indicators */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
             font-size: 0.8rem;
-            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
         }
 
-        .status-badge.online {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-        }
-
-        .status-badge.private {
-            background: rgba(37, 99, 235, 0.1);
-            color: var(--primary-color);
-        }
-
-        /* Utility Classes */
-        .text-center { text-align: center; }
-        .text-muted { color: var(--text-secondary); }
-        .font-weight-bold { font-weight: 600; }
-        .mb-0 { margin-bottom: 0; }
-        .mt-1 { margin-top: 0.5rem; }
-        .d-flex { display: flex; }
-        .align-items-center { align-items: center; }
-        .gap-2 { gap: 1rem; }
-
-        /* Smooth scrolling */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Focus styles */
-        *:focus-visible {
-            outline: 2px solid var(--primary-color);
-            outline-offset: 2px;
+        .tooltip:hover::after {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="main-content">
-            <div class="header">
-                <h1 class="logo">Enkryptonite</h1>
-                <button id="accountBtn" class="account-btn">
-                    <i class="fas fa-user"></i>
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">Enkryptonite</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Secure Chat Platform</div>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">?</div>
+                    <div>
+                        <div class="user-name" id="userName">Loading...</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Welcome back!</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-section">
+            <div class="nav-grid">
+                <a href="#" class="nav-card" onclick="showCreateChatModal()">
+                    <i class="fas fa-plus"></i>
+                    <h3>Create Chat</h3>
+                    <p>Start a new conversation</p>
+                </a>
+                <a href="/search.html" class="nav-card">
+                    <i class="fas fa-search"></i>
+                    <h3>Search Chats</h3>
+                    <p>Find existing conversations</p>
+                </a>
+                <a href="/all-chats.html" class="nav-card">
+                    <i class="fas fa-list"></i>
+                    <h3>All Chats</h3>
+                    <p>Browse all conversations</p>
+                </a>
+                <a href="#" class="nav-card" onclick="loadStarredChats()">
+                    <i class="fas fa-star"></i>
+                    <h3>Starred</h3>
+                    <p>Your favorite chats</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Chats -->
+        <div class="chat-section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Chats</h2>
+                <a href="/all-chats.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right"></i>
+                    View All
+                </a>
+            </div>
+            <div id="recentChats" class="chat-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading recent chats...
+                </div>
+            </div>
+        </div>
+
+        <!-- Starred Chats -->
+        <div class="chat-section" id="starredSection" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">Starred Chats</h2>
+                <button class="btn btn-secondary" onclick="hideStarredChats()">
+                    <i class="fas fa-times"></i>
+                    Hide
                 </button>
             </div>
-
-            <div class="actions-section">
-                <div class="actions-row">
-                    <div class="chat-form">
-                        <input type="text" id="chatName" class="name-input" placeholder="Enter chat name" maxlength="50">
-                        <div class="dropdown">
-                            <button class="create-btn" id="createDropdownBtn">
-                                <i class="fas fa-plus"></i>
-                                Create
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div id="createDropdown" class="dropdown-content">
-                                <a href="#" id="createChatOption">
-                                    <i class="fas fa-comments"></i>
-                                    Public Chat
-                                </a>
-                                <a href="#" id="privateMsgOption">
-                                    <i class="fas fa-lock"></i>
-                                    Private Message
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="action-buttons">
-                        <a href="/search.html" class="secondary-btn">
-                            <i class="fas fa-search"></i>
-                            Search
-                        </a>
-                        <a href="/all-chats.html" class="secondary-btn">
-                            <i class="fas fa-list"></i>
-                            All Chats
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="quick-actions">
-                    <a href="#" class="quick-action" onclick="document.getElementById('chatName').focus()">
-                        <i class="fas fa-plus-circle"></i>
-                        Quick Start
-                    </a>
-                    <a href="/search.html" class="quick-action">
-                        <i class="fas fa-compass"></i>
-                        Explore
-                    </a>
-                    <a href="#" class="quick-action" onclick="loadRecentChats()">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh
-                    </a>
-                </div>
-            </div>
-
-            <div class="recent-chats">
-                <h2 class="section-title">
-                    <i class="fas fa-clock"></i>
-                    Recent Activity
-                </h2>
-                <div id="chatList" class="chat-grid">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        Loading recent chats...
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="sidebar">
-            <div class="sidebar-card">
-                <div class="sidebar-section">
-                    <h3>
-                        <i class="fas fa-star"></i>
-                        Starred Chats
-                    </h3>
-                    <div id="myChatsList">
-                        <div class="loading">
-                            <div class="spinner"></div>
-                            Loading...
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="sidebar-card">
-                <div class="sidebar-section">
-                    <h3>
-                        <i class="fas fa-user-friends"></i>
-                        Private Messages
-                    </h3>
-                    <div id="privateMsgList">
-                        <div class="loading">
-                            <div class="spinner"></div>
-                            Loading...
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div id="starredChats" class="chat-grid"></div>
         </div>
     </div>
 
-    <!-- Private Message Modal -->
-    <div id="privateMsgModal" class="modal">
+    <!-- Create Chat Modal -->
+    <div id="createChatModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Start Private Message</h2>
-                <button id="closePrivateMsgModal" class="close-btn">&times;</button>
+                <h3 class="modal-title">Create New Chat</h3>
+                <button class="close-btn" onclick="hideCreateChatModal()">&times;</button>
             </div>
-            <div id="userListContainer" style="max-height:300px; overflow-y:auto; margin-top:1rem;"></div>
-            <button id="startGroupDMBtn" style="margin-top:1.5rem; background:var(--primary-color); color:white; border:none; border-radius:var(--radius-md); padding:1rem 2rem; font-size:1rem; font-weight:600; display:none; width:100%; cursor:pointer; transition: all 0.3s ease;">Start Group DM</button>
+            <form id="createChatForm">
+                <div class="form-group">
+                    <label class="form-label" for="chatName">Chat Name</label>
+                    <input type="text" id="chatName" class="form-input" placeholder="Enter chat name..." maxlength="50" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="hideCreateChatModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Create Chat
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Account Modal -->
-    <div id="accountModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Account Settings</h2>
-                <button id="closeAccountModal" class="close-btn">&times;</button>
-            </div>
-            <div style="text-align: center;">
-                <div id="profilePicContainer" style="margin:1.5rem 0 1rem 0;"></div>
-                <div id="accountNameDisplay" style="font-weight:600; font-size:1.3rem; margin-bottom:1.5rem; color:var(--text-primary);"></div>
-                <form id="profilePicForm" enctype="multipart/form-data" style="margin-bottom:1.5rem;">
-                    <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
-                    <label for="profilePicInput" style="cursor:pointer; color:var(--primary-color); text-decoration:underline; font-weight:500;">Upload/Change Profile Picture</label>
-                </form>
-                <button id="logoutButton" style="background:var(--danger-color);color:white;border:none;border-radius:var(--radius-md);padding:1rem 2rem;font-size:1rem;font-weight:600;cursor:pointer;transition: all 0.3s ease;">Logout</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Logout Warning Modal -->
-    <div id="logoutModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" style="color:var(--danger-color);">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Logout Warning
-                </h2>
-                <button id="closeLogoutModal" class="close-btn">&times;</button>
-            </div>
-            
-            <div style="margin:1.5rem 0; text-align:center;">
-                <p style="margin-bottom:1.5rem; color:var(--text-secondary); font-size:1.1rem;">Please copy your login information before logging out. You'll need this to log back in:</p>
-                
-                <div style="background:#f8f9fa; padding:1.5rem; border:1px solid var(--border-color); border-radius:var(--radius-md); margin:1rem 0;">
-                    <label style="display:block; margin-bottom:0.75rem; font-weight:600; color:var(--text-primary);">Display Name:</label>
-                    <div id="logoutDisplayName" style="background:white; padding:1rem; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
-                </div>
-                
-                <div style="background:#f8f9fa; padding:1.5rem; border:1px solid var(--border-color); border-radius:var(--radius-md); margin:1rem 0;">
-                    <label style="display:block; margin-bottom:0.75rem; font-weight:600; color:var(--text-primary);">4-Digit Code (for display):</label>
-                    <div id="logoutCode" style="background:white; padding:1rem; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
-                </div>
-                
-                <div style="background:#f8f9fa; padding:1.5rem; border:1px solid var(--border-color); border-radius:var(--radius-md); margin:1rem 0;">
-                    <label style="display:block; margin-bottom:0.75rem; font-weight:600; color:var(--text-primary);">Secret Word (for login):</label>
-                    <div id="logoutSecretWord" style="background:white; padding:1rem; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
-                </div>
-                
-                <p style="margin-top:1.5rem; color:var(--danger-color); font-size:14px;">
-                    <strong><i class="fas fa-exclamation-triangle"></i> Warning:</strong> If you don't save this information, you may not be able to log back in with the same account!
-                </p>
-            </div>
-
-            <div style="display:flex; gap:1rem; margin-top:2rem; justify-content:center;">
-                <button id="confirmLogout" style="background-color:var(--danger-color); color:white; padding:1rem 1.5rem; border:none; border-radius:var(--radius-sm); cursor:pointer; font-size:16px; font-weight:600;">Logout</button>
-                <button id="backToAccount" style="background-color:var(--secondary-color); color:white; padding:1rem 1.5rem; border:none; border-radius:var(--radius-sm); cursor:pointer; font-size:16px; font-weight:600;">Back to Account</button>
-                <button id="cancelLogout" style="background-color:var(--secondary-color); color:white; padding:1rem 1.5rem; border:none; border-radius:var(--radius-sm); cursor:pointer; font-size:16px; font-weight:600;">Cancel</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Scripts -->
+    <script src="/js/utils.js"></script>
     <script>
-        // Enhanced dropdown functionality
-        const createDropdownBtn = document.getElementById('createDropdownBtn');
-        const createDropdown = document.getElementById('createDropdown');
+        // Global variables
+        let currentUser = null;
 
-        createDropdownBtn.onclick = (e) => {
-            e.stopPropagation();
-            createDropdown.classList.toggle('show');
-        };
-
-        document.body.onclick = () => {
-            createDropdown.classList.remove('show');
-        };
-
-        // Enhanced modal functionality
-        function showModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('show'), 10);
-        }
-
-        function hideModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('show');
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-
-        // Function to create a new chat
-        async function createChat() {
-            const chatNameInput = document.getElementById('chatName');
-            const chatName = chatNameInput.value.trim();
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if user is logged in
+            const userId = localStorage.getItem('userId');
+            const userName = localStorage.getItem('userName');
             
-            if (!chatName) {
-                alert('Please enter a chat name');
+            if (!userId || !userName) {
+                window.location.href = '/welcome.html';
+                return;
+            }
+
+            currentUser = { id: userId, name: userName };
+            
+            // Update UI with user info
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+
+            // Load starred chat IDs first, then load recent chats
+            await fetchStarredChatIds();
+            await loadRecentChats();
+        });
+
+        // Load recent chats
+        async function loadRecentChats() {
+            const container = document.getElementById('recentChats');
+            
+            try {
+                const response = await fetch('/api/recent-chats?limit=6');
+                if (!response.ok) throw new Error('Failed to load chats');
+                
+                const chats = await response.json();
+                
+                if (chats.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-comments"></i>
+                            <h3>No chats yet</h3>
+                            <p>Create your first chat to get started!</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = chats.map(chat => createChatCard(chat)).join('');
+                }
+            } catch (error) {
+                console.error('Error loading recent chats:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Failed to load chats</h3>
+                        <p>Please try refreshing the page</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load starred chats
+        async function loadStarredChats() {
+            const section = document.getElementById('starredSection');
+            const container = document.getElementById('starredChats');
+            
+            section.style.display = 'block';
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading starred chats...</div>';
+
+            try {
+                const userId = localStorage.getItem('userId');
+                const response = await fetch(`/api/user/${userId}/starred-chats`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-star"></i>
+                                <h3>No starred chats</h3>
+                                <p>Star your favorite chats to see them here</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    throw new Error('Failed to load starred chats');
+                }
+                
+                const chats = await response.json();
+                
+                if (chats.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-star"></i>
+                            <h3>No starred chats</h3>
+                            <p>Star your favorite chats to see them here</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = chats.map(chat => createChatCard(chat)).join('');
+                }
+            } catch (error) {
+                console.error('Error loading starred chats:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Failed to load starred chats</h3>
+                        <p>Please try again</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Hide starred chats section
+        function hideStarredChats() {
+            document.getElementById('starredSection').style.display = 'none';
+        }
+
+        // Create chat card HTML
+        function createChatCard(chat) {
+            const isStarred = starredChatIds.has(chat.id);
+            return `
+                <div class="chat-card" onclick="window.location.href='/chat.html?chatID=${chat.id}'">
+                    <div class="chat-header">
+                        <div class="chat-name">${escapeHtml(chat.name)}</div>
+                        <div class="chat-actions">
+                            <button class="action-btn star-btn ${isStarred ? 'starred' : ''} tooltip" 
+                                    data-tooltip="${isStarred ? 'Unstar' : 'Star'} Chat"
+                                    onclick="toggleStar('${chat.id}', event)">
+                                <i class="fas fa-star"></i>
+                            </button>
+                            <button class="action-btn delete-btn tooltip" 
+                                    data-tooltip="Delete Chat"
+                                    onclick="deleteChat('${chat.id}', event)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chat-info">
+                        <i class="fas fa-calendar-alt"></i>
+                        Created: ${new Date(chat.createdAt).toLocaleString()}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show create chat modal
+        function showCreateChatModal() {
+            document.getElementById('createChatModal').style.display = 'flex';
+            document.getElementById('chatName').focus();
+        }
+
+        // Hide create chat modal
+        function hideCreateChatModal() {
+            document.getElementById('createChatModal').style.display = 'none';
+            document.getElementById('createChatForm').reset();
+        }
+
+        // Handle create chat form submission
+        document.getElementById('createChatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const chatName = document.getElementById('chatName').value.trim();
+            if (!chatName) return;
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="spinner" style="width: 16px; height: 16px;"></div> Creating...';
+
+            try {
+                const response = await fetch('/create-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: chatName })
+                });
+
+                if (!response.ok) throw new Error('Failed to create chat');
+
+                const chat = await response.json();
+                hideCreateChatModal();
+                
+                // Redirect to the new chat
+                window.location.href = `/chat.html?chatID=${chat.id}`;
+            } catch (error) {
+                console.error('Error creating chat:', error);
+                alert('Failed to create chat. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+
+        // Delete chat function
+        async function deleteChat(chatId, event) {
+            event.stopPropagation();
+            
+            if (!confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
                 return;
             }
 
             try {
-                const userId = localStorage.getItem('userId');
-                const response = await fetch('/create-chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        name: chatName,
-                        creatorId: userId
-                    })
+                const response = await fetch(`/api/chats/${chatId}`, {
+                    method: 'DELETE'
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to create chat');
-                }
+                if (!response.ok) throw new Error('Failed to delete chat');
 
-                const chat = await response.json();
-                chatNameInput.value = '';
-                
-                loadRecentChats();
-                window.location.href = `/chat.html?chatID=${chat.id}`;
+                // Remove the chat card with animation
+                const chatCard = event.target.closest('.chat-card');
+                if (chatCard) {
+                    chatCard.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        chatCard.remove();
+                        // Reload chats if no cards left
+                        const container = chatCard.closest('.chat-grid');
+                        if (container && container.children.length === 0) {
+                            if (container.id === 'recentChats') {
+                                loadRecentChats();
+                            } else if (container.id === 'starredChats') {
+                                loadStarredChats();
+                            }
+                        }
+                    }, 300);
+                }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to create chat');
+                console.error('Error deleting chat:', error);
+                alert('Failed to delete chat. Please try again.');
             }
         }
 
-        // Function to load recent chats
-        async function loadRecentChats() {
-            try {
-                const response = await fetch('/api/recent-chats');
-                if (!response.ok) {
-                    throw new Error('Failed to load recent chats');
-                }
-
-                const chats = await response.json();
-                const chatList = document.getElementById('chatList');
-                const currentUserId = localStorage.getItem('userId');
-                
-                if (chats.length === 0) {
-                    chatList.innerHTML = '<div class="no-items"><i class="fas fa-comments" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i><br>No recent chats in the last 24 hours<br><small>Create your first chat to get started!</small></div>';
-                    return;
-                }
-
-                chatList.innerHTML = chats.map(chat => {
-                    const isStarred = starredChatIds.has(chat.id);
-                    const isCreator = chat.creatorId === currentUserId;
-                    const deleteButton = isCreator ? `<button class="action-icon delete-btn" onclick="deleteChat('${chat.id}', event)" title="Delete Chat"><i class="fas fa-trash"></i></button>` : '';
-                    
-                    return `
-                    <div class="chat-card">
-                        <div class="chat-content" onclick="window.location.href='/chat.html?chatID=${chat.id}'">
-                            <div class="chat-name">${escapeHtml(chat.name)}</div>
-                            <div class="chat-time">
-                                <i class="fas fa-clock"></i>
-                                ${chat.timeAgo}
-                            </div>
-                        </div>
-                        <div class="chat-actions">
-                            <button class="action-icon star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${chat.id}', event)" title="${isStarred ? 'Unstar' : 'Star'} Chat">
-                                <i class="fas fa-star"></i>
-                            </button>
-                            ${deleteButton}
-                        </div>
-                    </div>
-                `}).join('');
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('chatList').innerHTML = 
-                    '<div class="no-items" style="color: var(--danger-color);"><i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i><br>Failed to load recent chats</div>';
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('profilePic');
+                localStorage.removeItem('keepSignedIn');
+                window.location.href = '/welcome.html';
             }
         }
 
-        // Helper function to escape HTML
+        // Refresh chat lists function (called by utils.js)
+        function refreshChatLists() {
+            loadRecentChats();
+            const starredSection = document.getElementById('starredSection');
+            if (starredSection.style.display !== 'none') {
+                loadStarredChats();
+            }
+        }
+
+        // Utility function to escape HTML
         function escapeHtml(unsafe) {
             return unsafe
                 .replace(/&/g, "&")
@@ -1033,460 +880,19 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // Function to delete a chat
-        async function deleteChat(chatId, event) {
-            event.stopPropagation();
-            
-            if (!confirm('Are you sure you want to delete this chat?')) {
-                return;
+        // Close modal when clicking outside
+        document.getElementById('createChatModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                hideCreateChatModal();
             }
+        });
 
-            try {
-                const userId = localStorage.getItem('userId');
-                const response = await fetch(`/api/chats/${chatId}?userId=${userId}`, {
-                    method: 'DELETE'
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to delete chat');
-                }
-
-                if (event) {
-                    const card = event.target.closest('.chat-card, .sidebar-item');
-                    if (card) {
-                        card.style.animation = 'fadeOut 0.3s ease';
-                        setTimeout(() => card.remove(), 300);
-                    }
-                }
-
-                loadRecentChats();
-                loadPrivateMessages && loadPrivateMessages();
-            } catch (error) {
-                console.error('Error:', error);
-                alert(error.message || 'Failed to delete chat');
-            }
-        }
-
-        // Load recent chats when the page loads
-        loadRecentChats();
-
-        // Refresh recent chats every minute
-        setInterval(loadRecentChats, 60000);
-
-        // Handle enter key in the input field
-        document.getElementById('chatName').addEventListener('keypress', function(e) {
+        // Handle Enter key in chat name input
+        document.getElementById('chatName').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                createChat();
+                document.getElementById('createChatForm').dispatchEvent(new Event('submit'));
             }
         });
-
-        // Dropdown logic
-        const createChatOption = document.getElementById('createChatOption');
-        const privateMsgOption = document.getElementById('privateMsgOption');
-        const privateMsgModal = document.getElementById('privateMsgModal');
-        const closePrivateMsgModal = document.getElementById('closePrivateMsgModal');
-        const userListContainer = document.getElementById('userListContainer');
-
-        let userId = localStorage.getItem('userId');
-        let userName = localStorage.getItem('userName');
-
-        createChatOption.onclick = (e) => {
-            e.preventDefault();
-            createDropdown.classList.remove('show');
-            createChat();
-        };
-        privateMsgOption.onclick = async (e) => {
-            e.preventDefault();
-            createDropdown.classList.remove('show');
-            await showPrivateMsgModal();
-        };
-
-        closePrivateMsgModal.onclick = () => {
-            hideModal('privateMsgModal');
-        };
-        privateMsgModal.onclick = (e) => {
-            if (e.target === privateMsgModal) hideModal('privateMsgModal');
-        };
-
-        async function loadMyStarredChats() {
-            const userId = localStorage.getItem('userId');
-            if (!userId) {
-                const myChatsList = document.getElementById('myChatsList');
-                myChatsList.innerHTML = '<div class="no-items">Please log in to see your starred chats.</div>';
-                return;
-            }
-
-            const myChatsList = document.getElementById('myChatsList');
-            myChatsList.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
-
-            try {
-                const res = await fetch(`/api/user/${userId}/starred-chats`);
-                if (!res.ok) {
-                    if (res.status === 404) {
-                        myChatsList.innerHTML = '<div class="no-items"><i class="fas fa-star" style="font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>No starred chats<br><small>Click the ⭐ on any chat to add it here</small></div>';
-                        return;
-                    }
-                    throw new Error('Failed to fetch starred chats');
-                }
-                const chats = await res.json();
-
-                if (chats.length === 0) {
-                    myChatsList.innerHTML = '<div class="no-items"><i class="fas fa-star" style="font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>No starred chats<br><small>Click the ⭐ on any chat to add it here</small></div>';
-                    return;
-                }
-
-                myChatsList.innerHTML = chats.map(chat => {
-                    const cid = chat.id || chat._id;
-                    const isStarred = starredChatIds.has(cid);
-                    const isCreator = chat.creatorId === userId;
-                    const deleteButton = isCreator ? `<button class="action-icon delete-btn" onclick="deleteChat('${cid}', event)" title="Delete Chat"><i class="fas fa-trash"></i></button>` : '';
-                    
-                    return `
-                    <div class="sidebar-item" onclick="window.location.href='/chat.html?chatID=${cid}'">
-                        <div class="sidebar-item-content">
-                            <div class="sidebar-item-title">${escapeHtml(chat.name)}</div>
-                            <div class="sidebar-item-time">${new Date(chat.createdAt).toLocaleString()}</div>
-                        </div>
-                        <div class="sidebar-item-actions">
-                             <button class="action-icon star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)" title="${isStarred ? 'Unstar' : 'Star'} Chat"><i class="fas fa-star"></i></button>
-                             ${deleteButton}
-                        </div>
-                    </div>`;
-                }).join('');
-
-            } catch (err) {
-                myChatsList.innerHTML = '<div class="no-items" style="color:var(--danger-color);">Failed to load starred chats.</div>';
-                console.error(err);
-            }
-        }
-
-        async function showPrivateMsgModal() {
-            userListContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
-            showModal('privateMsgModal');
-            try {
-                const res = await fetch(`/api/users`);
-                const users = await res.json();
-                const myUserId = localStorage.getItem('userId');
-                const filtered = users.filter(u => u.id !== myUserId);
-                if (filtered.length === 0) {
-                    userListContainer.innerHTML = '<div class="no-items">No other users found.</div>';
-                    return;
-                }
-                const userInfos = await Promise.all(filtered.map(u => fetch(`/user/${u.id}`).then(r => r.json())));
-                userListContainer.innerHTML = userInfos.map(u =>
-                    `<label style='display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;padding:12px;border-radius:var(--radius-sm);transition:all 0.2s ease;border: 1px solid var(--border-color);' onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='white'">
-                        <input type='checkbox' class='dm-user-checkbox' value='${u.userId || u.id}' style="transform:scale(1.2); accent-color: var(--primary-color);">
-                        <span style="font-weight:500;">${u.fullName || (u.name + (u.code ? '#' + u.code : ''))}</span>
-                    </label>`
-                ).join('');
-                const checkboxes = Array.from(document.querySelectorAll('.dm-user-checkbox'));
-                const startBtn = document.getElementById('startGroupDMBtn');
-                function updateBtn() {
-                    const checked = checkboxes.filter(cb => cb.checked);
-                    startBtn.style.display = checked.length >= 1 ? 'block' : 'none';
-                    startBtn.textContent = checked.length > 1 ? 'Start Group DM' : 'Start DM';
-                }
-                checkboxes.forEach(cb => cb.onchange = updateBtn);
-                updateBtn();
-                startBtn.onclick = async () => {
-                    const selectedIds = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
-                    if (selectedIds.length === 0) return;
-                    const allMembers = [myUserId, ...selectedIds];
-                    const resp = await fetch(`/api/private-chat?members=${allMembers.join(',')}`);
-                    const data = await resp.json();
-                    let chatId = data.chatId;
-                    if (!chatId) {
-                        const chatName = selectedIds.length > 1
-                            ? `Group DM: ${allMembers.length} members`
-                            : `Private: ${userInfos.find(u => u.userId === selectedIds[0] || u.id === selectedIds[0]).fullName}`;
-                        const createRes = await fetch('/create-chat', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                name: chatName,
-                                isPrivate: true,
-                                members: allMembers,
-                                creatorId: myUserId
-                            })
-                        });
-                        if (createRes.ok) {
-                            const chat = await createRes.json();
-                            chatId = chat.id;
-                        }
-                    }
-                    if (chatId) {
-                        window.location.href = `/chat.html?chatID=${chatId}`;
-                    }
-                };
-            } catch (err) {
-                userListContainer.innerHTML = '<div class="no-items" style="color:var(--danger-color);">Failed to load users.</div>';
-            }
-        }
-
-        async function loadPrivateMessages() {
-            const userId = localStorage.getItem('userId');
-            if (!userId) {
-                const privateMsgList = document.getElementById('privateMsgList');
-                privateMsgList.innerHTML = '<div class="no-items">Please log in to see your private messages.</div>';
-                return;
-            }
-            
-            const privateMsgList = document.getElementById('privateMsgList');
-            privateMsgList.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
-            try {
-                const res = await fetch(`/api/my-private-chats/${userId}`);
-                if (!res.ok) {
-                    if (res.status === 404) {
-                        privateMsgList.innerHTML = '<div class="no-items"><i class="fas fa-user-friends" style="font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>No private messages<br><small>Start a private conversation</small></div>';
-                        return;
-                    }
-                    throw new Error('Failed to fetch private chats');
-                }
-                const chats = await res.json();
-                if (!chats.length) {
-                    privateMsgList.innerHTML = '<div class="no-items"><i class="fas fa-user-friends" style="font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>No private messages<br><small>Start a private conversation</small></div>';
-                    return;
-                }
-                const chatTitles = await Promise.all(chats.map(async chat => {
-                    const members = chat.members || [];
-                    if (members.length > 2) {
-                        return { ...chat, displayTitle: `Group DM: ${members.length} people` };
-                    } else {
-                        const otherUserId = members.find(uid => uid !== userId);
-                        if (otherUserId) {
-                            const userRes = await fetch(`/user/${otherUserId}`);
-                            if (userRes.ok) {
-                                const userData = await userRes.json();
-                                return { ...chat, displayTitle: userData.fullName || userData.name };
-                            }
-                        }
-                        return { ...chat, displayTitle: chat.name };
-                    }
-                }));
-                privateMsgList.innerHTML = chatTitles.map(chat => {
-                    const cid = chat.id || chat._id;
-                    const isStarred = starredChatIds.has(cid);
-                    const isCreator = chat.creatorId === userId;
-                    const deleteButton = isCreator ? `<button class="action-icon delete-btn" onclick="deleteChat('${cid}', event)" title="Delete Chat"><i class="fas fa-trash"></i></button>` : '';
-                    
-                    return `
-                    <div class="sidebar-item" onclick="window.location.href='/chat.html?chatID=${cid}'">
-                        <div class="sidebar-item-content">
-                            <div class="sidebar-item-title">${escapeHtml(chat.displayTitle)}</div>
-                            <div class="sidebar-item-time">${new Date(chat.createdAt).toLocaleString()}</div>
-                        </div>
-                        <div class="sidebar-item-actions">
-                            <button class="action-icon star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)" title="${isStarred ? 'Unstar' : 'Star'} Chat"><i class="fas fa-star"></i></button>
-                            ${deleteButton}
-                        </div>
-                    </div>`
-                }).join('');
-            } catch (err) {
-                privateMsgList.innerHTML = '<div class="no-items" style="color:var(--danger-color);">Failed to load private messages</div>';
-            }
-        }
-
-        loadPrivateMessages();
-        setInterval(loadPrivateMessages, 60000);
-
-        function handleAction(params) {
-            const action = params.get('action');
-            if (action === 'start_dm' && params.has('withUserId') && params.has('withUserName')) {
-                const myUserId = localStorage.getItem('userId');
-                const myUserName = localStorage.getItem('userName');
-                if (!myUserId || !myUserName) {
-                    window.location.href = '/welcome';
-                    return;
-                }
-                findOrCreatePrivateChat(params.get('withUserId'), params.get('withUserName'))
-                    .then(chatId => {
-                        if (chatId) {
-                            window.location.href = `/chat.html?chatID=${chatId}`;
-                        }
-                    })
-                    .catch(err => {
-                        alert('Could not start private message.');
-                        console.error(err);
-                    })
-                    .finally(() => {
-                        const newUrl = window.location.pathname;
-                        window.history.replaceState({}, '', newUrl);
-                    });
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            const userId = localStorage.getItem('userId');
-            const userName = localStorage.getItem('userName');
-
-            if (!userId || !userName) {
-                window.location.href = '/welcome';
-                return;
-            }
-
-            try {
-                const userResponse = await fetch(`/user/${userId}`);
-                if (userResponse.ok) {
-                    await fetchStarredChatIds();
-                    refreshChatLists();
-                } else {
-                    console.log('User not found on server, clearing localStorage');
-                    localStorage.removeItem('userId');
-                    localStorage.removeItem('userName');
-                    window.location.href = '/welcome';
-                    return;
-                }
-            } catch (error) {
-                console.error('Error verifying user:', error);
-                window.location.href = '/welcome';
-                return;
-            }
-
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('action')) {
-                handleAction(params);
-            }
-
-            initializeLogoutFunctionality();
-        });
-
-        function refreshChatLists() {
-            loadMyStarredChats();
-            loadRecentChats();
-            loadPrivateMessages();
-        }
-
-        window.refreshChatLists = function() {
-            loadMyStarredChats();
-            loadRecentChats();
-            loadPrivateMessages();
-        };
-
-        const accountBtn = document.getElementById('accountBtn');
-        const accountModal = document.getElementById('accountModal');
-        const closeAccountModal = document.getElementById('closeAccountModal');
-        const profilePicInput = document.getElementById('profilePicInput');
-        const profilePicContainer = document.getElementById('profilePicContainer');
-        const accountNameDisplay = document.getElementById('accountNameDisplay');
-
-        function getInitials(name) {
-          if (!name) return '';
-          const parts = name.trim().split(' ');
-          if (parts.length === 1) return parts[0][0].toUpperCase();
-          return (parts[0][0] + parts[1][0]).toUpperCase();
-        }
-
-        function renderProfilePicOrInitials(name, url) {
-          profilePicContainer.innerHTML='';
-          const circle=document.createElement('div');
-          circle.style.width='96px';circle.style.height='96px';circle.style.borderRadius='50%';circle.style.border='3px solid var(--primary-color)';circle.style.backgroundSize='cover';circle.style.backgroundPosition='center';
-          if(url){circle.style.backgroundImage=`url('${url}')`;} else {circle.style.backgroundColor='var(--primary-light)';circle.style.display='flex';circle.style.alignItems='center';circle.style.justifyContent='center';circle.innerHTML=`<span style="color:var(--primary-color);font-size:2.5rem;font-weight:bold;">${getInitials(name)}</span>`;}
-          profilePicContainer.appendChild(circle);
-        }
-
-        accountBtn.onclick = async ()=>{
-          const userId=localStorage.getItem('userId');
-          if(!userId){window.location.href='/welcome';return;}
-          try{
-            const res=await fetch(`/user/${userId}`);
-            if(res.ok){const data=await res.json();
-              accountNameDisplay.textContent=data.fullName||data.name;
-              renderProfilePicOrInitials(data.name,data.profilePic);
-            }
-          }catch{}
-          showModal('accountModal');
-        };
-        closeAccountModal.onclick=()=>hideModal('accountModal');
-        accountModal.onclick=e=>{if(e.target===accountModal)hideModal('accountModal');};
-
-        profilePicInput.onchange=async function(){
-          const file=this.files[0];if(!file)return;
-          const formData=new FormData();formData.append('profilePic',file);
-          const userId=localStorage.getItem('userId');
-          try{
-            const res=await fetch(`/upload-profile-pic/${userId}`,{method:'POST',body:formData});
-            if(res.ok){setTimeout(async()=>{
-              const uRes=await fetch(`/user/${userId}`);if(uRes.ok){const uData=await uRes.json();renderProfilePicOrInitials(uData.name,uData.profilePic+'?t='+Date.now());}
-            },1500);}
-          }catch(err){alert('Upload failed');}
-        };
-
-        function initializeLogoutFunctionality() {
-            const logoutButton = document.getElementById('logoutButton');
-            const logoutModal = document.getElementById('logoutModal');
-            const closeLogoutModal = document.getElementById('closeLogoutModal');
-            const confirmLogout = document.getElementById('confirmLogout');
-            const cancelLogout = document.getElementById('cancelLogout');
-            const backToAccount = document.getElementById('backToAccount');
-            const logoutDisplayName = document.getElementById('logoutDisplayName');
-            const logoutCode = document.getElementById('logoutCode');
-            const logoutSecretWord = document.getElementById('logoutSecretWord');
-
-            function copyToClipboard(text) {
-              navigator.clipboard.writeText(text).then(() => {
-                const originalText = event.target.textContent;
-                event.target.textContent = 'Copied!';
-                event.target.style.background = '#d4edda';
-                event.target.style.color = '#155724';
-                setTimeout(() => {
-                  event.target.textContent = originalText;
-                  event.target.style.background = 'white';
-                  event.target.style.color = 'black';
-                }, 1000);
-              }).catch(err => {
-                console.error('Failed to copy text: ', err);
-                alert('Failed to copy to clipboard. Please copy manually.');
-              });
-            }
-
-            logoutButton.onclick = async () => {
-              try {
-                hideModal('accountModal');
-                
-                const userId = localStorage.getItem('userId');
-                const response = await fetch(`/user/${userId}`);
-                if (response.ok) {
-                  const userData = await response.json();
-                  logoutDisplayName.textContent = userData.displayName || userData.name;
-                  logoutCode.textContent = userData.code || 'N/A';
-                  logoutSecretWord.textContent = userData.secretWord || 'N/A';
-                  showModal('logoutModal');
-                } else {
-                  console.error('Failed to fetch user data for logout');
-                  alert('Failed to get user information. Please try again.');
-                }
-              } catch (error) {
-                console.error('Error fetching user data for logout:', error);
-                alert('Failed to get user information. Please try again.');
-              }
-            };
-
-            closeLogoutModal.onclick = () => {
-              hideModal('logoutModal');
-            };
-
-            cancelLogout.onclick = () => {
-              hideModal('logoutModal');
-            };
-
-            backToAccount.onclick = () => {
-              hideModal('logoutModal');
-              showModal('accountModal');
-            };
-
-            logoutModal.onclick = (e) => {
-              if (e.target === logoutModal) {
-                hideModal('logoutModal');
-              }
-            };
-
-            confirmLogout.onclick = () => {
-              localStorage.removeItem('userId');
-              localStorage.removeItem('userName');
-              window.location.href = '/welcome.html';
-            };
-        }
 
         // Add fadeOut animation
         const style = document.createElement('style');
@@ -1498,6 +904,5 @@
         `;
         document.head.appendChild(style);
     </script>
-    <script src="/js/utils.js"></script>
 </body>
 </html>
