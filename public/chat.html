@@ -958,22 +958,26 @@
                 minute: '2-digit' 
             });
 
+            // Escape the message content for safe HTML insertion
+            const escapedMessage = escapeHtml(message.message);
+            const escapedUserName = escapeHtml(message.userName);
+
             messageDiv.innerHTML = `
                 <div class="message-header">
-                    <span class="message-sender">${escapeHtml(message.userName)}</span>
+                    <span class="message-sender">${escapedUserName}</span>
                     <span class="message-time">${timeString}</span>
                 </div>
                 <div class="message-bubble ${message.edited ? 'edit-mode' : ''}">
-                    ${escapeHtml(message.message)}
+                    ${escapedMessage}
                     ${message.edited ? '<div class="edit-indicator">edited</div>' : ''}
                 </div>
                 <div class="message-actions">
                     ${isOwn ? `
-                        <button class="message-action-btn edit" onclick="editMessage('${message.id}', '${escapeHtml(message.message).replace(/'/g, "\\'")}')">
+                        <button class="message-action-btn edit" onclick="editMessage('${message.id}', \`${escapedMessage}\`)">
                             <i class="fas fa-edit"></i>
                         </button>
                     ` : ''}
-                    <button class="message-action-btn copy" onclick="copyMessage('${escapeHtml(message.message).replace(/'/g, "\\'")}')">
+                    <button class="message-action-btn copy" onclick="copyMessage(\`${escapedMessage}\`)">
                         <i class="fas fa-copy"></i>
                     </button>
                     ${isOwn ? `
@@ -1231,11 +1235,12 @@
 
         function escapeHtml(unsafe) {
             return unsafe
-                .replace(/&/g, "&")
-                .replace(/</g, "<")
-                .replace(/>/g, ">")
-                .replace(/"/g, """)
-                .replace(/'/g, "&#039;");
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;")
+                .replace(/`/g, "&#96;");
         }
 
         // Close modals when clicking outside
