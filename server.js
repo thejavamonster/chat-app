@@ -549,8 +549,17 @@ app.post('/register-user', async (req, res) => {
 
     const newUserId = userId || uuidv4()
     
-    // Generate a random 4-digit code
+    // Generate a random 4-digit code for display purposes (like Discord)
     const randomCode = Math.floor(1000 + Math.random() * 9000).toString()
+    
+    // Generate a random secret word (adjective + noun) for authentication
+    const adjectives = ['mysterious', 'enchanted', 'whispering', 'golden', 'silver', 'crystal', 'shadow', 'bright', 'gentle', 'brave', 'clever', 'swift', 'noble', 'wise', 'bold', 'calm', 'deep', 'fair', 'free', 'kind', 'proud', 'pure', 'quiet', 'rare', 'rich', 'smooth', 'soft', 'strong', 'sweet', 'warm', 'wild', 'young', 'ancient', 'cosmic', 'eternal', 'hidden', 'magical', 'sacred', 'secret', 'timeless', 'wondrous']
+    const nouns = ['mountain', 'ocean', 'forest', 'river', 'star', 'moon', 'sun', 'cloud', 'wind', 'fire', 'earth', 'water', 'light', 'shadow', 'dream', 'hope', 'love', 'peace', 'joy', 'wisdom', 'courage', 'strength', 'beauty', 'grace', 'honor', 'truth', 'freedom', 'harmony', 'serenity', 'tranquility', 'adventure', 'journey', 'quest', 'destiny', 'legacy', 'heritage', 'tradition', 'culture', 'spirit', 'soul', 'heart', 'mind', 'vision', 'inspiration', 'creativity', 'imagination', 'wonder', 'magic', 'mystery', 'enchantment', 'blessing', 'gift']
+    
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)]
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)]
+    const secretWord = `${randomAdjective} ${randomNoun}`
+    
     const fullDisplayName = `${displayName}#${randomCode}`
     
     try {
@@ -559,9 +568,10 @@ app.post('/register-user', async (req, res) => {
             name: displayName, // Store just the display name for messages
             fullName: fullDisplayName, // Store full name with code for profiles
             displayName: displayName, // Store original name without code
-            code: randomCode, // Store the code separately
+            code: randomCode, // Store the 4-digit code for display purposes
             createdAt: Date.now(),
-            starredChats: []
+            starredChats: [],
+            secretWord: secretWord
         }
         
         if (profilePic) {
@@ -596,6 +606,7 @@ app.get('/user/:userId', async (req, res) => {
             fullName: user.fullName || user.name, // Full name with code for profiles
             displayName: user.displayName || user.name,
             code: user.code || null,
+            secretWord: user.secretWord || null,
             profilePic: user.profilePic || null,
             formatting: user.formatting || null
         })
@@ -1265,10 +1276,12 @@ app.post('/upload-profile-pic/:userId', uploadProfilePic.single('profilePic'), a
 app.get('/api/find-user', async (req, res) => {
     const { displayName, code } = req.query;
     if (!displayName || !code) {
-        return res.status(400).json({ error: 'displayName and code are required' });
+        return res.status(400).json({ error: 'displayName and secret word are required' });
     }
     try {
-        const user = await db.collection('users').findOne({ displayName: displayName, code: code });
+        // Find user by secret word
+        const user = await db.collection('users').findOne({ displayName: displayName, secretWord: code });
+        
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
