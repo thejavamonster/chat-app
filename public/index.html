@@ -197,7 +197,12 @@
 <body>
     <div class="container" style="display: flex; gap: 32px;">
         <div style="flex: 1;">
-            <h1>Enkryptonite</h1>
+            <h1 style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Enkryptonite</span>
+                <button id="accountBtn" style="background:none; border:none; cursor:pointer; padding:4px 8px;">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+                </button>
+            </h1>
             <div class="actions-row">
                 <div class="chat-form" style="display: flex; gap: 8px; align-items: center;">
                     <input type="text" id="chatName" placeholder="Enter chat name">
@@ -239,7 +244,55 @@
             <button id="closePrivateMsgModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
             <h2>Start Private Message</h2>
             <div id="userListContainer" style="max-height:300px; overflow-y:auto; margin-top:1rem;"></div>
+            <button id="startGroupDMBtn" style="margin-top:1.2rem; background:#007bff; color:white; border:none; border-radius:6px; padding:10px 24px; font-size:1.1em; display:none;">Start Group DM</button>
         </div>
+    </div>
+
+    <!-- Account Modal -->
+    <div id="accountModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2000; justify-content:center; align-items:center;">
+      <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
+        <button id="closeAccountModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
+        <h2>Account</h2>
+        <div id="profilePicContainer" style="margin:1.5rem 0 0.5rem 0;"></div>
+        <div id="accountNameDisplay" style="font-weight:bold; font-size:1.2em; margin-bottom:1rem; text-align:center;"></div>
+        <form id="profilePicForm" enctype="multipart/form-data" style="margin-top:1rem;">
+          <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
+          <label for="profilePicInput" style="cursor:pointer; color:#007bff; text-decoration:underline;">Upload/Change Profile Picture</label>
+        </form>
+        <button id="logoutButton" style="background:#dc3545;color:white;border:none;border-radius:8px;padding:10px 20px;font-size:16px;cursor:pointer;margin-top:1rem;">Logout</button>
+      </div>
+    </div>
+
+    <!-- Logout Warning Modal -->
+    <div id="logoutModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2100; justify-content:center; align-items:center;">
+      <div style="background:#fff; padding:2rem; border-radius:8px; min-width:400px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
+        <button id="closeLogoutModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
+        <h2 style="margin-top:0; color:#dc3545;">⚠️ Logout Warning</h2>
+        
+        <div style="width:100%; margin:1rem 0; text-align:center;">
+          <p style="margin-bottom:1rem; color:#666;">Please copy your login information before logging out. You'll need this to log back in:</p>
+          
+          <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
+            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">Display Name:</label>
+            <div id="logoutDisplayName" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
+          </div>
+          
+          <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
+            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">4-Digit Code:</label>
+            <div id="logoutCode" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
+          </div>
+          
+          <p style="margin-top:1rem; color:#dc3545; font-size:14px;">
+            <strong>⚠️ Warning:</strong> If you don't save this information, you may not be able to log back in with the same account!
+          </p>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:1rem;">
+          <button id="confirmLogout" style="background-color:#dc3545; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Logout</button>
+          <button id="backToAccount" style="background-color:#6c757d; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Back to Account</button>
+          <button id="cancelLogout" style="background-color:#6c757d; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -254,12 +307,16 @@
             }
 
             try {
+                const userId = localStorage.getItem('userId');
                 const response = await fetch('/create-chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ name: chatName })
+                    body: JSON.stringify({ 
+                        name: chatName,
+                        creatorId: userId // Include the creator's ID
+                    })
                 });
 
                 if (!response.ok) {
@@ -290,6 +347,7 @@
 
                 const chats = await response.json();
                 const chatList = document.getElementById('chatList');
+                const currentUserId = localStorage.getItem('userId');
                 
                 if (chats.length === 0) {
                     chatList.innerHTML = '<div class="no-chats">No recent chats in the last 24 hours</div>';
@@ -298,6 +356,9 @@
 
                 chatList.innerHTML = chats.map(chat => {
                     const isStarred = starredChatIds.has(chat.id);
+                    const isCreator = chat.creatorId === currentUserId;
+                    const deleteButton = isCreator ? `<button class="delete-btn" onclick="deleteChat('${chat.id}', event)">×</button>` : '';
+                    
                     return `
                     <div class="chat-card">
                         <div class="chat-content" onclick="window.location.href='/chat.html?chatID=${chat.id}'">
@@ -306,7 +367,7 @@
                         </div>
                         <div style="display: flex; align-items: center;">
                             <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${chat.id}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
-                            <button class="delete-btn" onclick="deleteChat('${chat.id}', event)">×</button>
+                            ${deleteButton}
                         </div>
                     </div>
                 `}).join('');
@@ -336,12 +397,14 @@
             }
 
             try {
-                const response = await fetch(`/api/chats/${chatId}`, {
+                const userId = localStorage.getItem('userId');
+                const response = await fetch(`/api/chats/${chatId}?userId=${userId}`, {
                     method: 'DELETE'
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to delete chat');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete chat');
                 }
 
                 // Remove the card from the DOM immediately for better UX
@@ -355,7 +418,7 @@
                 loadPrivateMessages && loadPrivateMessages();
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to delete chat');
+                alert(error.message || 'Failed to delete chat');
             }
         }
 
@@ -441,6 +504,9 @@
                 myChatsList.innerHTML = chats.map(chat => {
                     const cid = chat.id || chat._id;
                     const isStarred = starredChatIds.has(cid);
+                    const isCreator = chat.creatorId === userId;
+                    const deleteButton = isCreator ? `<button class="delete-btn" onclick="deleteChat('${cid}', event)">×</button>` : '';
+                    
                     return `
                     <div class="private-msg-item" style="background:#fff; border-radius:6px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,0.03); cursor:pointer; border:1px solid #e0e0e0; display:flex; align-items:center; justify-content:space-between; gap:8px;" onclick="window.location.href='/chat.html?chatID=${cid}'">
                         <div style="flex:1; min-width:0;">
@@ -449,7 +515,7 @@
                         </div>
                         <div style="display: flex; align-items: center;">
                              <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
-                             <button class="delete-btn" onclick="deleteChat('${cid}', event)">×</button>
+                             ${deleteButton}
                         </div>
                     </div>`;
                 }).join('');
@@ -464,58 +530,71 @@
             userListContainer.innerHTML = 'Loading...';
             privateMsgModal.style.display = 'flex';
             try {
-                const res = await fetch('/api/users');
+                const res = await fetch(`/api/users`);
                 const users = await res.json();
                 // Exclude self
-                const filtered = users.filter(u => u.id !== userId);
+                const myUserId = localStorage.getItem('userId');
+                const filtered = users.filter(u => u.id !== myUserId);
                 if (filtered.length === 0) {
                     userListContainer.innerHTML = '<div style="color:#888;">No other users found.</div>';
                     return;
                 }
                 // Fetch full user info for all users
                 const userInfos = await Promise.all(filtered.map(u => fetch(`/user/${u.id}`).then(r => r.json())));
-                userListContainer.innerHTML = userInfos.map(u => `<div class="user-list-item" style="padding:8px 0; border-bottom:1px solid #eee; cursor:pointer;" data-uid="${u.userId}">${u.fullName || u.name}</div>`).join('');
-                // Add click handlers
-                Array.from(userListContainer.querySelectorAll('.user-list-item')).forEach(item => {
-                    item.onclick = async () => {
-                        const otherUserId = item.getAttribute('data-uid');
-                        const otherUserName = item.textContent;
-                        // Find or create private chat
-                        const chatId = await findOrCreatePrivateChat(otherUserId, otherUserName);
-                        if (chatId) {
-                            window.location.href = `/chat.html?chatID=${chatId}`;
+                // Render checkboxes for each user with fullName (display name + code)
+                userListContainer.innerHTML = userInfos.map(u =>
+                    `<label style='display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;'>
+                        <input type='checkbox' class='dm-user-checkbox' value='${u.userId || u.id}'>
+                        <span>${u.fullName || (u.name + (u.code ? '#' + u.code : ''))}</span>
+                    </label>`
+                ).join('');
+                // Show/hide Start Group DM button based on selection
+                const checkboxes = Array.from(document.querySelectorAll('.dm-user-checkbox'));
+                const startBtn = document.getElementById('startGroupDMBtn');
+                function updateBtn() {
+                    const checked = checkboxes.filter(cb => cb.checked);
+                    startBtn.style.display = checked.length >= 1 ? 'block' : 'none';
+                    startBtn.textContent = checked.length > 1 ? 'Start Group DM' : 'Start DM';
+                }
+                checkboxes.forEach(cb => cb.onchange = updateBtn);
+                updateBtn();
+                // Start DM/Group DM logic
+                startBtn.onclick = async () => {
+                    const selectedIds = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
+                    if (selectedIds.length === 0) return;
+                    // Always include self
+                    const allMembers = [myUserId, ...selectedIds];
+                    // Find or create group DM
+                    const resp = await fetch(`/api/private-chat?members=${allMembers.join(',')}`);
+                    const data = await resp.json();
+                    let chatId = data.chatId;
+                    if (!chatId) {
+                        // Create new private chat
+                        const chatName = selectedIds.length > 1
+                            ? `Group DM: ${allMembers.length} members`
+                            : `Private: ${userInfos.find(u => u.userId === selectedIds[0] || u.id === selectedIds[0]).fullName}`;
+                        const createRes = await fetch('/create-chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: chatName,
+                                isPrivate: true,
+                                members: allMembers,
+                                creatorId: myUserId
+                            })
+                        });
+                        if (createRes.ok) {
+                            const chat = await createRes.json();
+                            chatId = chat.id;
                         }
-                    };
-                });
+                    }
+                    if (chatId) {
+                        window.location.href = `/chat.html?chatID=${chatId}`;
+                    }
+                };
             } catch (err) {
                 userListContainer.innerHTML = '<div style="color:red;">Failed to load users.</div>';
             }
-        }
-
-        // Find or create a private chat between current user and selected user
-        async function findOrCreatePrivateChat(otherUserId, otherUserName) {
-            try {
-                // Try to find an existing private chat
-                const res = await fetch(`/api/private-chat?user1=${userId}&user2=${otherUserId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.chatId) return data.chatId;
-                }
-                // If not found, create one
-                const chatName = `Private: ${userName} & ${otherUserName}`;
-                const createRes = await fetch('/create-chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: chatName, isPrivate: true, members: [userId, otherUserId] })
-                });
-                if (createRes.ok) {
-                    const chat = await createRes.json();
-                    return chat.id;
-                }
-            } catch (err) {
-                alert('Failed to start private chat.');
-            }
-            return null;
         }
 
         // Private messages sidebar logic
@@ -544,22 +623,30 @@
                     privateMsgList.innerHTML = '<div style="color:#888;">No private messages</div>';
                     return;
                 }
-                // For each chat, get the other user's fullName
+                // For each chat, get the other user's fullName or show group DM title
                 const chatTitles = await Promise.all(chats.map(async chat => {
-                    // Find the other user in the chat
-                    const otherUserId = (chat.members || []).find(uid => uid !== userId);
-                    if (otherUserId) {
-                        const userRes = await fetch(`/user/${otherUserId}`);
-                        if (userRes.ok) {
-                            const userData = await userRes.json();
-                            return { ...chat, displayTitle: userData.fullName || userData.name };
+                    const members = chat.members || [];
+                    if (members.length > 2) {
+                        return { ...chat, displayTitle: `Group DM: ${members.length} people` };
+                    } else {
+                        // Find the other user in the chat
+                        const otherUserId = members.find(uid => uid !== userId);
+                        if (otherUserId) {
+                            const userRes = await fetch(`/user/${otherUserId}`);
+                            if (userRes.ok) {
+                                const userData = await userRes.json();
+                                return { ...chat, displayTitle: userData.fullName || userData.name };
+                            }
                         }
+                        return { ...chat, displayTitle: chat.name };
                     }
-                    return { ...chat, displayTitle: chat.name };
                 }));
                 privateMsgList.innerHTML = chatTitles.map(chat => {
                     const cid = chat.id || chat._id;
                     const isStarred = starredChatIds.has(cid);
+                    const isCreator = chat.creatorId === userId;
+                    const deleteButton = isCreator ? `<button class="delete-btn" onclick="deleteChat('${cid}', event)">×</button>` : '';
+                    
                     return `
                     <div class="private-msg-item" style="background:#fff; border-radius:6px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,0.03); cursor:pointer; border:1px solid #e0e0e0; display:flex; align-items:center; justify-content:space-between; gap:8px;" onclick="window.location.href='/chat.html?chatID=${cid}'">
                         <div style="flex:1; min-width:0;">
@@ -568,7 +655,7 @@
                         </div>
                         <div style="display: flex; align-items: center;">
                             <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${cid}', event)">${isStarred ? '&#9733;' : '&#9734;'}</button>
-                            <button class="delete-btn" onclick="deleteChat('${cid}', event)">×</button>
+                            ${deleteButton}
                         </div>
                     </div>`
                 }).join('');
@@ -649,6 +736,9 @@
             if (params.has('action')) {
                 handleAction(params);
             }
+
+            // Initialize logout functionality
+            initializeLogoutFunctionality();
         });
 
         function refreshChatLists() {
@@ -663,6 +753,141 @@
             loadRecentChats();
             loadPrivateMessages();
         };
+
+        const accountBtn = document.getElementById('accountBtn');
+        const accountModal = document.getElementById('accountModal');
+        const closeAccountModal = document.getElementById('closeAccountModal');
+        const profilePicInput = document.getElementById('profilePicInput');
+        const profilePicContainer = document.getElementById('profilePicContainer');
+        const accountNameDisplay = document.getElementById('accountNameDisplay');
+
+        function getInitials(name) {
+          if (!name) return '';
+          const parts = name.trim().split(' ');
+          if (parts.length === 1) return parts[0][0].toUpperCase();
+          return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+
+        function renderProfilePicOrInitials(name, url) {
+          profilePicContainer.innerHTML='';
+          const circle=document.createElement('div');
+          circle.style.width='96px';circle.style.height='96px';circle.style.borderRadius='50%';circle.style.border='3px solid #007bff';circle.style.backgroundSize='cover';circle.style.backgroundPosition='center';
+          if(url){circle.style.backgroundImage=`url('${url}')`;} else {circle.style.backgroundColor='#e0e7ef';circle.style.display='flex';circle.style.alignItems='center';circle.style.justifyContent='center';circle.innerHTML=`<span style="color:#007bff;font-size:2.5rem;font-weight:bold;">${getInitials(name)}</span>`;}
+          profilePicContainer.appendChild(circle);
+        }
+
+        accountBtn.onclick = async ()=>{
+          const userId=localStorage.getItem('userId');
+          if(!userId){window.location.href='/welcome';return;}
+          try{
+            const res=await fetch(`/user/${userId}`);
+            if(res.ok){const data=await res.json();
+              accountNameDisplay.textContent=data.fullName||data.name;
+              renderProfilePicOrInitials(data.name,data.profilePic);
+            }
+          }catch{}
+          accountModal.style.display='flex';
+        };
+        closeAccountModal.onclick=()=>accountModal.style.display='none';
+        accountModal.onclick=e=>{if(e.target===accountModal)accountModal.style.display='none';};
+
+        profilePicInput.onchange=async function(){
+          const file=this.files[0];if(!file)return;
+          const formData=new FormData();formData.append('profilePic',file);
+          const userId=localStorage.getItem('userId');
+          try{
+            const res=await fetch(`/upload-profile-pic/${userId}`,{method:'POST',body:formData});
+            if(res.ok){setTimeout(async()=>{
+              const uRes=await fetch(`/user/${userId}`);if(uRes.ok){const uData=await uRes.json();renderProfilePicOrInitials(uData.name,uData.profilePic+'?t='+Date.now());}
+            },1500);}
+          }catch(err){alert('Upload failed');}
+        };
+
+        // Add logout functionality
+        function initializeLogoutFunctionality() {
+            const logoutButton = document.getElementById('logoutButton');
+            const logoutModal = document.getElementById('logoutModal');
+            const closeLogoutModal = document.getElementById('closeLogoutModal');
+            const confirmLogout = document.getElementById('confirmLogout');
+            const cancelLogout = document.getElementById('cancelLogout');
+            const backToAccount = document.getElementById('backToAccount');
+            const logoutDisplayName = document.getElementById('logoutDisplayName');
+            const logoutCode = document.getElementById('logoutCode');
+
+            // Copy to clipboard function
+            function copyToClipboard(text) {
+              navigator.clipboard.writeText(text).then(() => {
+                // Show a brief "copied" message
+                const originalText = event.target.textContent;
+                event.target.textContent = 'Copied!';
+                event.target.style.background = '#d4edda';
+                event.target.style.color = '#155724';
+                setTimeout(() => {
+                  event.target.textContent = originalText;
+                  event.target.style.background = 'white';
+                  event.target.style.color = 'black';
+                }, 1000);
+              }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy to clipboard. Please copy manually.');
+              });
+            }
+
+            // Logout button click handler
+            logoutButton.onclick = async () => {
+              try {
+                // Hide the account modal first
+                document.getElementById('accountModal').style.display = 'none';
+                
+                // Fetch user data to get display name and code
+                const userId = localStorage.getItem('userId');
+                const response = await fetch(`/user/${userId}`);
+                if (response.ok) {
+                  const userData = await response.json();
+                  logoutDisplayName.textContent = userData.displayName || userData.name;
+                  logoutCode.textContent = userData.code || 'N/A';
+                  logoutModal.style.display = 'flex';
+                } else {
+                  console.error('Failed to fetch user data for logout');
+                  alert('Failed to get user information. Please try again.');
+                }
+              } catch (error) {
+                console.error('Error fetching user data for logout:', error);
+                alert('Failed to get user information. Please try again.');
+              }
+            };
+
+            // Close logout modal handlers
+            closeLogoutModal.onclick = () => {
+              logoutModal.style.display = 'none';
+            };
+
+            cancelLogout.onclick = () => {
+              logoutModal.style.display = 'none';
+            };
+
+            // Back to account button handler
+            backToAccount.onclick = () => {
+              logoutModal.style.display = 'none';
+              document.getElementById('accountModal').style.display = 'flex';
+            };
+
+            logoutModal.onclick = (e) => {
+              if (e.target === logoutModal) {
+                logoutModal.style.display = 'none';
+              }
+            };
+
+            // Confirm logout
+            confirmLogout.onclick = () => {
+              // Clear localStorage
+              localStorage.removeItem('userId');
+              localStorage.removeItem('userName');
+              
+              // Redirect to welcome page
+              window.location.href = '/welcome.html';
+            };
+        }
     </script>
     <script src="/js/utils.js"></script>
 </body>
