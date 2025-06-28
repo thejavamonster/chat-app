@@ -379,6 +379,24 @@
     .reply-btn:hover {
       color: #0056b3;
     }
+    body.stats-font #gifModal, body.stats-font #gifModal * {
+      background: #181818 !important;
+      color: #00ff00 !important;
+      border-color: #00ff00 !important;
+    }
+    body.stats-font #gifModal button, body.stats-font #gifModal input {
+      background: #222 !important;
+      color: #00ff00 !important;
+      border: 2px solid #00ff00 !important;
+    }
+    body.stats-font #gifResults > div {
+      background: #222 !important;
+      border: 1.5px solid #00ff00 !important;
+    }
+    body.stats-font #gifResults img {
+      background: #222 !important;
+      border: 1.5px solid #00ff00 !important;
+    }
   </style>
 </head>
 <body>
@@ -1625,10 +1643,10 @@
         }
 
         let retryCount = 0;
-        const maxRetries = 5;
-        const retryDelay = 1500;
+        const maxRetries = 3; // Reduced from 5 to 3
+        const retryDelay = 1000; // Reduced from 1500 to 1000
 
-        const preloader = (src) => {
+        const preloader = (src, attempt = 0) => {
             const img = new Image();
             img.src = src;
 
@@ -1640,11 +1658,12 @@
             };
 
             img.onerror = () => {
-                if (retryCount < maxRetries) {
-                    retryCount++;
+                if (attempt < maxRetries) {
                     setTimeout(() => {
-                        const newSrc = src + (src.includes('?') ? '&' : '?') + 'retry=' + Date.now();
-                        preloader(newSrc);
+                        // Use a simple timestamp instead of accumulating retry parameters
+                        const baseUrl = src.split('?')[0]; // Remove all query parameters
+                        const newSrc = baseUrl + '?t=' + Date.now() + '&retry=' + (attempt + 1);
+                        preloader(newSrc, attempt + 1);
                     }, retryDelay);
                 } else {
                     // All retries failed, fallback to initials
@@ -1792,7 +1811,7 @@
       // Attach to messageDiv after contentDiv
 
       // Function to render reactions
-      messageDiv._reactions = message.reactions ? [...message.reactions] : (messageDiv._reactions || []);
+      messageDiv._reactions = (message.reactions && Array.isArray(message.reactions)) ? [...message.reactions] : (messageDiv._reactions || []);
       messageDiv._renderReactions = function() {
         reactionsContainer.innerHTML = '';
         if (messageDiv._reactions && messageDiv._reactions.length > 0) {
@@ -2140,7 +2159,46 @@
         img.src = message.imageUrl;
         img.alt = 'Shared image';
         img.onclick = () => window.open(message.imageUrl, '_blank');
+        // Add error handler for broken images
+        img.onerror = function() {
+          img.style.display = 'none';
+          const fallback = document.createElement('div');
+          fallback.textContent = '[Image not found]';
+          fallback.style.color = '#dc3545';
+          fallback.style.fontStyle = 'italic';
+          fallback.style.marginTop = '8px';
+          messageDiv.appendChild(fallback);
+        };
         messageDiv.appendChild(img);
+      }
+
+      // Add GIF if present
+      if (message.gifUrl) {
+        const gifContainer = document.createElement('div');
+        gifContainer.style.cssText = 'margin-top:8px; border-radius:8px; overflow:hidden; max-width:300px;';
+        
+        const gifImg = document.createElement('img');
+        gifImg.src = message.gifUrl;
+        gifImg.alt = message.content || 'GIF';
+        gifImg.style.cssText = 'width:100%; height:auto; display:block; cursor:pointer;';
+        
+        // Add click to enlarge functionality
+        gifImg.onclick = () => {
+          const modal = document.createElement('div');
+          modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; cursor:pointer;';
+          
+          const enlargedImg = document.createElement('img');
+          enlargedImg.src = message.gifUrl;
+          enlargedImg.style.cssText = 'max-width:90vw; max-height:90vh; object-fit:contain;';
+          
+          modal.appendChild(enlargedImg);
+          document.body.appendChild(modal);
+          
+          modal.onclick = () => modal.remove();
+        };
+        
+        gifContainer.appendChild(gifImg);
+        messageDiv.appendChild(gifContainer);
       }
 
       // Add file message if present
@@ -2457,6 +2515,7 @@
       const typingIndicator = document.getElementById('typingIndicator');
       const inputContainer = document.getElementById('inputContainer');
       const formatButton = document.getElementById('formatButton');
+      const gifButton = document.getElementById('gifButton');
       const toggleConsoleBtn = document.getElementById('toggleConsole');
       
       if (on) {
@@ -2472,6 +2531,8 @@
         document.body.classList.add('stats-font');
         // Hide format button in nerd mode
         formatButton.style.display = 'none';
+        // Hide GIF button in nerd mode
+        gifButton.style.display = 'none';
         // Change button text to "Normal Mode"
         toggleConsoleBtn.textContent = 'Normal Mode';
         // Move modals to body so they are not hidden in splitChat
@@ -2488,6 +2549,8 @@
         document.body.classList.remove('stats-font');
         // Show format button in normal mode
         formatButton.style.display = 'inline-block';
+        // Show GIF button in normal mode
+        gifButton.style.display = 'inline-block';
         // Change button text back to "Nerd Mode"
         toggleConsoleBtn.textContent = 'Nerd Mode';
         // Move modals back to body (in case)
@@ -2535,11 +2598,6 @@
         border: 2px solid #444 !important;
       }
       body.stats-font #emojiButton {
-        background: #222 !important;
-        color: #00ff00 !important;
-        border: 2px solid #444 !important;
-      }
-      body.stats-font #gifButton {
         background: #222 !important;
         color: #00ff00 !important;
         border: 2px solid #444 !important;
@@ -3092,51 +3150,6 @@
       gifError.style.display = 'none';
     }
 
-    // Update showMessage function to handle GIFs
-    const originalShowMessage = window.showMessage;
-    window.showMessage = async function(message) {
-      // Call original function first
-      if (originalShowMessage) {
-        await originalShowMessage(message);
-      }
-
-      // Add GIF handling
-      if (message.gifUrl) {
-        const messageElement = document.querySelector(`[data-message-id="${message.id}"]`);
-        if (messageElement) {
-          const contentDiv = messageElement.querySelector('.content');
-          if (contentDiv) {
-            // Create GIF container
-            const gifContainer = document.createElement('div');
-            gifContainer.style.cssText = 'margin-top:8px; border-radius:8px; overflow:hidden; max-width:300px;';
-            
-            const gifImg = document.createElement('img');
-            gifImg.src = message.gifUrl;
-            gifImg.alt = message.content || 'GIF';
-            gifImg.style.cssText = 'width:100%; height:auto; display:block; cursor:pointer;';
-            
-            // Add click to enlarge functionality
-            gifImg.onclick = () => {
-              const modal = document.createElement('div');
-              modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; cursor:pointer;';
-              
-              const enlargedImg = document.createElement('img');
-              enlargedImg.src = message.gifUrl;
-              enlargedImg.style.cssText = 'max-width:90vw; max-height:90vh; object-fit:contain;';
-              
-              modal.appendChild(enlargedImg);
-              document.body.appendChild(modal);
-              
-              modal.onclick = () => modal.remove();
-            };
-            
-            gifContainer.appendChild(gifImg);
-            contentDiv.appendChild(gifContainer);
-          }
-        }
-      }
-    };
-
     // Edit chat name functionality
     const editChatNameBtn = document.getElementById('editChatNameBtn');
     const editChatNameInput = document.getElementById('editChatNameInput');
@@ -3245,53 +3258,10 @@
     }
 
     // Patch showMessage to support select mode checkboxes
-    const origShowMessage = window.showMessage || showMessage;
+    const mainShowMessage = showMessage; // The main function that renders everything
     window.showMessage = async function(message) {
-      await origShowMessage(message);
-      renderAllCheckboxes();
-    };
-
-    // --- PATCHES AT END OF FILE ---
-    // Patch 1: Add GIF support to showMessage
-    const mainShowMessage = window.showMessage; // This is the correct, latest version
-    window.showMessage = async function(message) {
-      // Call the main showMessage (with reaction and edit buttons)
-      if (mainShowMessage) {
-        await mainShowMessage(message);
-      }
-      // Add GIF handling
-      if (message.gifUrl) {
-        const messageElement = document.querySelector(`[data-message-id="${message.id}"]`);
-        if (messageElement) {
-          const contentDiv = messageElement.querySelector('.content');
-          if (contentDiv) {
-            const gifContainer = document.createElement('div');
-            gifContainer.style.cssText = 'margin-top:8px; border-radius:8px; overflow:hidden; max-width:300px;';
-            const gifImg = document.createElement('img');
-            gifImg.src = message.gifUrl;
-            gifImg.alt = message.content || 'GIF';
-            gifImg.style.cssText = 'width:100%; height:auto; display:block; cursor:pointer;';
-            gifImg.onclick = () => {
-              const modal = document.createElement('div');
-              modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; cursor:pointer;';
-              const enlargedImg = document.createElement('img');
-              enlargedImg.src = message.gifUrl;
-              enlargedImg.style.cssText = 'max-width:90vw; max-height:90vh; object-fit:contain;';
-              modal.appendChild(enlargedImg);
-              document.body.appendChild(modal);
-              modal.onclick = () => modal.remove();
-            };
-            gifContainer.appendChild(gifImg);
-            contentDiv.appendChild(gifContainer);
-          }
-        }
-      }
-    };
-    // Patch 2: Add select mode checkboxes to showMessage
-    const gifShowMessage = window.showMessage;
-    window.showMessage = async function(message) {
-      await gifShowMessage(message);
-      renderAllCheckboxes();
+      await mainShowMessage(message);   // Render the message (text, images, GIFs, etc)
+      renderAllCheckboxes();            // Add checkboxes if select mode is on
     };
 
     let reactionMenu = null;
