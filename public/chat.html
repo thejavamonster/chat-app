@@ -495,6 +495,32 @@
             color: var(--danger-color);
         }
 
+        /* Error states */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .retry-btn {
+            margin-top: 1rem;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .retry-btn:hover {
+            background: #dc2626;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .header {
@@ -713,32 +739,6 @@
         *:focus-visible {
             outline: 2px solid var(--primary-color);
             outline-offset: 2px;
-        }
-
-        /* Error states */
-        .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger-color);
-            padding: 1rem;
-            border-radius: var(--radius-md);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            margin: 1rem 0;
-            text-align: center;
-        }
-
-        .retry-btn {
-            margin-top: 1rem;
-            background: var(--danger-color);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .retry-btn:hover {
-            background: #dc2626;
         }
     </style>
 </head>
@@ -1279,10 +1279,10 @@
         function escapeHtml(unsafe) {
             if (!unsafe) return '';
             return unsafe
-                .replace(/&/g, "&")
-                .replace(/</g, "<")
-                .replace(/>/g, ">")
-                .replace(/"/g, """)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
 
