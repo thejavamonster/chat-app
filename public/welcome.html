@@ -221,13 +221,13 @@
         <!-- Sign-in form (hidden by default) -->
         <div class="form-section" id="signInSection" style="display:none;">
             <input type="text" id="signInName" class="name-input" placeholder="Display name" maxlength="32" style="margin-bottom:10px;">
-            <input type="text" id="signInCode" class="name-input" placeholder="4-digit code" maxlength="4" style="margin-bottom:6px;">
+            <input type="text" id="signInCode" class="name-input" placeholder="Secret word (not 4-digit code)" style="margin-bottom:6px;">
             <label style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:10px;">
               <input type="checkbox" id="keepSignedIn"> Keep me signed in
             </label>
             <div id="signInError" class="error-message"></div>
             <button id="signInBtn" class="start-btn">Sign In</button>
-            <p style="margin-top:12px;font-size:14px;">New here? <a href="#" id="showRegister">Create an account</a></p>
+            <p style="margin-top:12px;font-size:14px;">New here? <a href="#" id="showRegister">Create account</a></p>
         </div>
         
         <div id="loading" class="loading">
@@ -454,18 +454,18 @@
             const dName = signInName.value.trim();
             const code = signInCode.value.trim();
             signInError.textContent='';
-            if(!dName || code.length!==4){ signInError.textContent='Enter name and 4-digit code'; return; }
+            if(!dName || !code){ signInError.textContent='Enter name and secret word'; return; }
 
             try {
                 const res = await fetch(`/api/find-user?displayName=${encodeURIComponent(dName)}&code=${encodeURIComponent(code)}`);
-                if(!res.ok){ signInError.textContent='User not found'; return; }
+                if(!res.ok){ signInError.textContent='User not found or secret word incorrect'; return; }
                 const data = await res.json();
                 localStorage.setItem('userId', data.userId);
                 localStorage.setItem('userName', data.name);
-                if(keepSignedInChk.checked){ localStorage.setItem('keepSignedIn','true'); } else { localStorage.removeItem('keepSignedIn'); }
+                if(keepSignedInChk.checked){ localStorage.setItem('keepSignedIn','true'); }
                 window.location.href = '/';
-            } catch(err){
-                signInError.textContent='Sign-in failed';
+            } catch (err) {
+                signInError.textContent='Error signing in';
             }
         };
     </script>
