@@ -714,6 +714,32 @@
             outline: 2px solid var(--primary-color);
             outline-offset: 2px;
         }
+
+        /* Error states */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .retry-btn {
+            margin-top: 1rem;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .retry-btn:hover {
+            background: #dc2626;
+        }
     </style>
 </head>
 <body>
@@ -820,13 +846,14 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Chat page loading...');
+            
             // Get chat ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             chatId = urlParams.get('chatID');
             
             if (!chatId) {
-                alert('No chat ID provided');
-                window.location.href = '/';
+                showError('No chat ID provided');
                 return;
             }
 
@@ -840,6 +867,9 @@
                 window.location.href = '/welcome.html';
                 return;
             }
+
+            console.log('Current user:', currentUser);
+            console.log('Chat ID:', chatId);
 
             // Initialize E2EE
             try {
@@ -862,33 +892,50 @@
         });
 
         function initializeSocket() {
-            socket = io();
+            console.log('Initializing Socket.IO...');
             
-            socket.on('connect', () => {
-                console.log('Connected to server');
-                socket.emit('join-chat', chatId);
-            });
+            try {
+                socket = io();
+                
+                socket.on('connect', () => {
+                    console.log('Connected to server');
+                    socket.emit('join-chat', chatId);
+                });
 
-            socket.on('new-message', (message) => {
-                displayMessage(message);
-                scrollToBottom();
-            });
+                socket.on('connect_error', (error) => {
+                    console.error('Socket connection error:', error);
+                    showError('Failed to connect to chat server. Please refresh the page.');
+                });
 
-            socket.on('message-updated', (updatedMessage) => {
-                updateMessageInDOM(updatedMessage);
-            });
+                socket.on('new-message', (message) => {
+                    console.log('New message received:', message);
+                    displayMessage(message);
+                    scrollToBottom();
+                });
 
-            socket.on('message-deleted', (messageId) => {
-                removeMessageFromDOM(messageId);
-            });
+                socket.on('message-updated', (updatedMessage) => {
+                    console.log('Message updated:', updatedMessage);
+                    updateMessageInDOM(updatedMessage);
+                });
 
-            socket.on('reaction-added', ({ messageId, reaction, userId }) => {
-                updateReactionInDOM(messageId, reaction, userId, 'add');
-            });
+                socket.on('message-deleted', (messageId) => {
+                    console.log('Message deleted:', messageId);
+                    removeMessageFromDOM(messageId);
+                });
 
-            socket.on('reaction-removed', ({ messageId, reaction, userId }) => {
-                updateReactionInDOM(messageId, reaction, userId, 'remove');
-            });
+                socket.on('reaction-added', ({ messageId, reaction, userId }) => {
+                    console.log('Reaction added:', { messageId, reaction, userId });
+                    updateReactionInDOM(messageId, reaction, userId, 'add');
+                });
+
+                socket.on('reaction-removed', ({ messageId, reaction, userId }) => {
+                    console.log('Reaction removed:', { messageId, reaction, userId });
+                    updateReactionInDOM(messageId, reaction, userId, 'remove');
+                });
+            } catch (error) {
+                console.error('Socket.IO initialization failed:', error);
+                showError('Chat functionality may be limited. Socket.IO failed to initialize.');
+            }
         }
 
         function setupEventListeners() {
@@ -930,22 +977,29 @@
 
         async function loadChatInfo() {
             try {
+                console.log('Loading chat info for:', chatId);
                 const response = await fetch(`/api/chat/${chatId}`);
                 if (response.ok) {
                     const chat = await response.json();
+                    console.log('Chat info loaded:', chat);
                     document.getElementById('chatTitle').textContent = chat.name;
                     document.title = `${chat.name} - Enkryptonite`;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
                 console.error('Error loading chat info:', error);
+                showError('Failed to load chat information');
             }
         }
 
         async function loadMessages() {
             try {
+                console.log('Loading messages for chat:', chatId);
                 const response = await fetch(`/api/chat/${chatId}/messages`);
                 if (response.ok) {
                     const messages = await response.json();
+                    console.log('Messages loaded:', messages.length);
                     const container = document.getElementById('messagesContainer');
                     container.innerHTML = '';
                     
@@ -955,11 +1009,12 @@
                         messages.forEach(message => displayMessage(message));
                         scrollToBottom();
                     }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
                 console.error('Error loading messages:', error);
-                document.getElementById('messagesContainer').innerHTML = 
-                    '<div style="text-align: center; color: var(--danger-color); padding: 2rem;"><i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i><br>Failed to load messages</div>';
+                showError('Failed to load messages');
             }
         }
 
@@ -1033,10 +1088,8 @@
                 
                 // Encrypt if enabled
                 if (isEncryptionEnabled && e2eeMessenger) {
-                    // For demo purposes, we'll encrypt with a dummy recipient key
-                    // In a real implementation, you'd get the recipient's public key
                     try {
-                        const recipientPubKey = await e2eeMessenger.getPublicKey(); // Using own key for demo
+                        const recipientPubKey = await e2eeMessenger.getPublicKey();
                         const encrypted = await e2eeMessenger.encryptMessage(content, recipientPubKey);
                         messageToSend = JSON.stringify(encrypted);
                     } catch (error) {
@@ -1059,10 +1112,12 @@
                 if (response.ok) {
                     input.value = '';
                     input.style.height = 'auto';
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
                 console.error('Error sending message:', error);
-                alert('Failed to send message');
+                alert('Failed to send message: ' + error.message);
             } finally {
                 sendBtn.disabled = false;
                 sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
@@ -1110,7 +1165,6 @@
             const text = messageElement.textContent;
             
             navigator.clipboard.writeText(text).then(() => {
-                // Show success feedback
                 const btn = event.target.closest('.action-btn');
                 const originalIcon = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check"></i>';
@@ -1158,10 +1212,12 @@
 
                 if (response.ok) {
                     closeEditModal();
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
                 console.error('Error editing message:', error);
-                alert('Failed to edit message');
+                alert('Failed to edit message: ' + error.message);
             }
         }
 
@@ -1176,11 +1232,11 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to delete message');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
                 console.error('Error deleting message:', error);
-                alert('Failed to delete message');
+                alert('Failed to delete message: ' + error.message);
             }
         }
 
@@ -1196,7 +1252,7 @@
             } else {
                 btn.innerHTML = '<i class="fas fa-terminal"></i><span>Nerd Mode</span>';
                 btn.classList.remove('active');
-                loadChatInfo(); // Restore original title
+                loadChatInfo();
             }
         }
 
@@ -1221,6 +1277,7 @@
 
         // Utility functions
         function escapeHtml(unsafe) {
+            if (!unsafe) return '';
             return unsafe
                 .replace(/&/g, "&")
                 .replace(/</g, "<")
@@ -1258,9 +1315,21 @@
         }
 
         function updateReactionInDOM(messageId, reaction, userId, action) {
-            const reactionsContainer = document.getElementById(`reactions-${messageId}`);
             // Implementation would update the reactions display
-            // This is a simplified version - full implementation would handle the reaction logic
+            console.log('Updating reaction:', { messageId, reaction, userId, action });
+        }
+
+        function showError(message) {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i><br>
+                    ${message}
+                    <button class="retry-btn" onclick="location.reload()">
+                        <i class="fas fa-refresh"></i> Retry
+                    </button>
+                </div>
+            `;
         }
 
         // Add fadeOut animation
