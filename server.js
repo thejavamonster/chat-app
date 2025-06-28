@@ -52,23 +52,41 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json')
 
 // MongoDB setup
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/chatapp';
-const client = new MongoClient(mongoUri);
+
+// Use longer server-selection timeout and unified topology for Atlas SRV records
+const client = new MongoClient(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 20000 // 20s instead of default 30s
+});
+
 let db;
 
-// Connect to MongoDB
-async function connectDB() {
-    try {
-        await client.connect();
-        db = client.db();
-        console.log('Connected to MongoDB');
-        
-        // Create indexes for better query performance
-        await db.collection('chats').createIndex({ createdAt: 1 });
-        await db.collection('chats').createIndex({ name: 'text' });
-        await db.collection('users').createIndex({ id: 1 }, { unique: true });
-    } catch (error) {
-        console.error('MongoDB connection error:', error);
-        process.exit(1);
+// Robust connect with automatic retry (handles DNS ETIMEOUT etc.)
+async function connectDB(retries = Infinity, delayMs = 5000) {
+    let attempt = 0;
+    while (retries === Infinity || attempt < retries) {
+        try {
+            attempt++;
+            console.log(`[MongoDB] Connecting (attempt ${attempt})…`);
+            await client.connect();
+            db = client.db();
+            console.log('[MongoDB] Connected');
+
+            // Create indexes for better query performance
+            await db.collection('chats').createIndex({ createdAt: 1 });
+            await db.collection('chats').createIndex({ name: 'text' });
+            await db.collection('users').createIndex({ id: 1 }, { unique: true });
+            return; // success
+        } catch (err) {
+            console.error('[MongoDB] Connection failed:', err.code || err.name || err.message);
+            if (retries !== Infinity && attempt >= retries) {
+                console.error('[MongoDB] Exhausted retries – starting server in file-only mode');
+                return; // continue without DB
+            }
+            console.log(`[MongoDB] Retry in ${delayMs / 1000}s…`);
+            await new Promise(res => setTimeout(res, delayMs));
+        }
     }
 }
 
@@ -137,6 +155,34 @@ loadData()
 app.use(express.static('public'))
 app.use(express.json())
 
+// Ensure uploads directory exists
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR);
+}
+
+// Multer storage config for general files
+const fileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, UPLOADS_DIR);
+    },
+    filename: (req, file, cb) => {
+        // Use timestamp + original name for uniqueness
+        const uniqueName = Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+        cb(null, uniqueName);
+    }
+});
+const fileUpload = multer({ storage: fileStorage });
+
+// File upload endpoint for all file types
+app.post('/upload-file', fileUpload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl, originalName: req.file.originalname });
+});
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -166,8 +212,8 @@ const upload = multer({
     }
 })
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(DATA_DIR, 'uploads')))
+// Serve uploaded files from the correct directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve welcome page
 app.get('/welcome', (req, res) => {
@@ -234,7 +280,36 @@ app.get('/search-chats', (req, res) => {
 app.delete('/api/chats/:chatId', async (req, res) => {
     try {
         const chatId = req.params.chatId;
-        console.log('Attempting to delete chat:', chatId);
+        const userId = req.query.userId; // Get the user ID from query parameter
+        
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        console.log('Attempting to delete chat:', chatId, 'by user:', userId);
+
+        // First, check if the chat exists and get its creator
+        const chat = await db.collection('chats').findOne({ id: chatId });
+        
+        if (!chat) {
+            // Try finding by MongoDB _id for older records
+            try {
+                const objId = new ObjectId(chatId);
+                const oldChat = await db.collection('chats').findOne({ _id: objId });
+                if (!oldChat) {
+                    return res.status(404).json({ error: 'Chat not found' });
+                }
+                // For older chats without creatorId, allow deletion (backward compatibility)
+                console.log('Deleting older chat without creator tracking');
+            } catch (err) {
+                return res.status(404).json({ error: 'Chat not found' });
+            }
+        } else {
+            // Check if the user is the creator of the chat
+            if (chat.creatorId && chat.creatorId !== userId) {
+                return res.status(403).json({ error: 'Only the chat creator can delete this chat' });
+            }
+        }
 
         // Try deleting by our custom id field first
         let result = await db.collection('chats').deleteOne({ id: chatId });
@@ -253,7 +328,7 @@ app.delete('/api/chats/:chatId', async (req, res) => {
             return res.status(404).json({ error: 'Chat not found' });
         }
 
-        console.log('Chat deleted successfully from MongoDB');
+        console.log('Chat deleted successfully from MongoDB by user:', userId);
         res.status(200).json({ message: 'Chat deleted successfully' });
     } catch (error) {
         console.error('Error deleting chat:', error);
@@ -343,17 +418,29 @@ function loadExistingChats() {
     console.log(`Loaded ${chats.size} chats`);
 }
 
-// Endpoint to find a private chat between two users
+// Endpoint to find a private chat between multiple users
 app.get('/api/private-chat', async (req, res) => {
+    let members = req.query.members;
+    if (!members) {
+        // Fallback to old API for 2 users
     const { user1, user2 } = req.query;
     if (!user1 || !user2) {
-        return res.status(400).json({ error: 'Both user1 and user2 are required' });
+            return res.status(400).json({ error: 'members or user1 and user2 are required' });
+        }
+        members = [user1, user2];
+    } else {
+        if (typeof members === 'string') {
+            members = members.split(',').map(x => x.trim()).filter(Boolean);
+        }
+    }
+    if (!Array.isArray(members) || members.length < 2) {
+        return res.status(400).json({ error: 'At least 2 members required' });
     }
     try {
-        // Find a chat that is private and has exactly these two members
+        // Find a chat that is private and has exactly these members
         const chat = await db.collection('chats').findOne({
             isPrivate: true,
-            members: { $all: [user1, user2], $size: 2 }
+            members: { $all: members, $size: members.length }
         });
         if (chat) {
             return res.json({ chatId: chat.id });
@@ -371,6 +458,8 @@ app.post('/create-chat', async (req, res) => {
     const chatName = req.body.name;
     const isPrivate = req.body.isPrivate || false;
     const members = req.body.members || [];
+    const creatorId = req.body.creatorId; // Add creator ID from request
+    
     if (!chatName) {
         return res.status(400).json({ error: 'Chat name is required' });
     }
@@ -381,12 +470,13 @@ app.post('/create-chat', async (req, res) => {
         name: chatName,
         messages: [],
         createdAt: Date.now(),
+        creatorId: creatorId, // Store the creator's ID
         isPrivate,
-        members: isPrivate ? members : undefined
+        members: Array.isArray(members) && members.length > 0 ? members : [] // Always initialize as array
     };
     try {
         await db.collection('chats').insertOne(chat);
-        console.log(`Created new chat: ${chatName} (${chatId}) at ${new Date(chat.createdAt).toLocaleString()}`);
+        console.log(`Created new chat: ${chatName} (${chatId}) by user ${creatorId} at ${new Date(chat.createdAt).toLocaleString()}`);
         res.json({ id: chatId, name: chatName });
     } catch (error) {
         console.error('Error creating chat:', error);
@@ -408,6 +498,7 @@ app.get('/api/recent-chats', async (req, res) => {
             id: chat.id,
             name: chat.name,
             createdAt: chat.createdAt,
+            creatorId: chat.creatorId || null, // Include creator ID
             timeAgo: getTimeAgo(chat.createdAt)
         }));
 
@@ -488,12 +579,16 @@ app.post('/register-user', async (req, res) => {
 
 app.get('/user/:userId', async (req, res) => {
     const { userId } = req.params
+    console.log('Fetching user data for:', userId);
     try {
         const user = await db.collection('users').findOne({ id: userId })
         
         if (!user) {
+            console.log('User not found:', userId);
             return res.status(404).json({ error: 'User not found' })
         }
+        
+        console.log('User found, formatting:', user.formatting);
         
         res.json({ 
             userId: user.id, 
@@ -501,7 +596,8 @@ app.get('/user/:userId', async (req, res) => {
             fullName: user.fullName || user.name, // Full name with code for profiles
             displayName: user.displayName || user.name,
             code: user.code || null,
-            profilePic: user.profilePic || null 
+            profilePic: user.profilePic || null,
+            formatting: user.formatting || null
         })
     } catch (error) {
         console.error('Error fetching user:', error)
@@ -598,6 +694,38 @@ app.post('/user/:userId/update-name', async (req, res) => {
     }
 });
 
+// Endpoint to save user formatting preferences
+app.post('/user/:userId/formatting', async (req, res) => {
+    const { userId } = req.params;
+    const formatting = req.body;
+    
+    console.log('Saving formatting for user:', userId, 'formatting:', formatting);
+    
+    if (!userId || !formatting) {
+        console.log('Missing userId or formatting data');
+        return res.status(400).json({ error: 'userId and formatting data are required' });
+    }
+    
+    try {
+        const result = await db.collection('users').updateOne(
+            { id: userId },
+            { $set: { formatting: formatting } }
+        );
+        
+        console.log('Formatting save result:', result);
+        
+        if (result.matchedCount === 0) {
+            console.log('User not found for formatting save:', userId);
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json({ success: true, message: 'Formatting preferences saved' });
+    } catch (error) {
+        console.error('Error saving formatting preferences:', error);
+        res.status(500).json({ error: 'Failed to save formatting preferences' });
+    }
+});
+
 // WebSocket connection handling
 wss.on('connection', async (ws) => {
     console.log('New WebSocket connection');
@@ -615,11 +743,30 @@ wss.on('connection', async (ws) => {
                 ws.chatID = chatID;
                 ws.userId = userId;
 
-                console.log(`User ${userId} joining chat ${chatID}`);
+                const isTrial = data.trial === true;
+                console.log(`User ${userId} joining chat ${chatID}${isTrial ? ' (trial)' : ''}`);
 
-                // Load chat history from MongoDB
+                // Load chat from MongoDB
                 const chat = await db.collection('chats').findOne({ id: chatID });
                 if (chat) {
+                    // Ensure members field is an array
+                    if (!Array.isArray(chat.members)) {
+                        await db.collection('chats').updateOne(
+                            { id: chatID },
+                            { $set: { members: [] } }
+                        );
+                        chat.members = [];
+                    }
+
+                    // Only add to members list if NOT a trial connection
+                    if (!isTrial && !chat.members.includes(userId)) {
+                        await db.collection('chats').updateOne(
+                            { id: chatID },
+                            { $addToSet: { members: userId } }
+                        );
+                        chat.members.push(userId);
+                    }
+
                     console.log(`Sending chat history for ${chat.name} (${chat.messages?.length || 0} messages)`);
                     ws.send(JSON.stringify({
                         type: 'history',
@@ -636,7 +783,11 @@ wss.on('connection', async (ws) => {
                     timestamp: Date.now(),
                     encrypted: data.encrypted,
                     userId: userId,
-                    imageUrl: data.imageUrl // Add support for image URLs
+                    imageUrl: data.imageUrl, // Add support for image URLs
+                    gifUrl: data.gifUrl, // Add support for GIF URLs
+                    fileUrl: data.fileUrl, // Add support for file URLs
+                    fileName: data.fileName, // Add support for file names
+                    parentId: data.parentId || null // Add support for threads
                 };
 
                 // First get the current chat to preserve its name
@@ -711,6 +862,85 @@ wss.on('connection', async (ws) => {
                         }));
                     }
                 });
+            } else if (data.type === 'typing') {
+                // Broadcast typing event to all other clients in the same chat
+                wss.clients.forEach((client) => {
+                    if (
+                        client !== ws &&
+                        client.readyState === WebSocket.OPEN &&
+                        client.chatID === data.chatID
+                    ) {
+                        client.send(JSON.stringify({
+                            type: 'typing',
+                            userId: data.userId
+                        }));
+                    }
+                });
+            } else if (data.type === 'react_message') {
+                const { messageId, emoji, userId } = data;
+                console.log(`User ${userId} reacted to message ${messageId} in chat ${chatID} with ${emoji}`);
+
+                // Add reaction to MongoDB (push into reactions array on target message)
+                try {
+                    await db.collection('chats').updateOne(
+                        { id: chatID, "messages.id": messageId },
+                        {
+                            $push: {
+                                "messages.$.reactions": {
+                                    emoji: emoji,
+                                    userId: userId
+                                }
+                            }
+                        }
+                    );
+                } catch (err) {
+                    console.error('Failed to store reaction:', err);
+                }
+
+                // Broadcast reaction to all clients in this chat
+                wss.clients.forEach((client) => {
+                    if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
+                        client.send(JSON.stringify({
+                            type: 'reaction_added',
+                            messageId: messageId,
+                            emoji: emoji,
+                            userId: userId
+                        }));
+                    }
+                });
+            } else if (data.type === 'remove_reaction') {
+                console.log('[Reaction] Received remove_reaction', { messageId: data.messageId, emoji: data.emoji, userId: data.userId });
+                const { messageId, emoji, userId } = data;
+                console.log(`User ${userId} removed reaction ${emoji} from message ${messageId} in chat ${chatID}`);
+                // Remove reaction from MongoDB
+                try {
+                    const dbResult = await db.collection('chats').updateOne(
+                        { id: chatID, "messages.id": messageId },
+                        {
+                            $pull: {
+                                "messages.$.reactions": {
+                                    emoji: emoji,
+                                    userId: userId
+                                }
+                            }
+                        }
+                    );
+                    console.log('[Reaction] DB update result', dbResult);
+                } catch (err) {
+                    console.error('Failed to remove reaction:', err);
+                }
+                console.log('[Reaction] Broadcasting reaction_removed', { messageId, emoji, userId });
+                // Broadcast reaction removal to all clients
+                wss.clients.forEach((client) => {
+                    if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
+                        client.send(JSON.stringify({
+                            type: 'reaction_removed',
+                            messageId: messageId,
+                            emoji: emoji,
+                            userId: userId
+                        }));
+                    }
+                });
             }
         } catch (error) {
             console.error('Error handling WebSocket message:', error);
@@ -736,7 +966,9 @@ app.get('/api/chats/:chatId', async (req, res) => {
             id: chat.id,
             name: chat.name,
             messages: chat.messages || [],
-            createdAt: chat.createdAt
+            createdAt: chat.createdAt,
+            creatorId: chat.creatorId || null, // Include creator ID
+            members: chat.members || []
         });
     } catch (error) {
         console.error('Error getting chat:', error);
@@ -753,7 +985,7 @@ app.get('/api/chat/:chatId', async (req, res) => {
         const chat = await db.collection('chats').findOne({ id: chatId });
         console.log('Found chat:', chat ? `${chat.name} (${chat.id})` : 'null');
         
-            if (!chat) {
+        if (!chat) {
             console.log('Chat not found in MongoDB');
             return res.status(404).json({ error: 'Chat not found' });
         }
@@ -762,19 +994,97 @@ app.get('/api/chat/:chatId', async (req, res) => {
             id: chat.id,
             name: chat.name,
             messages: chat.messages || [],
-            createdAt: chat.createdAt
+            createdAt: chat.createdAt,
+            creatorId: chat.creatorId || null, // Include creator ID
+            members: chat.members || [] // Always return members array
         };
         console.log('Sending chat data:', {
             id: response.id,
             name: response.name,
             messageCount: response.messages.length,
-            createdAt: new Date(response.createdAt).toISOString()
+            createdAt: new Date(response.createdAt).toISOString(),
+            membersCount: response.members.length
         });
         
         res.json(response);
     } catch (error) {
         console.error('Error getting chat:', error);
         res.status(500).json({ error: 'Failed to get chat' });
+    }
+});
+
+// Add member to chat endpoint
+app.post('/api/chat/:chatId/add-member', async (req, res) => {
+    try {
+        const chatId = req.params.chatId;
+        const { userId } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({ error: 'userId is required' });
+        }
+        
+        console.log(`Adding user ${userId} to chat ${chatId}`);
+        
+        // First ensure the chat exists and members field is an array
+        const chat = await db.collection('chats').findOne({ id: chatId });
+        if (!chat) {
+            return res.status(404).json({ error: 'Chat not found' });
+        }
+        
+        // Ensure members field is an array
+        if (!Array.isArray(chat.members)) {
+            await db.collection('chats').updateOne(
+                { id: chatId },
+                { $set: { members: [] } }
+            );
+        }
+        
+        // Add user to members array if not already present
+        const result = await db.collection('chats').updateOne(
+            { id: chatId },
+            { $addToSet: { members: userId } }
+        );
+        
+        if (result.modifiedCount > 0) {
+            console.log(`Successfully added user ${userId} to chat ${chatId}`);
+            res.json({ success: true, message: 'User added to chat' });
+        } else {
+            console.log(`User ${userId} was already in chat ${chatId}`);
+            res.json({ success: true, message: 'User already in chat' });
+        }
+    } catch (error) {
+        console.error('Error adding member to chat:', error);
+        res.status(500).json({ error: 'Failed to add member to chat' });
+    }
+});
+
+// Remove member from chat endpoint
+app.post('/api/chat/:chatId/remove-member', async (req, res) => {
+    try {
+        const chatId = req.params.chatId;
+        const { userId } = req.body;
+        if (!userId) {
+            return res.status(400).json({ error: 'userId is required' });
+        }
+
+        console.log(`Removing user ${userId} from chat ${chatId}`);
+
+        // Ensure chat exists
+        const chat = await db.collection('chats').findOne({ id: chatId });
+        if (!chat) {
+            return res.status(404).json({ error: 'Chat not found' });
+        }
+
+        // Pull user from members array
+        await db.collection('chats').updateOne(
+            { id: chatId },
+            { $pull: { members: userId } }
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error removing member from chat:', err);
+        res.status(500).json({ error: 'Failed to remove member' });
     }
 });
 
@@ -785,6 +1095,7 @@ app.get('/api/debug/chats', async (req, res) => {
         console.log('All chats in MongoDB:', chats.map(chat => ({
             id: chat.id,
             name: chat.name,
+            creatorId: chat.creatorId || 'none',
             messageCount: chat.messages ? chat.messages.length : 0
         })));
         res.json(chats);
@@ -860,7 +1171,13 @@ app.get('/api/my-private-chats/:userId', async (req, res) => {
             .find({ isPrivate: true, members: userId })
             .sort({ createdAt: -1 })
             .toArray();
-        res.json(chats.map(chat => ({ id: chat.id, name: chat.name, members: chat.members, createdAt: chat.createdAt })));
+        res.json(chats.map(chat => ({ 
+            id: chat.id, 
+            name: chat.name, 
+            creatorId: chat.creatorId || null,
+            members: chat.members, 
+            createdAt: chat.createdAt 
+        })));
     } catch (error) {
         console.error('Error fetching private chats:', error);
         res.status(500).json({ error: 'Failed to fetch private chats' });
@@ -941,6 +1258,154 @@ app.post('/upload-profile-pic/:userId', uploadProfilePic.single('profilePic'), a
     } catch (error) {
         console.error('Error uploading profile picture:', error);
         res.status(500).json({ error: 'Failed to upload profile picture' });
+    }
+});
+
+
+app.get('/api/find-user', async (req, res) => {
+    const { displayName, code } = req.query;
+    if (!displayName || !code) {
+        return res.status(400).json({ error: 'displayName and code are required' });
+    }
+    try {
+        const user = await db.collection('users').findOne({ displayName: displayName, code: code });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({
+            userId: user.id,
+            name: user.name,
+            fullName: user.fullName,
+            profilePic: user.profilePic || null
+        });
+    } catch (err) {
+        console.error('Error finding user:', err);
+        res.status(500).json({ error: 'Failed to fetch user' });
+    }
+});
+
+// Debug endpoint to check user data
+app.get('/debug/user/:userId', async (req, res) => {
+    const { userId } = req.params;
+    console.log('Debug: Checking user data for:', userId);
+    try {
+        const user = await db.collection('users').findOne({ id: userId });
+        if (!user) {
+            console.log('Debug: User not found:', userId);
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        console.log('Debug: Full user data:', JSON.stringify(user, null, 2));
+        res.json({ 
+            userId: user.id, 
+            name: user.name,
+            formatting: user.formatting,
+            fullUserData: user
+        });
+    } catch (error) {
+        console.error('Debug: Error fetching user:', error);
+        res.status(500).json({ error: 'Failed to fetch user' });
+    }
+});
+
+// Giphy API proxy endpoints
+app.get('/api/gifs/search', async (req, res) => {
+    try {
+        const { q, limit = 20 } = req.query;
+        if (!q) {
+            return res.status(400).json({ error: 'Query parameter required' });
+        }
+
+        const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=GlVGYHkr3WSBnllca54iNt0yFbjz7L65&q=${encodeURIComponent(q)}&limit=${limit}&rating=g`);
+        const data = await response.json();
+        
+        res.json(data);
+    } catch (error) {
+        console.error('Error searching GIFs:', error);
+        res.status(500).json({ error: 'Failed to search GIFs' });
+    }
+});
+
+app.get('/api/gifs/trending', async (req, res) => {
+    try {
+        const { limit = 20 } = req.query;
+        
+        const response = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=GlVGYHkr3WSBnllca54iNt0yFbjz7L65&limit=${limit}&rating=g`);
+        const data = await response.json();
+        
+        res.json(data);
+    } catch (error) {
+        console.error('Error loading trending GIFs:', error);
+        res.status(500).json({ error: 'Failed to load trending GIFs' });
+    }
+});
+
+// Rename chat endpoint (only creator can rename)
+app.post('/api/chats/:chatId/rename', async (req, res) => {
+    const chatId = req.params.chatId;
+    const { userId, newName } = req.body;
+    if (!userId || !newName) {
+        return res.status(400).json({ error: 'userId and newName are required' });
+    }
+    try {
+        const chat = await db.collection('chats').findOne({ id: chatId });
+        if (!chat) {
+            return res.status(404).json({ error: 'Chat not found' });
+        }
+        if (chat.creatorId !== userId) {
+            return res.status(403).json({ error: 'Only the chat creator can rename this chat' });
+        }
+        await db.collection('chats').updateOne(
+            { id: chatId },
+            { $set: { name: newName } }
+        );
+        res.json({ success: true, newName });
+    } catch (error) {
+        console.error('Error renaming chat:', error);
+        res.status(500).json({ error: 'Failed to rename chat' });
+    }
+});
+
+// Bulk delete messages in a chat (only if they belong to the requesting user)
+app.post('/api/chats/:chatId/delete-messages', async (req, res) => {
+    const chatId = req.params.chatId;
+    const { userId, messageIds } = req.body;
+    if (!userId || !Array.isArray(messageIds) || messageIds.length === 0) {
+        return res.status(400).json({ error: 'userId and messageIds[] are required' });
+    }
+    try {
+        // Remove all messages with matching IDs and userId from the messages array
+        const result = await db.collection('chats').updateOne(
+            { id: chatId },
+            { $pull: { messages: { id: { $in: messageIds }, userId } } }
+        );
+        res.json({ modifiedCount: result.modifiedCount });
+    } catch (error) {
+        console.error('Bulk delete error:', error);
+        res.status(500).json({ error: 'Failed to delete messages' });
+    }
+});
+
+// Edit a message in a chat (only if it belongs to the requesting user)
+app.post('/api/chats/:chatId/edit-message', async (req, res) => {
+    const chatId = req.params.chatId;
+    const { userId, messageId, newContent } = req.body;
+    if (!userId || !messageId || typeof newContent !== 'string') {
+        return res.status(400).json({ error: 'userId, messageId, and newContent are required' });
+    }
+    try {
+        // Only update the message if it belongs to the user
+        const result = await db.collection('chats').updateOne(
+            { id: chatId, "messages.id": messageId, "messages.userId": userId },
+            { $set: { "messages.$.content": newContent } }
+        );
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ error: 'Message not found or not authorized' });
+        }
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Edit message error:', error);
+        res.status(500).json({ error: 'Failed to edit message' });
     }
 });
 
