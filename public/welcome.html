@@ -210,10 +210,24 @@
             <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
         </div>
         
-        <div class="form-section">
+        <!-- Registration form -->
+        <div class="form-section" id="registerSection">
             <input type="text" id="nameInput" class="name-input" placeholder="Choose your display name" maxlength="32">
             <div id="errorMessage" class="error-message"></div>
             <button id="startBtn" class="start-btn">Start Chatting</button>
+            <p style="margin-top:12px;font-size:14px;">Already have an account? <a href="#" id="showSignIn">Sign in</a></p>
+        </div>
+
+        <!-- Sign-in form (hidden by default) -->
+        <div class="form-section" id="signInSection" style="display:none;">
+            <input type="text" id="signInName" class="name-input" placeholder="Display name" maxlength="32" style="margin-bottom:10px;">
+            <input type="text" id="signInCode" class="name-input" placeholder="4-digit code" maxlength="4" style="margin-bottom:6px;">
+            <label style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+              <input type="checkbox" id="keepSignedIn"> Keep me signed in
+            </label>
+            <div id="signInError" class="error-message"></div>
+            <button id="signInBtn" class="start-btn">Sign In</button>
+            <p style="margin-top:12px;font-size:14px;">New here? <a href="#" id="showRegister">Create an account</a></p>
         </div>
         
         <div id="loading" class="loading">
@@ -240,6 +254,15 @@
         const errorMessage = document.getElementById('errorMessage');
         const startBtn = document.getElementById('startBtn');
         const loading = document.getElementById('loading');
+        const signInSection = document.getElementById('signInSection');
+        const registerSection = document.getElementById('registerSection');
+        const showSignIn = document.getElementById('showSignIn');
+        const showRegister = document.getElementById('showRegister');
+        const signInBtn = document.getElementById('signInBtn');
+        const signInName = document.getElementById('signInName');
+        const signInCode = document.getElementById('signInCode');
+        const signInError = document.getElementById('signInError');
+        const keepSignedInChk = document.getElementById('keepSignedIn');
 
         let selectedProfilePic = null;
 
@@ -412,6 +435,39 @@
                 window.location.href = '/';
             }
         });
+
+        // Toggle sections
+        showSignIn.onclick = (e) => { e.preventDefault(); registerSection.style.display='none'; signInSection.style.display='block'; };
+        showRegister.onclick = (e) => { e.preventDefault(); signInSection.style.display='none'; registerSection.style.display='block'; };
+
+        // Auto-redirect if remember flag set
+        (function(){
+            const uid = localStorage.getItem('userId');
+            const keep = localStorage.getItem('keepSignedIn');
+            if(uid && keep === 'true') {
+                window.location.href = '/';
+            }
+        })();
+
+        // Handle sign-in
+        signInBtn.onclick = async () => {
+            const dName = signInName.value.trim();
+            const code = signInCode.value.trim();
+            signInError.textContent='';
+            if(!dName || code.length!==4){ signInError.textContent='Enter name and 4-digit code'; return; }
+
+            try {
+                const res = await fetch(`/api/find-user?displayName=${encodeURIComponent(dName)}&code=${encodeURIComponent(code)}`);
+                if(!res.ok){ signInError.textContent='User not found'; return; }
+                const data = await res.json();
+                localStorage.setItem('userId', data.userId);
+                localStorage.setItem('userName', data.name);
+                if(keepSignedInChk.checked){ localStorage.setItem('keepSignedIn','true'); } else { localStorage.removeItem('keepSignedIn'); }
+                window.location.href = '/';
+            } catch(err){
+                signInError.textContent='Sign-in failed';
+            }
+        };
     </script>
 </body>
 </html> 
