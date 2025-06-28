@@ -577,8 +577,13 @@
         </div>
         
         <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
-          <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">4-Digit Code:</label>
+          <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">4-Digit Code (for display):</label>
           <div id="logoutCode" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
+        </div>
+        
+        <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
+          <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">Secret Word (for login):</label>
+          <div id="logoutSecretWord" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
         </div>
         
         <p style="margin-top:1rem; color:#dc3545; font-size:14px;">
@@ -2017,7 +2022,10 @@
         e.stopPropagation();
         // If a reply input already exists, remove it
         const existing = messageDiv.querySelector('.reply-input-container');
-        if (existing) { existing.remove(); return; }
+        if (existing) {
+          existing.remove();
+          return;
+        }
         // Create reply input
         const replyContainer = document.createElement('div');
         replyContainer.className = 'reply-input-container';
@@ -2817,6 +2825,7 @@
     const cancelLogout = document.getElementById('cancelLogout');
     const logoutDisplayName = document.getElementById('logoutDisplayName');
     const logoutCode = document.getElementById('logoutCode');
+    const logoutSecretWord = document.getElementById('logoutSecretWord');
 
     // Copy to clipboard function
     function copyToClipboard(text) {
@@ -2849,6 +2858,7 @@
           const userData = await response.json();
           logoutDisplayName.textContent = userData.displayName || userData.name;
           logoutCode.textContent = userData.code || 'N/A';
+          logoutSecretWord.textContent = userData.secretWord || 'N/A';
           logoutModal.style.display = 'flex';
         } else {
           console.error('Failed to fetch user data for logout');
