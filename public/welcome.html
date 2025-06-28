@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Enkryptonite</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,61 +13,68 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 2rem;
         }
 
         .welcome-container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
             max-width: 500px;
             width: 100%;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .logo {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 10px;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
         }
 
         .subtitle {
-            color: #666;
-            margin-bottom: 40px;
+            color: #6c757d;
+            margin-bottom: 3rem;
             font-size: 1.1rem;
+            line-height: 1.5;
         }
 
         .profile-section {
-            margin-bottom: 30px;
+            margin-bottom: 2.5rem;
         }
 
         .profile-pic-container {
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            margin: 0 auto 20px;
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 3px dashed #dee2e6;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
         .profile-pic-container:hover {
             border-color: #007bff;
-            background: #f0f2ff;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            transform: scale(1.05);
         }
 
         .profile-pic-container img {
@@ -79,60 +87,104 @@
         .profile-pic-placeholder {
             font-size: 3rem;
             color: #adb5bd;
+            transition: all 0.3s ease;
+        }
+
+        .profile-pic-container:hover .profile-pic-placeholder {
+            color: #007bff;
         }
 
         .upload-text {
             color: #007bff;
             font-size: 0.9rem;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
         }
 
         .name-input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            margin-bottom: 10px;
-            transition: border-color 0.2s;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
         }
 
         .name-input:focus {
             outline: none;
             border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+            background: white;
         }
 
         .error-message {
             color: #dc3545;
             font-size: 0.9rem;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
             min-height: 1.2em;
+            font-weight: 500;
         }
 
         .start-btn {
-            background-color: #007bff;
+            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            padding: 1rem 2rem;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.2s;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
             width: 100%;
+            position: relative;
+            overflow: hidden;
         }
 
-        .start-btn:hover {
-            background-color: #0056b3;
+        .start-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
         }
 
         .start-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
+        }
+
+        .toggle-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            transform: scale(1.2);
+            accent-color: #007bff;
         }
 
         .loading {
             display: none;
-            margin-top: 20px;
+            margin-top: 1.5rem;
         }
 
         .spinner {
@@ -142,7 +194,7 @@
             width: 30px;
             height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
+            margin: 0 auto 1rem;
         }
 
         @keyframes spin {
@@ -151,60 +203,93 @@
         }
 
         .features {
-            margin-top: 30px;
-            padding-top: 30px;
+            margin-top: 2.5rem;
+            padding-top: 2.5rem;
             border-top: 1px solid #e9ecef;
         }
 
         .features h3 {
-            color: #333;
-            margin-bottom: 15px;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
         }
 
         .feature-list {
             list-style: none;
             text-align: left;
+            display: grid;
+            gap: 0.75rem;
         }
 
         .feature-list li {
-            padding: 8px 0;
-            color: #666;
-            position: relative;
-            padding-left: 25px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #6c757d;
+            font-size: 0.95rem;
         }
 
-        .feature-list li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
+        .feature-list li i {
             color: #28a745;
-            font-weight: bold;
+            font-size: 1.1rem;
+            width: 20px;
         }
 
         @media (max-width: 480px) {
             .welcome-container {
-                padding: 30px 20px;
+                padding: 2rem 1.5rem;
+                margin: 1rem;
             }
             
             .logo {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
             
             .profile-pic-container {
                 width: 100px;
                 height: 100px;
             }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-container {
+            animation: fadeInUp 0.6s ease;
+        }
+
+        /* Success states */
+        .success-feedback {
+            background: #d4edda;
+            color: #155724;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #c3e6cb;
         }
     </style>
 </head>
 <body>
     <div class="welcome-container">
         <div class="logo">Enkryptonite</div>
-        <p class="subtitle">Create your identity to start chatting securely</p>
+        <p class="subtitle">Create your identity to start chatting securely with end-to-end encryption</p>
         
         <div class="profile-section">
             <div class="profile-pic-container" id="profilePicContainer">
-                <div class="profile-pic-placeholder">👤</div>
+                <i class="fas fa-user profile-pic-placeholder"></i>
             </div>
             <p class="upload-text">Click to upload a profile picture (optional)</p>
             <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
@@ -214,35 +299,42 @@
         <div class="form-section" id="registerSection">
             <input type="text" id="nameInput" class="name-input" placeholder="Choose your display name" maxlength="32">
             <div id="errorMessage" class="error-message"></div>
-            <button id="startBtn" class="start-btn">Start Chatting</button>
-            <p style="margin-top:12px;font-size:14px;">Already have an account? <a href="#" id="showSignIn">Sign in</a></p>
+            <button id="startBtn" class="start-btn">
+                <i class="fas fa-rocket"></i>
+                Start Chatting
+            </button>
+            <p style="margin-top:1rem;font-size:14px;">Already have an account? <a href="#" id="showSignIn" class="toggle-link">Sign in</a></p>
         </div>
 
         <!-- Sign-in form (hidden by default) -->
         <div class="form-section" id="signInSection" style="display:none;">
-            <input type="text" id="signInName" class="name-input" placeholder="Display name" maxlength="32" style="margin-bottom:10px;">
-            <input type="text" id="signInCode" class="name-input" placeholder="Secret word (not 4-digit code)" style="margin-bottom:6px;">
-            <label style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-              <input type="checkbox" id="keepSignedIn"> Keep me signed in
-            </label>
+            <input type="text" id="signInName" class="name-input" placeholder="Display name" maxlength="32">
+            <input type="text" id="signInCode" class="name-input" placeholder="Secret word (not 4-digit code)">
+            <div class="checkbox-container">
+                <input type="checkbox" id="keepSignedIn">
+                <label for="keepSignedIn">Keep me signed in</label>
+            </div>
             <div id="signInError" class="error-message"></div>
-            <button id="signInBtn" class="start-btn">Sign In</button>
-            <p style="margin-top:12px;font-size:14px;">New here? <a href="#" id="showRegister">Create account</a></p>
+            <button id="signInBtn" class="start-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </button>
+            <p style="margin-top:1rem;font-size:14px;">New here? <a href="#" id="showRegister" class="toggle-link">Create account</a></p>
         </div>
         
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: #666;">Setting up your account...</p>
+            <p style="color: #6c757d;">Setting up your account...</p>
         </div>
         
         <div class="features">
-            <h3>What you get:</h3>
+            <h3><i class="fas fa-shield-alt"></i> What you get:</h3>
             <ul class="feature-list">
-                <li>End-to-end encrypted messaging</li>
-                <li>Private conversations</li>
-                <li>Star your favorite chats</li>
-                <li>No registration required</li>
-                <li>Instant setup</li>
+                <li><i class="fas fa-lock"></i> End-to-end encrypted messaging</li>
+                <li><i class="fas fa-user-friends"></i> Private conversations</li>
+                <li><i class="fas fa-star"></i> Star your favorite chats</li>
+                <li><i class="fas fa-user-plus"></i> No registration required</li>
+                <li><i class="fas fa-bolt"></i> Instant setup</li>
             </ul>
         </div>
     </div>
@@ -281,7 +373,14 @@
                     return;
                 }
 
-                // Display image without compression
+                // Check file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    showError('Image must be smaller than 5MB.');
+                    profilePicInput.value = '';
+                    return;
+                }
+
+                // Display image
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     selectedProfilePic = event.target.result;
@@ -407,8 +506,17 @@
                     localStorage.setItem('profilePic', userData.profilePic);
                 }
                 
-                // Redirect to homepage
-                window.location.href = '/';
+                // Show success and redirect
+                loading.innerHTML = `
+                    <div style="color: #28a745;">
+                        <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>Account created successfully!</p>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
                 
             } catch (error) {
                 console.error('Error registering user:', error);
@@ -437,8 +545,18 @@
         });
 
         // Toggle sections
-        showSignIn.onclick = (e) => { e.preventDefault(); registerSection.style.display='none'; signInSection.style.display='block'; };
-        showRegister.onclick = (e) => { e.preventDefault(); signInSection.style.display='none'; registerSection.style.display='block'; };
+        showSignIn.onclick = (e) => { 
+            e.preventDefault(); 
+            registerSection.style.display='none'; 
+            signInSection.style.display='block'; 
+            clearError();
+        };
+        showRegister.onclick = (e) => { 
+            e.preventDefault(); 
+            signInSection.style.display='none'; 
+            registerSection.style.display='block'; 
+            signInError.textContent = '';
+        };
 
         // Auto-redirect if remember flag set
         (function(){
@@ -454,20 +572,51 @@
             const dName = signInName.value.trim();
             const code = signInCode.value.trim();
             signInError.textContent='';
-            if(!dName || !code){ signInError.textContent='Enter name and secret word'; return; }
+            
+            if(!dName || !code){ 
+                signInError.textContent='Please enter both display name and secret word'; 
+                return; 
+            }
+
+            signInBtn.disabled = true;
+            signInBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;"></div>';
 
             try {
                 const res = await fetch(`/api/find-user?displayName=${encodeURIComponent(dName)}&code=${encodeURIComponent(code)}`);
-                if(!res.ok){ signInError.textContent='User not found or secret word incorrect'; return; }
+                if(!res.ok){ 
+                    signInError.textContent='User not found or secret word incorrect'; 
+                    return; 
+                }
                 const data = await res.json();
                 localStorage.setItem('userId', data.userId);
                 localStorage.setItem('userName', data.name);
-                if(keepSignedInChk.checked){ localStorage.setItem('keepSignedIn','true'); }
-                window.location.href = '/';
+                if(keepSignedInChk.checked){ 
+                    localStorage.setItem('keepSignedIn','true'); 
+                }
+                
+                // Show success
+                signInBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
             } catch (err) {
-                signInError.textContent='Error signing in';
+                signInError.textContent='Error signing in. Please try again.';
+            } finally {
+                if (signInError.textContent) {
+                    signInBtn.disabled = false;
+                    signInBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+                }
             }
         };
+
+        // Handle Enter key for sign-in
+        [signInName, signInCode].forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !signInBtn.disabled) {
+                    signInBtn.click();
+                }
+            });
+        });
     </script>
 </body>
-</html> 
+</html>
