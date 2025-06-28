@@ -661,9 +661,54 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/e2ee.js"></script>
+    <!-- Load scripts in the correct order -->
     <script>
+        // Check if we're in development or production
+        const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        // Function to load scripts dynamically
+        function loadScript(src, callback) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = callback;
+            script.onerror = function() {
+                console.error('Failed to load script:', src);
+                if (callback) callback(new Error('Script load failed'));
+            };
+            document.head.appendChild(script);
+        }
+
+        // Load Socket.IO first
+        loadScript('/socket.io/socket.io.js', function(error) {
+            if (error) {
+                console.error('Socket.IO failed to load, trying CDN fallback');
+                loadScript('https://cdn.socket.io/4.7.2/socket.io.min.js', function(cdnError) {
+                    if (cdnError) {
+                        console.error('Socket.IO CDN also failed');
+                        alert('Failed to load Socket.IO. Chat functionality may not work.');
+                    } else {
+                        console.log('Socket.IO loaded from CDN');
+                        loadE2EE();
+                    }
+                });
+            } else {
+                console.log('Socket.IO loaded successfully');
+                loadE2EE();
+            }
+        });
+
+        // Load E2EE after Socket.IO
+        function loadE2EE() {
+            loadScript('/e2ee.js', function(error) {
+                if (error) {
+                    console.error('E2EE failed to load');
+                    alert('Encryption system failed to load. Some features may not work properly.');
+                }
+                // Initialize the chat regardless
+                initializeChat();
+            });
+        }
+
         // Global variables
         let socket;
         let chatId;
@@ -674,7 +719,7 @@
         let typingTimeout;
 
         // Initialize chat
-        document.addEventListener('DOMContentLoaded', async () => {
+        function initializeChat() {
             // Get chat ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             chatId = urlParams.get('chatID');
@@ -694,29 +739,40 @@
                 return;
             }
 
-            // Initialize E2EE
-            try {
-                e2eeMessenger = new E2EEMessenger();
-                await e2eeMessenger.initialize();
-                console.log('E2EE initialized successfully');
-            } catch (error) {
-                console.error('E2EE initialization failed:', error);
-                alert('Encryption system failed to initialize. Some features may not work properly.');
+            // Initialize E2EE if available
+            if (typeof E2EEMessenger !== 'undefined') {
+                try {
+                    e2eeMessenger = new E2EEMessenger();
+                    e2eeMessenger.initialize().then(() => {
+                        console.log('E2EE initialized successfully');
+                    }).catch(error => {
+                        console.error('E2EE initialization failed:', error);
+                        alert('Encryption system failed to initialize. Some features may not work properly.');
+                    });
+                } catch (error) {
+                    console.error('E2EE initialization failed:', error);
+                    alert('Encryption system failed to initialize. Some features may not work properly.');
+                }
             }
 
-            // Initialize socket connection
-            initializeSocket();
+            // Initialize socket connection if available
+            if (typeof io !== 'undefined') {
+                initializeSocket();
+            } else {
+                console.error('Socket.IO not available');
+                alert('Real-time features may not work properly.');
+            }
             
             // Load chat info and messages
-            await loadChatInfo();
-            await loadMessages();
+            loadChatInfo();
+            loadMessages();
             
             // Set up event listeners
             setupEventListeners();
             
             // Set up share link
             document.getElementById('chatLink').value = window.location.href;
-        });
+        }
 
         function initializeSocket() {
             socket = io();
@@ -830,12 +886,14 @@
         }
 
         function handleTyping() {
-            socket.emit('typing', { chatId, userId, userName });
-            
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                socket.emit('stop-typing', { chatId, userId });
-            }, 1000);
+            if (socket) {
+                socket.emit('typing', { chatId, userId, userName });
+                
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    socket.emit('stop-typing', { chatId, userId });
+                }, 1000);
+            }
         }
 
         async function sendMessage(e) {
@@ -864,7 +922,9 @@
                 if (response.ok) {
                     messageInput.value = '';
                     autoResize(messageInput);
-                    socket.emit('stop-typing', { chatId, userId });
+                    if (socket) {
+                        socket.emit('stop-typing', { chatId, userId });
+                    }
                 } else {
                     throw new Error('Failed to send message');
                 }
@@ -1171,10 +1231,10 @@
 
         function escapeHtml(unsafe) {
             return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
+                .replace(/&/g, "&")
+                .replace(/</g, "<")
+                .replace(/>/g, ">")
+                .replace(/"/g, """)
                 .replace(/'/g, "&#039;");
         }
 
