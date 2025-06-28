@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Enkryptonite</title>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -210,6 +211,174 @@
     .message-body {
       flex: 1;
     }
+    body.stats-font #mainChatContent, body.stats-font #mainChatContent * {
+      background-color: #181818 !important;
+      color: #00ff00 !important;
+      border-color: #444 !important;
+      cursor: auto !important;
+      font-size: 13px !important;
+      line-height: 1.3 !important;
+    }
+    body.stats-font #mainChatContent {
+      padding: 12px 8px !important;
+    }
+    body.stats-font #leaveChatBtn {
+      background: #dc3545 !important;
+      color: #fff !important;
+      font-size: 16px !important;
+      padding: 10px 20px !important;
+      border-radius: 4px !important;
+    }
+    body.stats-font #mainChatContent .avatar-circle {
+      color: #00ff00 !important;
+      border-color: #00ff00 !important;
+      /* Removed background-image and background-color overrides to allow profile picture display */
+    }
+    .message .reaction-btn {
+      background: none;
+      border: none;
+      color: #ffc107;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+      padding: 4px;
+      font-size: 16px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .message:hover .reaction-btn {
+      opacity: 1;
+    }
+    .reactions-container {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    body.stats-font, body.stats-font * {
+      font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace !important;
+    }
+    body.stats-font #mainChatContent, body.stats-font #mainChatContent * {
+      background-color: #181818 !important;
+      color: #00ff00 !important;
+      border-color: #444 !important;
+      cursor: auto !important;
+    }
+    body.stats-font .message .delete-btn, body.stats-font .star-btn, body.stats-font .back-link, body.stats-font .encryption-status {
+      color: #00ff00 !important;
+    }
+    body.stats-font #leaveChatBtn {
+      background: #222 !important;
+      color: #00ff00 !important;
+      border: 2px solid #444 !important;
+    }
+    body.stats-font #sendButton, body.stats-font #formatButton {
+      background: #222 !important;
+      color: #00ff00 !important;
+      border: 2px solid #444 !important;
+    }
+    body.stats-font #messageInput {
+      background: #181818 !important;
+      color: #00ff00 !important;
+      border: 2px solid #444 !important;
+    }
+    body.stats-font #emojiButton {
+      background: #222 !important;
+      color: #00ff00 !important;
+      border: 2px solid #444 !important;
+    }
+    body.stats-font #gifButton {
+      background: #222 !important;
+      color: #00ff00 !important;
+      border: 2px solid #444 !important;
+    }
+    #gifResults > div {
+      background: #fafbfc;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 0.18s, transform 0.18s;
+      cursor: pointer;
+      border: 1.5px solid #f0f0f0;
+    }
+    #gifResults > div:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+      border: 1.5px solid #007bff;
+      transform: translateY(-2px) scale(1.04);
+      background: #f5faff;
+    }
+    #gifResults img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      display: block;
+      background: #eaeaea;
+    }
+    #closeGifModal:hover {
+      background: #e0e0e0;
+    }
+    #gifModal input:focus {
+      border: 1.5px solid #007bff;
+      background: #fff;
+    }
+    .copy-btn {
+      background: none;
+      border: none;
+      color: #007bff;
+      cursor: pointer;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      padding: 4px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .message:hover .copy-btn {
+      opacity: 1;
+    }
+    .copy-btn:hover {
+      opacity: 1;
+      color: #0056b3;
+    }
+    .edit-btn {
+      background: none;
+      border: none;
+      color: #007bff;
+      cursor: pointer;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      padding: 4px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .message:hover .edit-btn {
+      opacity: 1;
+    }
+    .edit-btn:hover {
+      color: #0056b3;
+    }
+    .reply-btn {
+      background: none;
+      border: none;
+      color: #007bff;
+      cursor: pointer;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      padding: 4px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .message:hover .reply-btn {
+      opacity: 1;
+    }
+    .reply-btn:hover {
+      color: #0056b3;
+    }
   </style>
 </head>
 <body>
@@ -217,15 +386,35 @@
   <button id="accountBtn" style="float:right; margin-top:10px; background:none; border:none; cursor:pointer; padding:4px 8px;">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="8" r="5"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
   </button>
-  <h1 id="chatTitle">Loading...</h1>
+  <h1 id="chatTitleContainer" style="display:flex;align-items:center;gap:10px;">
+    <span id="chatTitle">Loading...</span>
+    <button id="editChatNameBtn" title="Edit chat name" style="display:none;background:none;border:none;cursor:pointer;padding:2px 4px;vertical-align:middle;">
+      <svg id="editChatNameIcon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 3.3a1 1 0 0 1 1.4 1.4l-9 9-2 0.6 0.6-2 9-9z"></path></svg>
+    </button>
+  </h1>
+  <div id="editChatNameForm" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
+    <input id="editChatNameInput" type="text" style="font-size:1.1em;padding:4px 8px;border-radius:5px;border:1.5px solid #ccc;min-width:180px;">
+    <button id="saveChatNameBtn" style="background:#007bff;color:white;border:none;border-radius:5px;padding:4px 14px;font-size:1em;">Save</button>
+    <button id="cancelChatNameBtn" style="background:#eee;color:#333;border:none;border-radius:5px;padding:4px 10px;font-size:1em;">Cancel</button>
+  </div>
+
+  <div id="joinChatButton" style="margin-bottom: 16px; display: none;">
+    <button id="joinChatBtn" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Join Chat</button>
+  </div>
+
+  <div id="leaveChatButton" style="margin-bottom: 16px; display: none;">
+    <button id="leaveChatBtn" style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Leave Chat</button>
+  </div>
+
+  <div id="chatMembersList" style="margin-bottom: 16px;"></div>
 
   <div id="encryptionStatus" class="encryption-status">Initializing encryption...</div>
 
-  <!-- Username prompt -->
-  <div id="namePrompt">
-    <label for="nameInput">Enter your name:</label>
-    <input type="text" id="nameInput" />
-    <button id="startChat">Start Chat</button>
+  <!-- Add the select mode and delete selected buttons above the chat UI -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+    <button id="toggleSelectModeBtn" style="background:#ffc107;color:#333;border:none;border-radius:6px;padding:6px 16px;font-size:15px;cursor:pointer;">Select Messages</button>
+    <button id="deleteSelectedBtn" style="display:none;background:#dc3545;color:white;border:none;border-radius:6px;padding:6px 16px;font-size:15px;cursor:pointer;">Delete Selected</button>
+    <span id="selectedCount" style="margin-left:8px;color:#dc3545;font-weight:bold;"></span>
   </div>
 
   <!-- Chat UI -->
@@ -233,21 +422,35 @@
     <div id="chatBox"></div>
     <div id="inputContainer">
       <input id="messageInput" type="text" placeholder="Type a message..." />
+      <button id="sendButton">Send</button>
       <label for="imageUpload" class="image-upload-btn">
         <span>Upload Images</span>
         <input type="file" id="imageUpload" accept="image/*" style="display: none;" />
       </label>
-      <button id="sendButton">Send</button>
+      <!-- New file upload button for all file types -->
+      <label for="fileUpload" class="image-upload-btn" style="background:#e9ecef;">
+        <span>Upload File</span>
+        <input type="file" id="fileUpload" style="display: none;" />
+      </label>
+      <button id="emojiButton" style="background:#007bff;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:16px;cursor:pointer;">Emoji</button>
+      <button id="gifButton" style="background:#ff6b6b;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:14px;cursor:pointer;">GIF</button>
+      <button id="toggleConsole" style="background:#222;color:#0f0;border:2px solid #444;border-radius:8px;padding:8px 16px;font-size:14px;cursor:pointer;">Nerd Mode</button>
+      <button id="formatButton" style="background:#6f42c1;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:14px;cursor:pointer;">Format</button>
     </div>
     <div id="dropZone" class="drop-zone">
       <div class="drop-zone-content">
-        <span class="drop-zone-icon">��</span>
+        <span class="drop-zone-icon"></span>
         <p>Drag and drop images here</p>
       </div>
     </div>
   </div>
 
-  <div id="accountModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2000; justify-content:center; align-items:center;">
+  <div id="splitStatsContainer" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:3000;pointer-events:none;">
+    <div id="splitChat" style="position:absolute;top:0;left:0;width:60vw;height:100vh;pointer-events:auto;overflow:auto;background:#181818;"></div>
+    <div id="splitStats" style="position:absolute;top:0;right:0;width:40vw;height:100vh;background:#111;color:#0f0;padding:16px;font-size:16px;font-family:'Fira Mono', 'Consolas', 'Menlo', monospace;overflow:auto;resize:horizontal;min-width:200px;max-width:80vw;pointer-events:auto;border-left:2px solid #444;box-sizing:border-box;"></div>
+  </div>
+
+  <div id="accountModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:5000; justify-content:center; align-items:center; pointer-events:auto;">
     <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
       <button id="closeAccountModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
       <h2>Account</h2>
@@ -257,6 +460,7 @@
         <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
         <label for="profilePicInput" style="cursor:pointer; color:#007bff; text-decoration:underline;">Upload/Change Profile Picture</label>
       </form>
+      <button id="logoutButton" style="background:#dc3545;color:white;border:none;border-radius:8px;padding:10px 20px;font-size:16px;cursor:pointer;margin-top:1rem;">Logout</button>
     </div>
   </div>
 
@@ -271,8 +475,155 @@
     </div>
   </div>
 
+  <!-- Join Chat Confirmation Modal -->
+  <div id="joinChatModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2200; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
+      <h2 style="margin-top:0;">Join Chat</h2>
+      <div id="joinChatMessage" style="margin:1.5rem 0; text-align:center; line-height:1.5;"></div>
+      <div style="display:flex; gap:10px; margin-top:1rem;">
+        <button id="joinChatYes" style="background-color:#007bff; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Yes, Join Chat</button>
+        <button id="joinChatNo" style="background-color:#6c757d; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">No, Go Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Text Formatting Modal -->
+  <div id="formatModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2300; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:2rem; border-radius:8px; min-width:350px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
+      <button id="closeFormatModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
+      <h2 style="margin-top:0;">Text Formatting</h2>
+      
+      <div style="width:100%; margin:1rem 0;">
+        <label for="fontSize" style="display:block; margin-bottom:0.5rem; font-weight:bold;">Font Size:</label>
+        <select id="fontSize" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:1rem;">
+          <option value="12">Small (12px)</option>
+          <option value="14">Normal (14px)</option>
+          <option value="16">Medium (16px)</option>
+          <option value="18">Large (18px)</option>
+          <option value="20">Extra Large (20px)</option>
+          <option value="24">Huge (24px)</option>
+        </select>
+      </div>
+
+      <div style="width:100%; margin:1rem 0;">
+        <label for="fontFamily" style="display:block; margin-bottom:0.5rem; font-weight:bold;">Font Family:</label>
+        <select id="fontFamily" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:1rem;">
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Times New Roman', Times, serif">Times New Roman</option>
+          <option value="'Courier New', Courier, monospace">Courier New</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="Verdana, Geneva, sans-serif">Verdana</option>
+          <option value="Tahoma, Geneva, sans-serif">Tahoma</option>
+          <option value="'Trebuchet MS', Helvetica, sans-serif">Trebuchet MS</option>
+          <option value="Impact, Charcoal, sans-serif">Impact</option>
+          <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans MS</option>
+          <option value="'Lucida Console', Monaco, monospace">Lucida Console</option>
+          <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
+          <option value="'Palatino Linotype', 'Book Antiqua', Palatino, serif">Palatino Linotype</option>
+          <option value="'Garamond', serif">Garamond</option>
+          <option value="'Brush Script MT', cursive">Brush Script MT</option>
+          <option value="'Roboto', sans-serif" data-googlefont>Roboto</option>
+          <option value="'Open Sans', sans-serif" data-googlefont>Open Sans</option>
+          <option value="'Lato', sans-serif" data-googlefont>Lato</option>
+          <option value="'Montserrat', sans-serif" data-googlefont>Montserrat</option>
+          <option value="'Oswald', sans-serif" data-googlefont>Oswald</option>
+          <option value="'Raleway', sans-serif" data-googlefont>Raleway</option>
+          <option value="'Merriweather', serif" data-googlefont>Merriweather</option>
+          <option value="'Fira Mono', monospace" data-googlefont>Fira Mono</option>
+          <option value="'Dancing Script', cursive" data-googlefont>Dancing Script</option>
+          <option value="'Pacifico', cursive" data-googlefont>Pacifico</option>
+          <option value="'Indie Flower', cursive" data-googlefont>Indie Flower</option>
+          <option value="'Bebas Neue', cursive" data-googlefont>Bebas Neue</option>
+          <option value="'Playfair Display', serif" data-googlefont>Playfair Display</option>
+          <option value="'Quicksand', sans-serif" data-googlefont>Quicksand</option>
+          <option value="'Source Code Pro', monospace" data-googlefont>Source Code Pro</option>
+          <option value="'Space Mono', monospace" data-googlefont>Space Mono</option>
+          <option value="'Caveat', cursive" data-googlefont>Caveat</option>
+          <option value="'Shadows Into Light', cursive" data-googlefont>Shadows Into Light</option>
+        </select>
+      </div>
+
+      <div style="width:100%; margin:1rem 0;">
+        <label for="textColor" style="display:block; margin-bottom:0.5rem; font-weight:bold;">Text Color:</label>
+        <input type="color" id="textColor" style="width:100%; height:40px; border:1px solid #ccc; border-radius:4px; margin-bottom:1rem;" value="#000000">
+      </div>
+
+      <div style="width:100%; margin:1rem 0;">
+        <label style="display:block; margin-bottom:0.5rem; font-weight:bold;">Preview:</label>
+        <div id="formatPreview" style="padding:1rem; border:1px solid #ccc; border-radius:4px; min-height:60px; background:#f8f9fa;">
+          This is how your text will look with the selected formatting.
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:1rem;">
+        <button id="saveFormat" style="background-color:#28a745; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Save Formatting</button>
+        <button id="resetFormat" style="background-color:#dc3545; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Reset to Default</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout Warning Modal -->
+  <div id="logoutModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2400; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:2rem; border-radius:8px; min-width:400px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
+      <button id="closeLogoutModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
+      <h2 style="margin-top:0; color:#dc3545;">⚠️ Logout Warning</h2>
+      
+      <div style="width:100%; margin:1rem 0; text-align:center;">
+        <p style="margin-bottom:1rem; color:#666;">Please copy your login information before logging out. You'll need this to log back in:</p>
+        
+        <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
+          <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">Display Name:</label>
+          <div id="logoutDisplayName" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
+        </div>
+        
+        <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
+          <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">4-Digit Code:</label>
+          <div id="logoutCode" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
+        </div>
+        
+        <p style="margin-top:1rem; color:#dc3545; font-size:14px;">
+          <strong>⚠️ Warning:</strong> If you don't save this information, you may not be able to log back in with the same account!
+        </p>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:1rem;">
+        <button id="confirmLogout" style="background-color:#dc3545; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Logout</button>
+        <button id="backToAccount" style="background-color:#6c757d; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Back to Account</button>
+        <button id="cancelLogout" style="background-color:#6c757d; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add typing indicator UI below input -->
+  <div id="typingIndicator" style="margin-top:4px; min-height:20px; color:#888; font-size:14px;"></div>
+
+  <!-- GIF Search Modal -->
+  <div id="gifModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2500; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:2.5rem 2rem 2rem 2rem; border-radius:18px; min-width:350px; max-width:480px; width:95vw; max-height:80vh; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center; box-shadow:0 8px 32px rgba(0,0,0,0.18); overflow:hidden;">
+      <button id="closeGifModal" style="position:absolute; top:18px; right:18px; background:#f5f5f5; border:none; border-radius:50%; width:36px; height:36px; font-size:22px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.08); transition:background 0.2s;">×</button>
+      <h2 style="margin-top:0; margin-bottom:1.2rem; font-size:1.4rem; font-weight:600; letter-spacing:0.01em; color:#222;">Search GIFs</h2>
+      <div style="width:100%; margin-bottom:1.2rem;">
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="gifSearchInput" placeholder="Search for GIFs..." style="flex:1; padding:10px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:16px; background:#fafbfc; outline:none; transition:border 0.2s;">
+          <button id="gifSearchBtn" style="background:#007bff; color:white; border:none; border-radius:8px; padding:10px 20px; cursor:pointer; font-size:16px; font-weight:500; box-shadow:0 1px 4px rgba(0,0,0,0.06); transition:background 0.2s;">Search</button>
+        </div>
+      </div>
+      <div style="width:100%; height:1px; background:#f0f0f0; margin-bottom:1.2rem;"></div>
+      <div id="gifResults" style="width:100%; max-height:340px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:16px; margin-bottom:0.5rem;">
+        <!-- GIF results will be populated here -->
+      </div>
+      <div id="gifLoading" style="display:none; text-align:center; padding:2rem;">
+        <div style="color:#666;">Loading GIFs...</div>
+      </div>
+      <div id="gifError" style="display:none; text-align:center; padding:1rem; color:#dc3545;">
+        <!-- Error messages will appear here -->
+      </div>
+    </div>
+  </div>
+
   <script src="/e2ee.js"></script>
   <script src="/js/utils.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
   <script>
     // Get chat ID from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -375,15 +726,199 @@
         console.log('Received chat data:', {
           id: data.id,
           name: data.name,
-          messageCount: data.messages ? data.messages.length : 0
+          messageCount: data.messages ? data.messages.length : 0,
+          members: data.members
         });
         
         // Update chat title
         document.getElementById('chatTitle').textContent = data.name;
+        // Show edit button only if user is creator
+        if (data.creatorId === userId) {
+          document.getElementById('editChatNameBtn').style.display = 'inline-block';
+        } else {
+          document.getElementById('editChatNameBtn').style.display = 'none';
+        }
         console.log('Updated chat title to:', data.name);
+
+        // ----- Free-trial logic constants -----
+        const TRIAL_DURATION_MS = 60 * 60 * 1000; // 1 hour
+        const trialKey = `trialStart_${chatID}`;
+        // --------------------------------------
+
+        // Check if current user is in members list
+        const isUserInChat = Array.isArray(data.members) && data.members.includes(userId);
+        const isCreator = data.creatorId === userId; // Check if user is the creator
+        window.isUserMember = isUserInChat || isCreator; // Creator is considered a member
+        const joinButton = document.getElementById('joinChatButton');
+        const leaveButtonDiv = document.getElementById('leaveChatButton');
+        
+        const leftFlag = localStorage.getItem(`left_${chatID}`) === '1';
+
+        if (!isUserInChat && !isCreator && leftFlag) {
+          // User previously left this chat – no free trial, just show join button
+          joinButton.style.display = 'block';
+          leaveButtonDiv.style.display = 'none';
+          const chatUIEl = document.getElementById('chatUI');
+          if (chatUIEl) chatUIEl.style.display = 'none';
+          const banner = document.getElementById('trialBanner');
+          if (banner) banner.remove();
+          return; // skip rest of trial logic and message loading
+        }
+
+        if (!isUserInChat && !isCreator) {
+          // Show join button if user is not in chat and not the creator
+          joinButton.style.display = 'block';
+          leaveButtonDiv.style.display = 'none';
+
+          // Determine/record trial start time
+          let trialStart = parseInt(localStorage.getItem(trialKey) || '0', 10);
+          if (!trialStart) {
+            trialStart = Date.now();
+            localStorage.setItem(trialKey, trialStart.toString());
+          }
+          const prevElapsed = parseInt(localStorage.getItem(`trialElapsed_${chatID}`)||'0',10);
+          const elapsed = prevElapsed + (Date.now() - trialStart);
+
+          // If trial already expired (user refreshed after 1h) prompt to join immediately
+          if (elapsed >= TRIAL_DURATION_MS) {
+            document.getElementById('chatTitle').textContent = `${data.name} (Trial expired – please join)`;
+            const chatUIEl = document.getElementById('chatUI');
+            if (chatUIEl) chatUIEl.style.display = 'block';
+            document.getElementById('joinChatButton').style.display = 'block';
+            // Disable inputs
+            const inputContainer = document.getElementById('inputContainer');
+            if (inputContainer) inputContainer.style.opacity = '0.4';
+            return; // skip rest of trial init
+          }
+
+          // Ensure chat UI and controls visible for full trial functionality
+          const chatUIEl = document.getElementById('chatUI');
+          if (chatUIEl) chatUIEl.style.display = 'block';
+
+          // Display / update a live countdown banner
+          let banner = document.getElementById('trialBanner');
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'trialBanner';
+            banner.style.cssText = 'background:#fff3cd;color:#856404;padding:10px;border:1px solid #ffeeba;border-radius:4px;margin-bottom:12px;';
+            chatUIEl.parentNode.insertBefore(banner, chatUIEl);
+          }
+
+          // Function to format mm:ss
+          const formatTime = (ms) => {
+            const totalSec = Math.max(0, Math.floor(ms / 1000));
+            const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+            const s = String(totalSec % 60).padStart(2, '0');
+            return `${m}:${s}`;
+          };
+
+          // Update banner immediately and every second
+          banner.textContent = `Free trial time left: ${formatTime(TRIAL_DURATION_MS - elapsed)} – enjoy chatting!`;
+          if (window._trialTimer) clearInterval(window._trialTimer);
+          window._trialTimer = setInterval(() => {
+            const remaining = TRIAL_DURATION_MS - (prevElapsed + (Date.now() - trialStart));
+            if (remaining <= 0) {
+              clearInterval(window._trialTimer);
+              // Trial expired: prompt user
+              banner.remove();
+              document.getElementById('joinChatModal').style.display = 'flex';
+              // Disable input while modal open
+              const inputContainer = document.getElementById('inputContainer');
+              if (inputContainer) inputContainer.style.opacity = '0.4';
+              return;
+            }
+            banner.textContent = `Free trial time left: ${formatTime(remaining)} – enjoy chatting!`;
+          }, 1000);
+
+          // Persist elapsed time when user navigates away (tab close, refresh, other page)
+          const beforeUnloadHandler = () => {
+            const startTs = parseInt(localStorage.getItem(`trialStart_${chatID}`)||'0',10);
+            if (startTs) {
+              const prev = parseInt(localStorage.getItem(`trialElapsed_${chatID}`)||'0',10);
+              const elapsedNow = Date.now() - startTs;
+              localStorage.setItem(`trialElapsed_${chatID}`, (prev + elapsedNow).toString());
+              localStorage.removeItem(`trialStart_${chatID}`);
+            }
+          };
+          window.addEventListener('beforeunload', beforeUnloadHandler);
+          // Also remove the listener if user ultimately joins or leaves to avoid leaks
+          window._cleanupTrialListener = () => {
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+          };
+
+          // Automatically start chat (WebSocket, E2EE) if not already started
+          if (!window._chatStarted) {
+            window._chatStarted = true;
+            if (currentUserName) {
+              startChat(currentUserName);
+            } else {
+              // Fetch user name then start chat
+              fetch(`/user/${userId}`)
+                .then(res => res.json())
+                .then(d => {
+                  currentUserName = d.name;
+                  startChat(currentUserName);
+                })
+                .catch(() => startChat('Guest'));
+            }
+          }
+        } else {
+          // Hide join button if user is already in chat or is the creator
+          joinButton.style.display = 'none';
+          leaveButtonDiv.style.display = 'block';
+          // If we are a member or creator we can show chat normally
+          const inputContainer = document.getElementById('inputContainer');
+          if (inputContainer) inputContainer.style.display = 'flex';
+          // Remove any trial banner
+          const old = document.getElementById('trialBanner');
+          if (old) old.remove();
+
+          // Automatically start chat UI for members and creators (was removed earlier)
+          if (!window._chatStarted) {
+            window._chatStarted = true;
+            if (currentUserName) {
+              startChat(currentUserName);
+            } else {
+              // Fetch user name then start
+              fetch(`/user/${userId}`)
+                .then(res => res.json())
+                .then(d => {
+                  currentUserName = d.name;
+                  startChat(currentUserName);
+                })
+                .catch(() => {
+                  startChat('Me');
+                });
+            }
+          }
+        }
+
+        // --- Render chat members list ---
+        const membersListDiv = document.getElementById('chatMembersList');
+        if (Array.isArray(data.members) && data.members.length > 0) {
+          // Fetch user info for all members
+          Promise.all(data.members.map(uid => getUserInfoById(uid))).then(userInfos => {
+            membersListDiv.innerHTML = '<b>Members:</b> ' + userInfos.map(u => {
+              // Render as clickable span
+              return `<span class="chat-member-name" data-uid="${u.userId || ''}" style="color:#007bff; cursor:pointer; margin-right:10px; text-decoration:underline;">${escapeHtml(u.fullName || u.name)}</span>`;
+            }).join(' ');
+            // Add click handlers
+            Array.from(membersListDiv.querySelectorAll('.chat-member-name')).forEach(item => {
+              item.onclick = () => {
+                const uid = item.getAttribute('data-uid');
+                const name = item.textContent;
+                if (uid) showUserProfileModal(uid, name);
+              };
+            });
+          });
+        } else {
+          membersListDiv.innerHTML = '';
+        }
+        // --- End render chat members list ---
         
         // Update chat messages if we have them
         if (data.messages && data.messages.length > 0) {
+          window._allMessages = data.messages.slice();
           console.log('Rendering', data.messages.length, 'messages');
           const chatBox = document.getElementById('chatBox');
           chatBox.innerHTML = '';
@@ -403,8 +938,150 @@
       }
     }
 
+    // Function to handle joining a chat
+    async function joinChat() {
+      if (!userId) {
+        alert('You must be logged in to join a chat.');
+        return;
+      }
+
+      const chatName = document.getElementById('chatTitle').textContent;
+      const joinModal = document.getElementById('joinChatModal');
+      const joinMessage = document.getElementById('joinChatMessage');
+      
+      // Set the message in the modal
+      joinMessage.innerHTML = `Would you like to join <strong>"${chatName}"</strong>?<br><br>This will:<br>• Add you to the chat members<br>• Star the chat for you<br>• Add it to your chat list`;
+      
+      // Show the modal
+      joinModal.style.display = 'flex';
+    }
+
+    // Function to handle the actual joining process
+    async function confirmJoinChat() {
+      const chatName = document.getElementById('chatTitle').textContent;
+      
+      try {
+        // Star the chat for the user
+        const starResponse = await fetch(`/api/user/${userId}/star`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ chatId: chatID })
+        });
+
+        if (!starResponse.ok) {
+          console.error('Failed to star chat');
+        }
+
+        // Add user to chat members
+        const addMemberResponse = await fetch(`/api/chat/${chatID}/add-member`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId: userId })
+        });
+
+        if (!addMemberResponse.ok) {
+          console.error('Failed to add user to chat members');
+        }
+
+        // Hide join button and modal, then reload chat data
+        document.getElementById('joinChatButton').style.display = 'none';
+        document.getElementById('joinChatModal').style.display = 'none';
+        await loadChatData();
+
+        alert('Successfully joined the chat!');
+        // Now start the chat UI and WebSocket connection
+        await startChat(currentUserName || userName);
+      } catch (error) {
+        console.error('Error joining chat:', error);
+        alert('Failed to join chat. Please try again.');
+      }
+    }
+
+    // Function to decline joining and go back
+    function declineJoinChat() {
+      // Hide modal and redirect to index.html
+      document.getElementById('joinChatModal').style.display = 'none';
+      window.location.href = '/';
+    }
+
+    // Function to leave a chat
+    async function leaveChat() {
+      if (!userId) return;
+      const confirmLeave = confirm('Are you sure you want to leave this chat?');
+      if (!confirmLeave) return;
+
+      try {
+        const res = await fetch(`/api/chat/${chatID}/remove-member`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        if (!res.ok) throw new Error('Failed to leave chat');
+
+        // Unstar chat for this user (if starred)
+        try {
+          await fetch(`/api/user/${userId}/unstar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId: chatID })
+          });
+        } catch {}
+
+        if (window.isUserMember) {
+          // Member leaving: skip free-trial next time
+          localStorage.setItem(`left_${chatID}`, '1');
+        } else {
+          // Trial user leaving: pause timer
+          const trialStart = parseInt(localStorage.getItem(`trialStart_${chatID}`)||'0',10);
+          if (trialStart) {
+            const elapsedSoFar = Date.now() - trialStart;
+            const prevElapsed = parseInt(localStorage.getItem(`trialElapsed_${chatID}`)||'0',10);
+            localStorage.setItem(`trialElapsed_${chatID}`, (prevElapsed + elapsedSoFar).toString());
+            localStorage.removeItem(`trialStart_${chatID}`); // clear running timer
+          }
+        }
+
+        // Redirect home
+        window.location.href = '/';
+      } catch (err) {
+        alert('Could not leave chat.');
+        console.error(err);
+      }
+    }
+
+    // Add click handlers for join button and modal buttons
+    document.addEventListener('DOMContentLoaded', async function() {
+      document.getElementById('joinChatBtn').addEventListener('click', joinChat);
+      document.getElementById('joinChatYes').addEventListener('click', confirmJoinChat);
+      document.getElementById('joinChatNo').addEventListener('click', declineJoinChat);
+      document.getElementById('leaveChatBtn').addEventListener('click', leaveChat);
+      
+      // Close modal when clicking outside of it
+      document.getElementById('joinChatModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.style.display = 'none';
+        }
+      });
+
+      // NEW: fetch chat details immediately so UI is not stuck on "Loading..."
+      try {
+        await loadChatData();
+      } catch (err) {
+        console.error('Initial chat data load failed:', err);
+      }
+    });
+
     // Function to start the chat
     async function startChat(name) {
+      // Prevent multiple WebSocket/E2EE initializations
+      if (window._chatStarted && window.ws && window.ws.readyState === WebSocket.OPEN) {
+        console.warn('Chat already started, skipping duplicate startChat call');
+        return;
+      }
       currentUserName = name;
       try {
         // Initialize E2EE first
@@ -432,11 +1109,17 @@
         } catch {}
 
         // Hide name prompt and show chat
-        document.getElementById("namePrompt").style.display = "none";
-        document.getElementById("chatUI").style.display = "block";
+        const namePromptEl = document.getElementById("namePrompt");
+        if (namePromptEl) namePromptEl.style.display = "none";
+
+        const chatUIEl = document.getElementById("chatUI");
+        if (chatUIEl) chatUIEl.style.display = "block";
 
         // Load chat data
         await loadChatData();
+
+        // Load user formatting preferences after user is initialized
+        await loadUserFormatting();
 
         // Initialize WebSocket connection with protocol matching the page
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -454,7 +1137,8 @@
                 type: "join",
                 chatID: chatID,
                 userId: userId,
-                publicKey: publicKey
+                publicKey: publicKey,
+                trial: !window.isUserMember
               }));
             }).catch(error => {
               console.error('Failed to get public key:', error);
@@ -462,7 +1146,8 @@
               ws.send(JSON.stringify({
                 type: "join",
                 chatID: chatID,
-                userId: userId
+                userId: userId,
+                trial: !window.isUserMember
               }));
             });
           } else {
@@ -470,7 +1155,8 @@
             ws.send(JSON.stringify({
               type: "join",
               chatID: chatID,
-              userId: userId
+              userId: userId,
+              trial: !window.isUserMember
             }));
           }
         });
@@ -494,6 +1180,7 @@
             
             // Show message history
             if (data.messages && data.messages.length > 0) {
+                window._allMessages = data.messages.slice();
                 console.log('Displaying', data.messages.length, 'messages from history');
                 for (const message of data.messages) {
                     // Handle encrypted messages
@@ -525,6 +1212,8 @@
                 console.log('No messages in history');
             }
           } else if (data.type === "message") {
+            window._allMessages = window._allMessages || [];
+            window._allMessages.push(data.message);
             // Only show messages from other users
             if (data.message.userId !== userId) {
                 await showMessage(data.message);
@@ -565,7 +1254,41 @@
           } else if (data.type === "public_key") {
             console.log('Received public key in response to request:', data.publicKey.substring(0, 20) + '...');
             recipientPublicKey = data.publicKey;
+          } else if (data.type === 'reaction_added') {
+            const msgEl = document.querySelector(`.message[data-message-id="${data.messageId}"]`);
+            if (msgEl) {
+              if (!msgEl._reactions) msgEl._reactions = [];
+              // Check if this reaction already exists to avoid duplicates
+              const reactionExists = msgEl._reactions.some(r => 
+                String(r.emoji) === String(data.emoji) && String(r.userId) === String(data.userId)
+              );
+              if (!reactionExists) {
+                msgEl._reactions.push({ emoji: data.emoji, userId: data.userId });
+                // Call renderReactions to properly update the display with click handlers
+                const renderReactions = msgEl._renderReactions;
+                if (renderReactions) {
+                  renderReactions();
+                }
+              }
+            } else {
+              // Queue the reaction for later if the message isn't rendered yet
+              if (!pendingReactions[data.messageId]) pendingReactions[data.messageId] = [];
+              pendingReactions[data.messageId].push({ emoji: data.emoji, userId: data.userId });
+            }
+          } else if (data.type === 'reaction_removed') {
+            console.log('[Reaction] Received reaction_removed', data);
+            const msgEl = document.querySelector(`.message[data-message-id="${data.messageId}"]`);
+            if (msgEl && msgEl._reactions) {
+              msgEl._reactions = msgEl._reactions.filter(r => !(String(r.emoji) === String(data.emoji) && String(r.userId) === String(data.userId)));
+              // Call renderReactions to properly update the display with click handlers
+              const renderReactions = msgEl._renderReactions;
+              if (renderReactions) {
+                renderReactions();
+              }
+            }
           }
+
+          statsLog(`RECV: [${data.id||''}] type=${data.type||''} content=${data.content ? (data.content.length > 80 ? data.content.slice(0,80)+'...' : data.content) : ''}`);
         });
 
         // Handle Enter key in message input
@@ -598,7 +1321,6 @@
           const input = document.getElementById("messageInput");
           const content = input.value.trim();
           const file = imageUpload.files[0];
-          
           if (!content && !file) return;
 
           if (ws.readyState === WebSocket.OPEN) {
@@ -610,20 +1332,17 @@
               if (file) {
                 const formData = new FormData();
                 formData.append('image', file);
-                
                 const uploadResponse = await fetch('/upload-image', {
                   method: 'POST',
                   body: formData
                 });
-                
                 if (!uploadResponse.ok) {
                   throw new Error('Failed to upload image');
                 }
-                
                 const uploadResult = await uploadResponse.json();
                 imageUrl = uploadResult.url;
               }
-              
+
               // Show message immediately in UI
               const localMsg = {
                 id: messageId,
@@ -645,16 +1364,22 @@
                 imageUrl: imageUrl
               }));
 
+              // Stats logging
+              statsLog(`SEND: [${messageId}] ${content}`);
+              if (file) statsLog(`UPLOAD: [${messageId}] image ${file.name} (${file.size} bytes)`);
+
               // Clear inputs
               input.value = "";
               imageUpload.value = "";
               imagePreview.style.display = 'none';
             } catch (error) {
               console.error('Failed to send message:', error);
+              statsLog('ERROR: Failed to send message: ' + error);
               alert('Failed to send message. Please try again.');
             }
           } else {
             alert("WebSocket not connected!");
+            statsLog('ERROR: WebSocket not connected!');
           }
         });
 
@@ -727,54 +1452,102 @@
           };
           reader.readAsDataURL(file);
         });
+
+        // Add typing indicator UI below input
+        let typingTimeouts = {};
+        let typingIndicator = document.getElementById('typingIndicator');
+        if (!typingIndicator) {
+          typingIndicator = document.createElement('div');
+          typingIndicator.id = 'typingIndicator';
+          typingIndicator.style.cssText = 'margin-top:4px; min-height:20px; color:#888; font-size:14px;';
+          const inputContainer = document.getElementById('inputContainer');
+          inputContainer.parentNode.insertBefore(typingIndicator, inputContainer.nextSibling);
+        }
+
+        // Throttle typing events
+        let lastTypingSent = 0;
+        document.getElementById('messageInput').addEventListener('input', function() {
+          const now = Date.now();
+          if (ws && ws.readyState === WebSocket.OPEN && now - lastTypingSent > 500) {
+            ws.send(JSON.stringify({ type: 'typing', chatID: chatID, userId: userId }));
+            lastTypingSent = now;
+          }
+        });
+
+        // Listen for typing events from others
+        if (ws && !ws._typingHandlerAttached) {
+          ws.addEventListener('message', function(event) {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.type === 'typing' && data.userId && data.userId !== userId) {
+                showTypingIndicatorById(data.userId);
+              }
+            } catch {}
+          });
+          ws._typingHandlerAttached = true;
+        }
+
+        async function showTypingIndicatorById(uid) {
+          // Use getUserInfoById to get fullName (display name + code)
+          const info = await getUserInfoById(uid);
+          typingIndicator.textContent = `${info.fullName || info.name || uid} is typing...`;
+          if (typingTimeouts[uid]) clearTimeout(typingTimeouts[uid]);
+          typingTimeouts[uid] = setTimeout(() => {
+            typingIndicator.textContent = '';
+            delete typingTimeouts[uid];
+          }, 2000);
+        }
+
+        // New file upload handling
+        const fileUpload = document.getElementById('fileUpload');
+        fileUpload.addEventListener('change', async function(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          const formData = new FormData();
+          formData.append('file', file);
+          try {
+            const uploadResponse = await fetch('/upload-file', {
+              method: 'POST',
+              body: formData
+            });
+            if (!uploadResponse.ok) {
+              alert('Failed to upload file');
+              return;
+            }
+            const uploadResult = await uploadResponse.json();
+            // Send a chat message with the file link
+            const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            const fileUrl = uploadResult.url;
+            const fileName = uploadResult.originalName;
+            const fileMsg = {
+              id: messageId,
+              content: '',
+              timestamp: Date.now(),
+              sender: currentUserName || 'You',
+              userId: userId,
+              fileUrl: fileUrl,
+              fileName: fileName
+            };
+            await showMessage(fileMsg);
+            ws.send(JSON.stringify({
+              type: 'message',
+              id: messageId,
+              content: '',
+              sender: currentUserName,
+              userId: userId,
+              fileUrl: fileUrl,
+              fileName: fileName
+            }));
+            fileUpload.value = '';
+          } catch (err) {
+            alert('Failed to upload file');
+          }
+        });
       } catch (error) {
         console.error('Error starting chat:', error);
         alert('Failed to start chat. Please try again.');
       }
     }
-
-    // Check if we have a stored user ID and try to load the name
-    if (userId) {
-      fetch(`/user/${userId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.name) {
-            // Auto-start chat with existing user
-            startChat(data.name).catch(error => {
-              console.error('Failed to auto-start chat:', error);
-              // Clear invalid user ID
-              localStorage.removeItem('userId');
-              userId = null;
-            });
-          } else {
-            // Clear invalid user ID
-            localStorage.removeItem('userId');
-            userId = null;
-          }
-        })
-        .catch(error => {
-          console.error('Error loading user:', error);
-          // Clear invalid user ID
-          localStorage.removeItem('userId');
-          userId = null;
-        });
-    }
-
-    // Handle manual name entry
-    document.getElementById("startChat").addEventListener("click", async () => {
-      const input = document.getElementById("nameInput").value.trim();
-      if (!input) {
-        alert("Please enter a name.");
-        return;
-      }
-
-      try {
-        await startChat(input);
-      } catch (error) {
-        console.error('Failed to start chat:', error);
-        alert('Failed to start chat. Please try again.');
-      }
-    });
 
     // Helper: get initials
     function getInitials(name) {
@@ -789,7 +1562,7 @@
     const userInfoByIdCache = {};
 
     async function getUserInfoById(uid, fallbackName = '') {
-      if (!uid) return { initials: getInitials(fallbackName), profilePic: null, code: null, name: fallbackName, fullName: fallbackName };
+      if (!uid) return { userId: '', initials: getInitials(fallbackName), profilePic: null, code: null, name: fallbackName, fullName: fallbackName };
 
       // Always fetch fresh for current user to keep avatar current
       if (uid === userId) {
@@ -798,6 +1571,7 @@
           if (res.ok) {
             const data = await res.json();
             const info = { 
+              userId: uid, // Include userId in the info object
               initials: getInitials(data.name), 
               profilePic: data.profilePic || null,
               code: data.code || null,
@@ -817,6 +1591,7 @@
         if (res.ok) {
           const data = await res.json();
           const info = { 
+            userId: uid, // Include userId in the info object
             initials: getInitials(data.name), 
             profilePic: data.profilePic || null,
             code: data.code || null,
@@ -829,7 +1604,7 @@
       } catch {}
 
       // Fallback to initials only
-      const info = { initials: getInitials(fallbackName), profilePic: null, code: null, name: fallbackName, fullName: fallbackName };
+      const info = { userId: uid, initials: getInitials(fallbackName), profilePic: null, code: null, name: fallbackName, fullName: fallbackName };
       userInfoByIdCache[uid] = info;
       return info;
     }
@@ -941,6 +1716,7 @@
       const messageDiv = document.createElement('div');
       messageDiv.className = 'message';
       messageDiv.dataset.messageId = message.id;
+      messageDiv.dataset.userId = message.userId; // <-- Add this line
 
       const bodyDiv = document.createElement('div');
       bodyDiv.className = 'message-body';
@@ -1002,25 +1778,350 @@
       contentDiv.className = 'content';
       contentDiv.textContent = message.content;
 
-      // Layout: avatar + sender + timestamp + (delete button if own message)
+      // Reactions container
+      const reactionsContainer = document.createElement('div');
+      reactionsContainer.className = 'reactions-container';
+      reactionsContainer.style.display = 'flex';
+      reactionsContainer.style.gap = '4px';
+      reactionsContainer.style.marginTop = '4px';
+      // Attach to messageDiv after contentDiv
+
+      // Function to render reactions
+      messageDiv._reactions = message.reactions ? [...message.reactions] : (messageDiv._reactions || []);
+      messageDiv._renderReactions = function() {
+        reactionsContainer.innerHTML = '';
+        if (messageDiv._reactions && messageDiv._reactions.length > 0) {
+          // Group by emoji and count
+          const grouped = {};
+          for (const r of messageDiv._reactions) {
+            if (!grouped[r.emoji]) grouped[r.emoji] = { count: 0, users: [] };
+            grouped[r.emoji].count++;
+            grouped[r.emoji].users.push(r.userId);
+          }
+          Object.entries(grouped).forEach(([emoji, info]) => {
+            const btn = document.createElement('button');
+            btn.textContent = `${emoji} ${info.count > 1 ? info.count : ''}`;
+            btn.style.background = '#f8f9fa';
+            btn.style.border = '1px solid #eee';
+            btn.style.borderRadius = '12px';
+            btn.style.padding = '2px 8px';
+            btn.style.marginRight = '2px';
+            btn.style.cursor = 'pointer';
+            btn.title = 'Reacted: ' + info.users.join(', ');
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              // Remove your reaction if you already reacted
+              if (info.users.includes(userId)) {
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                  type: 'remove_reaction',
+                  chatID: chatID,
+                  messageId: message.id,
+                  emoji: emoji,
+                  userId: userId
+                }));
+              }
+              } else {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify({
+                    type: 'react_message',
+                    chatID: chatID,
+                    messageId: message.id,
+                    emoji: emoji,
+                    userId: userId
+                  }));
+                }
+              }
+            };
+            reactionsContainer.appendChild(btn);
+          });
+        }
+      };
+      // Initial render
+      messageDiv._renderReactions();
+
+      // Apply user formatting to the message content
+      if (userFormatting) {
+        contentDiv.style.fontSize = userFormatting.fontSize + 'px';
+        contentDiv.style.fontFamily = userFormatting.fontFamily;
+        contentDiv.style.color = userFormatting.textColor;
+      }
+
+      // Reaction button
+      const reactionBtn = document.createElement('button');
+      reactionBtn.className = 'reaction-btn';
+      reactionBtn.textContent = '😊';
+      reactionBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (reactionMenu) {
+          reactionMenu.remove();
+          reactionMenu = null;
+          return;
+        }
+        reactionMenu = document.createElement('div');
+        reactionMenu.style.position = 'absolute';
+        reactionMenu.style.zIndex = 9999;
+        const rect = reactionBtn.getBoundingClientRect();
+        reactionMenu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        reactionMenu.style.left = (rect.left + window.scrollX) + 'px';
+        reactionMenu.style.background = 'transparent';
+        reactionMenu.style.border = 'none';
+        reactionMenu.style.boxShadow = 'none';
+        // Emoji picker
+        const picker = document.createElement('emoji-picker');
+        picker.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+        picker.style.background = '#fff';
+        picker.style.borderRadius = '8px';
+        picker.style.border = '1px solid #ccc';
+        picker.addEventListener('emoji-click', (event) => {
+          const emoji = event.detail.unicode;
+          // Immediately add the reaction to the local UI
+          if (!messageDiv._reactions) messageDiv._reactions = [];
+          messageDiv._reactions.push({ emoji: emoji, userId: userId });
+          const renderReactions = messageDiv._renderReactions;
+          if (renderReactions) {
+            renderReactions();
+          }
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'react_message',
+              chatID: chatID,
+              messageId: message.id,
+              emoji: emoji,
+              userId: userId
+            }));
+          }
+          reactionMenu.remove();
+          reactionMenu = null;
+        });
+        reactionMenu.appendChild(picker);
+        document.body.appendChild(reactionMenu);
+        // Close on outside click
+        const onBodyClick = (evt) => {
+          if (!reactionMenu.contains(evt.target)) {
+            reactionMenu.remove(); reactionMenu = null; document.body.removeEventListener('click', onBodyClick);
+          }
+        };
+        setTimeout(()=>document.body.addEventListener('click', onBodyClick), 0);
+      };
+
+      // Copy button
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.title = 'Copy message';
+      copyBtn.textContent = '📋';
+      copyBtn.style.marginLeft = '4px';
+      copyBtn.onclick = async (e) => {
+        e.stopPropagation();
+        let textToCopy = message.content || '';
+        if (message.imageUrl) textToCopy += `\n${message.imageUrl}`;
+        if (message.gifUrl) textToCopy += `\n${message.gifUrl}`;
+        try {
+          await navigator.clipboard.writeText(textToCopy);
+          copyBtn.textContent = '✅';
+          setTimeout(() => { copyBtn.textContent = '📋'; }, 1000);
+        } catch (err) {
+          alert('Failed to copy message');
+        }
+      };
+
+      // Layout: avatar + sender + timestamp (left), button group (right)
       const headerDiv = document.createElement('div');
       headerDiv.style.display = 'flex';
       headerDiv.style.alignItems = 'center';
+      headerDiv.style.justifyContent = 'space-between';
       headerDiv.style.gap = '8px';
-      headerDiv.appendChild(avatarSpan);
-      headerDiv.appendChild(senderSpan);
-      headerDiv.appendChild(timestampSpan);
 
+      // Left side: avatar, sender, timestamp
+      const leftHeader = document.createElement('div');
+      leftHeader.style.display = 'flex';
+      leftHeader.style.alignItems = 'center';
+      leftHeader.style.gap = '8px';
+      leftHeader.appendChild(avatarSpan);
+      leftHeader.appendChild(senderSpan);
+      leftHeader.appendChild(timestampSpan);
+      headerDiv.appendChild(leftHeader);
+
+      // Edit button (only for own messages)
+      let isEditing = false;
+      let editInput, saveBtn, cancelBtn;
+      let originalContent = message.content;
+      let editBtn;
+      if (message.userId && userId && message.userId === userId) {
+        editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
+        editBtn.title = 'Edit message';
+        editBtn.textContent = '✏️';
+        editBtn.style.marginLeft = '4px';
+        editBtn.style.transition = 'opacity 0.2s';
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (isEditing) return;
+          isEditing = true;
+          // Replace content with input
+          contentDiv.style.display = 'none';
+          editInput = document.createElement('input');
+          editInput.type = 'text';
+          editInput.value = originalContent;
+          editInput.style.width = '90%';
+          editInput.style.fontSize = '1em';
+          editInput.style.marginRight = '8px';
+          saveBtn = document.createElement('button');
+          saveBtn.textContent = 'Save';
+          saveBtn.style.marginRight = '4px';
+          saveBtn.onclick = async (ev) => {
+            ev.stopPropagation();
+            const newContent = editInput.value.trim();
+            if (newContent && newContent !== originalContent) {
+              const res = await fetch(`/api/chats/${chatID}/edit-message`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, messageId: message.id, newContent })
+              });
+              if (res.ok) {
+                contentDiv.textContent = newContent;
+                originalContent = newContent;
+              } else {
+                alert('Failed to edit message');
+              }
+            }
+            finishEdit();
+          };
+          cancelBtn = document.createElement('button');
+          cancelBtn.textContent = 'Cancel';
+          cancelBtn.onclick = (ev) => {
+            ev.stopPropagation();
+            finishEdit();
+          };
+          bodyDiv.insertBefore(editInput, contentDiv);
+          bodyDiv.insertBefore(saveBtn, contentDiv);
+          bodyDiv.insertBefore(cancelBtn, contentDiv);
+          editInput.focus();
+        };
+        function finishEdit() {
+          isEditing = false;
+          if (editInput) editInput.remove();
+          if (saveBtn) saveBtn.remove();
+          if (cancelBtn) cancelBtn.remove();
+          contentDiv.style.display = '';
+        }
+      }
+
+      // Reply button
+      const replyBtn = document.createElement('button');
+      replyBtn.className = 'reply-btn';
+      replyBtn.title = 'Reply to this message';
+      replyBtn.textContent = '💬';
+      replyBtn.style.marginLeft = '4px';
+      replyBtn.onclick = (e) => {
+        e.stopPropagation();
+        // If a reply input already exists, remove it
+        const existing = messageDiv.querySelector('.reply-input-container');
+        if (existing) { existing.remove(); return; }
+        // Create reply input
+        const replyContainer = document.createElement('div');
+        replyContainer.className = 'reply-input-container';
+        replyContainer.style.display = 'flex';
+        replyContainer.style.flexDirection = 'column';
+        replyContainer.style.gap = '4px';
+        replyContainer.style.marginTop = '8px';
+        replyContainer.style.marginLeft = '40px';
+        // Add reply-to label
+        const replyToLabel = document.createElement('div');
+        replyToLabel.textContent = `Replying to: ${message.sender}: ${message.content}`;
+        replyToLabel.style.fontSize = '0.95em';
+        replyToLabel.style.color = '#555';
+        replyToLabel.style.background = '#f3f3f3';
+        replyToLabel.style.padding = '2px 8px';
+        replyToLabel.style.borderRadius = '6px';
+        replyToLabel.style.marginBottom = '4px';
+        replyContainer.appendChild(replyToLabel);
+        // Reply input
+        const replyInput = document.createElement('input');
+        replyInput.type = 'text';
+        replyInput.placeholder = 'Reply...';
+        replyInput.style.flex = '1';
+        replyInput.style.padding = '4px 8px';
+        replyInput.style.borderRadius = '5px';
+        replyInput.style.border = '1px solid #ccc';
+        const sendReplyBtn = document.createElement('button');
+        sendReplyBtn.textContent = 'Send';
+        sendReplyBtn.style.background = '#007bff';
+        sendReplyBtn.style.color = 'white';
+        sendReplyBtn.style.border = 'none';
+        sendReplyBtn.style.borderRadius = '5px';
+        sendReplyBtn.style.padding = '4px 14px';
+        sendReplyBtn.onclick = async () => {
+          const replyContent = replyInput.value.trim();
+          if (!replyContent) return;
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            const localReply = {
+              id: messageId,
+              content: replyContent,
+              timestamp: Date.now(),
+              sender: currentUserName || 'You',
+              userId: userId,
+              parentId: message.id
+            };
+            await showMessage(localReply);
+            ws.send(JSON.stringify({
+              type: 'message',
+              id: messageId,
+              content: replyContent,
+              sender: currentUserName,
+              userId: userId,
+              parentId: message.id
+            }));
+            replyContainer.remove();
+          }
+        };
+        const inputRow = document.createElement('div');
+        inputRow.style.display = 'flex';
+        inputRow.style.gap = '8px';
+        inputRow.appendChild(replyInput);
+        inputRow.appendChild(sendReplyBtn);
+        replyContainer.appendChild(inputRow);
+        messageDiv.appendChild(replyContainer);
+        replyInput.focus();
+      };
+
+      // Right-side button group
+      const rightBtnGroup = document.createElement('div');
+      rightBtnGroup.style.display = 'flex';
+      rightBtnGroup.style.alignItems = 'center';
+      rightBtnGroup.appendChild(reactionBtn);
+      rightBtnGroup.appendChild(replyBtn);
+      if (editBtn) rightBtnGroup.appendChild(editBtn);
+      rightBtnGroup.appendChild(copyBtn);
       if (message.userId && userId && message.userId === userId) {
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
         deleteBtn.textContent = '×';
         deleteBtn.onclick = () => deleteMessage(message.id);
-        headerDiv.appendChild(deleteBtn);
+        rightBtnGroup.appendChild(deleteBtn);
       }
+      headerDiv.appendChild(rightBtnGroup);
 
       bodyDiv.appendChild(headerDiv);
+      // If this is a reply, show a 'Replying to' label above the content
+      if (message.parentId) {
+        // Find the parent message in the global messages array
+        const parentMsg = (window._allMessages || []).find(m => m.id === message.parentId);
+        if (parentMsg) {
+          const replyToLabel = document.createElement('div');
+          replyToLabel.textContent = `Replying to: ${parentMsg.sender}: ${parentMsg.content}`;
+          replyToLabel.style.fontSize = '0.95em';
+          replyToLabel.style.color = '#555';
+          replyToLabel.style.background = '#f3f3f3';
+          replyToLabel.style.padding = '2px 8px';
+          replyToLabel.style.borderRadius = '6px';
+          replyToLabel.style.marginBottom = '4px';
+          bodyDiv.appendChild(replyToLabel);
+        }
+      }
       bodyDiv.appendChild(contentDiv);
+      bodyDiv.appendChild(reactionsContainer);
 
       messageDiv.appendChild(avatarSpan);
       messageDiv.appendChild(bodyDiv);
@@ -1032,6 +2133,45 @@
         img.alt = 'Shared image';
         img.onclick = () => window.open(message.imageUrl, '_blank');
         messageDiv.appendChild(img);
+      }
+
+      // Add file message if present
+      if (message.fileUrl && message.fileName) {
+        const fileDiv = document.createElement('div');
+        fileDiv.style.marginTop = '8px';
+        fileDiv.style.display = 'flex';
+        fileDiv.style.alignItems = 'center';
+        const fileIcon = document.createElement('span');
+        fileIcon.textContent = '📎';
+        fileIcon.style.fontSize = '1.2em';
+        fileIcon.style.marginRight = '6px';
+        const fileLink = document.createElement('a');
+        fileLink.href = message.fileUrl;
+        fileLink.textContent = message.fileName;
+        fileLink.download = message.fileName; // <-- This makes it auto-download
+        fileLink.style.color = '#007bff';
+        fileLink.style.textDecoration = 'underline';
+        // Log fileUrl for debugging
+        console.log('[File Message] fileUrl:', message.fileUrl);
+        // Add error handling for missing files
+        fileLink.onerror = function() {
+          fileLink.style.color = 'red';
+          fileLink.textContent = message.fileName + ' (File not found: ' + message.fileUrl + ')';
+        };
+        // Also handle click error (for browsers that don't fire onerror on <a>)
+        fileLink.addEventListener('click', function(e) {
+          fetch(message.fileUrl, { method: 'HEAD' }).then(res => {
+            if (!res.ok) {
+              e.preventDefault();
+              fileLink.style.color = 'red';
+              fileLink.textContent = message.fileName + ' (File not found: ' + message.fileUrl + ')';
+              alert('File not found on server: ' + message.fileUrl);
+            }
+          });
+        });
+        fileDiv.appendChild(fileIcon);
+        fileDiv.appendChild(fileLink);
+        bodyDiv.appendChild(fileDiv);
       }
 
       chatBox.appendChild(messageDiv);
@@ -1071,7 +2211,7 @@
     const profilePicInput = document.getElementById('profilePicInput');
     const profilePicForm = document.getElementById('profilePicForm');
 
-    let currentUserProfilePic = null;
+    let currentUserProfilePic = localStorage.getItem('profilePic') || null;
 
     function renderProfilePicOrInitials(name, profilePicUrl) {
         profilePicContainer.innerHTML = ''; // Clear previous content
@@ -1295,6 +2435,856 @@
             console.error('Error showing user profile modal:', error);
         }
     }
+
+    // Stats console logic
+    const splitStatsContainer = document.getElementById('splitStatsContainer');
+    const splitStats = document.getElementById('splitStats');
+    const splitChat = document.getElementById('splitChat');
+    const toggleConsoleBtn = document.getElementById('toggleConsole');
+    let statsModeOn = false;
+    // Move chat UI into splitChat when stats is on
+    function setStatsMode(on) {
+      statsModeOn = on;
+      const mainChatContent = document.getElementById('mainChatContent');
+      const typingIndicator = document.getElementById('typingIndicator');
+      const inputContainer = document.getElementById('inputContainer');
+      const formatButton = document.getElementById('formatButton');
+      const toggleConsoleBtn = document.getElementById('toggleConsole');
+      
+      if (on) {
+        splitStatsContainer.style.display = 'block';
+        splitStats.textContent = '';
+        splitChat.innerHTML = '';
+        splitChat.appendChild(mainChatContent);
+        // Move typing indicator below input in splitChat
+        if (typingIndicator && inputContainer && typingIndicator.parentNode !== inputContainer.parentNode) {
+          inputContainer.parentNode.insertBefore(typingIndicator, inputContainer.nextSibling);
+        }
+        document.body.style.overflow = 'hidden';
+        document.body.classList.add('stats-font');
+        // Hide format button in nerd mode
+        formatButton.style.display = 'none';
+        // Change button text to "Normal Mode"
+        toggleConsoleBtn.textContent = 'Normal Mode';
+        // Move modals to body so they are not hidden in splitChat
+        const modals = [document.getElementById('accountModal'), document.getElementById('userProfileModal'), document.getElementById('joinChatModal'), document.getElementById('formatModal'), document.getElementById('logoutModal'), document.getElementById('gifModal')];
+        modals.forEach(m => { if (m) document.body.appendChild(m); });
+      } else {
+        splitStatsContainer.style.display = 'none';
+        document.body.appendChild(mainChatContent);
+        // Move typing indicator below input in normal mode
+        if (typingIndicator && inputContainer && typingIndicator.parentNode !== inputContainer.parentNode) {
+          inputContainer.parentNode.insertBefore(typingIndicator, inputContainer.nextSibling);
+        }
+        document.body.style.overflow = '';
+        document.body.classList.remove('stats-font');
+        // Show format button in normal mode
+        formatButton.style.display = 'inline-block';
+        // Change button text back to "Nerd Mode"
+        toggleConsoleBtn.textContent = 'Nerd Mode';
+        // Move modals back to body (in case)
+        const modals = [document.getElementById('accountModal'), document.getElementById('userProfileModal'), document.getElementById('joinChatModal'), document.getElementById('formatModal'), document.getElementById('logoutModal'), document.getElementById('gifModal')];
+        modals.forEach(m => { if (m) document.body.appendChild(m); });
+      }
+    }
+    toggleConsoleBtn.onclick = () => setStatsMode(!statsModeOn);
+    function statsLog(txt) {
+      const line = document.createElement('div');
+      line.style.marginBottom = '8px';
+      line.style.whiteSpace = 'pre-wrap';
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${txt}`;
+      splitStats.appendChild(line);
+      splitStats.scrollTop = splitStats.scrollHeight;
+    }
+    // Add black/green theme for stats mode
+    const style = document.createElement('style');
+    style.textContent = `
+      body.stats-font, body.stats-font * {
+        font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace !important;
+      }
+      body.stats-font #mainChatContent, body.stats-font #mainChatContent * {
+        background-color: #181818 !important;
+        color: #00ff00 !important;
+        border-color: #444 !important;
+        cursor: auto !important;
+      }
+      body.stats-font .message .delete-btn, body.stats-font .star-btn, body.stats-font .back-link, body.stats-font .encryption-status {
+        color: #00ff00 !important;
+      }
+      body.stats-font #leaveChatBtn {
+        background: #222 !important;
+        color: #00ff00 !important;
+        border: 2px solid #444 !important;
+      }
+      body.stats-font #sendButton, body.stats-font #formatButton {
+        background: #222 !important;
+        color: #00ff00 !important;
+        border: 2px solid #444 !important;
+      }
+      body.stats-font #messageInput {
+        background: #181818 !important;
+        color: #00ff00 !important;
+        border: 2px solid #444 !important;
+      }
+      body.stats-font #emojiButton {
+        background: #222 !important;
+        color: #00ff00 !important;
+        border: 2px solid #444 !important;
+      }
+      body.stats-font #gifButton {
+        background: #222 !important;
+        color: #00ff00 !important;
+        border: 2px solid #444 !important;
+      }
+    `;
+    document.head.appendChild(style);
+    // Wrap main chat content for moving
+    if (!document.getElementById('mainChatContent')) {
+      const wrap = document.createElement('div');
+      wrap.id = 'mainChatContent';
+      while (document.body.firstChild && document.body.firstChild !== splitStatsContainer && document.body.firstChild !== toggleConsoleBtn) {
+        wrap.appendChild(document.body.firstChild);
+      }
+      document.body.insertBefore(wrap, splitStatsContainer);
+    }
+
+    // Preload current user's profile picture for faster display
+    if (window.localStorage && localStorage.getItem('userId')) {
+      fetch(`/user/${localStorage.getItem('userId')}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.profilePic) {
+            const img = new window.Image();
+            img.src = data.profilePic;
+          }
+        });
+    }
+
+    // Global map to store pending reactions for messages not yet rendered
+    const pendingReactions = {};
+
+    // Add emoji button functionality
+    const emojiButton = document.getElementById('emojiButton');
+    let emojiMenu = null;
+    
+    emojiButton.onclick = (e) => {
+      e.stopPropagation();
+      if (emojiMenu) {
+        emojiMenu.remove();
+        emojiMenu = null;
+        return;
+      }
+      
+      emojiMenu = document.createElement('div');
+      emojiMenu.style.position = 'absolute';
+      emojiMenu.style.zIndex = 9999;
+      const rect = emojiButton.getBoundingClientRect();
+      emojiMenu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+      emojiMenu.style.left = (rect.left + window.scrollX) + 'px';
+      emojiMenu.style.background = 'transparent';
+      emojiMenu.style.border = 'none';
+      emojiMenu.style.boxShadow = 'none';
+      
+      // Emoji picker
+      const picker = document.createElement('emoji-picker');
+      picker.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+      picker.style.background = '#fff';
+      picker.style.borderRadius = '8px';
+      picker.style.border = '1px solid #ccc';
+      
+      picker.addEventListener('emoji-click', (event) => {
+        const emoji = event.detail.unicode;
+        const messageInput = document.getElementById('messageInput');
+        const cursorPos = messageInput.selectionStart;
+        const textBefore = messageInput.value.substring(0, cursorPos);
+        const textAfter = messageInput.value.substring(cursorPos);
+        
+        // Insert emoji at cursor position
+        messageInput.value = textBefore + emoji + textAfter;
+        
+        // Set cursor position after the inserted emoji
+        const newCursorPos = cursorPos + emoji.length;
+        messageInput.setSelectionRange(newCursorPos, newCursorPos);
+        
+        // Focus back to input
+        messageInput.focus();
+        
+        emojiMenu.remove();
+        emojiMenu = null;
+      });
+      
+      emojiMenu.appendChild(picker);
+      document.body.appendChild(emojiMenu);
+      
+      // Close on outside click
+      const onBodyClick = (evt) => {
+        if (!emojiMenu.contains(evt.target)) {
+          emojiMenu.remove(); 
+          emojiMenu = null; 
+          document.body.removeEventListener('click', onBodyClick);
+        }
+      };
+      setTimeout(() => document.body.addEventListener('click', onBodyClick), 0);
+    };
+
+    // Add drag and drop functionality
+
+    // Add text formatting functionality
+    const formatButton = document.getElementById('formatButton');
+    const formatModal = document.getElementById('formatModal');
+    const closeFormatModal = document.getElementById('closeFormatModal');
+    const saveFormat = document.getElementById('saveFormat');
+    const resetFormat = document.getElementById('resetFormat');
+    const fontSize = document.getElementById('fontSize');
+    const fontFamily = document.getElementById('fontFamily');
+    const textColor = document.getElementById('textColor');
+    const formatPreview = document.getElementById('formatPreview');
+
+    // Default formatting settings
+    let userFormatting = {
+      fontSize: '14',
+      fontFamily: 'Arial, sans-serif',
+      textColor: '#000000'
+    };
+
+    // Load user formatting preferences
+    async function loadUserFormatting() {
+      try {
+        if (userId) {
+          console.log('Loading formatting for user:', userId);
+          const response = await fetch(`/user/${userId}`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('User data received:', data);
+            if (data.formatting) {
+              userFormatting = { ...userFormatting, ...data.formatting };
+              console.log('Formatting loaded:', userFormatting);
+              
+              // Apply formatting to all existing messages
+              const messages = document.querySelectorAll('.message');
+              console.log('Applying formatting to', messages.length, 'existing messages');
+              messages.forEach(applyFormattingToMessage);
+            } else {
+              console.log('No formatting found in user data');
+            }
+          } else {
+            console.error('Failed to load user data:', response.status);
+          }
+        } else {
+          console.log('No userId available for formatting load');
+        }
+      } catch (error) {
+        console.error('Error loading formatting preferences:', error);
+      }
+    }
+
+    // Save user formatting preferences
+    async function saveUserFormatting() {
+      try {
+        if (userId) {
+          console.log('Saving formatting for user:', userId, 'formatting:', userFormatting);
+          const response = await fetch(`/user/${userId}/formatting`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userFormatting)
+          });
+          if (response.ok) {
+            const result = await response.json();
+            console.log('Formatting preferences saved successfully:', result);
+          } else {
+            console.error('Failed to save formatting:', response.status);
+          }
+        } else {
+          console.log('No userId available for formatting save');
+        }
+      } catch (error) {
+        console.error('Error saving formatting preferences:', error);
+      }
+    }
+
+    // Helper to load Google Font dynamically
+    function loadGoogleFont(fontName) {
+      const cleanName = fontName.replace(/['"]/g, '').split(',')[0].trim().replace(/ /g, '+');
+      if (document.getElementById('gf-' + cleanName)) return; // Already loaded
+      const link = document.createElement('link');
+      link.id = 'gf-' + cleanName;
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css?family=${cleanName}:400,700&display=swap`;
+      document.head.appendChild(link);
+    }
+
+    // Update preview with current formatting
+    function updateFormatPreview() {
+      const size = fontSize.value;
+      const family = fontFamily.value;
+      const color = textColor.value;
+      // If Google Font, load it
+      const selectedOption = fontFamily.options[fontFamily.selectedIndex];
+      if (selectedOption && selectedOption.hasAttribute('data-googlefont')) {
+        loadGoogleFont(family);
+      }
+      formatPreview.style.fontSize = size + 'px';
+      formatPreview.style.fontFamily = family;
+      formatPreview.style.color = color;
+    }
+
+    // Apply formatting to a message element
+    function applyFormattingToMessage(messageElement) {
+      if (messageElement && userFormatting) {
+        const contentDiv = messageElement.querySelector('.content');
+        if (contentDiv) {
+          // If Google Font, load it
+          const googleFontOption = Array.from(fontFamily.options).find(opt => opt.value === userFormatting.fontFamily && opt.hasAttribute('data-googlefont'));
+          if (googleFontOption) {
+            loadGoogleFont(userFormatting.fontFamily);
+          }
+          contentDiv.style.fontSize = userFormatting.fontSize + 'px';
+          contentDiv.style.fontFamily = userFormatting.fontFamily;
+          contentDiv.style.color = userFormatting.textColor;
+        } else {
+          console.log('No content div found in message element');
+        }
+      } else {
+        console.log('Cannot apply formatting - missing messageElement or userFormatting');
+      }
+    }
+
+    // Format button click handler
+    formatButton.onclick = () => {
+      fontSize.value = userFormatting.fontSize;
+      fontFamily.value = userFormatting.fontFamily;
+      textColor.value = userFormatting.textColor;
+      updateFormatPreview();
+      formatModal.style.display = 'flex';
+    };
+
+    // Close modal handlers
+    closeFormatModal.onclick = () => {
+      formatModal.style.display = 'none';
+    };
+
+    formatModal.onclick = (e) => {
+      if (e.target === formatModal) {
+        formatModal.style.display = 'none';
+      }
+    };
+
+    // Update preview when formatting changes
+    fontSize.onchange = updateFormatPreview;
+    fontFamily.onchange = updateFormatPreview;
+    textColor.onchange = updateFormatPreview;
+
+    // Save formatting
+    saveFormat.onclick = async () => {
+      console.log('Save formatting button clicked');
+      userFormatting = {
+        fontSize: fontSize.value,
+        fontFamily: fontFamily.value,
+        textColor: textColor.value
+      };
+      console.log('New formatting to save:', userFormatting);
+      await saveUserFormatting();
+      // Apply formatting to all existing messages
+      const messages = document.querySelectorAll('.message');
+      console.log('Applying new formatting to', messages.length, 'messages');
+      messages.forEach(applyFormattingToMessage);
+      formatModal.style.display = 'none';
+    };
+
+    // Reset formatting
+    resetFormat.onclick = () => {
+      userFormatting = {
+        fontSize: '14',
+        fontFamily: 'Arial, sans-serif',
+        textColor: '#000000'
+      };
+      fontSize.value = userFormatting.fontSize;
+      fontFamily.value = userFormatting.fontFamily;
+      textColor.value = userFormatting.textColor;
+      updateFormatPreview();
+    };
+
+    // Load formatting preferences when page loads
+    loadUserFormatting();
+
+    // Add logout functionality
+    const logoutButton = document.getElementById('logoutButton');
+    const logoutModal = document.getElementById('logoutModal');
+    const closeLogoutModal = document.getElementById('closeLogoutModal');
+    const confirmLogout = document.getElementById('confirmLogout');
+    const cancelLogout = document.getElementById('cancelLogout');
+    const logoutDisplayName = document.getElementById('logoutDisplayName');
+    const logoutCode = document.getElementById('logoutCode');
+
+    // Copy to clipboard function
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        // Show a brief "copied" message
+        const originalText = event.target.textContent;
+        event.target.textContent = 'Copied!';
+        event.target.style.background = '#d4edda';
+        event.target.style.color = '#155724';
+        setTimeout(() => {
+          event.target.textContent = originalText;
+          event.target.style.background = 'white';
+          event.target.style.color = 'black';
+        }, 1000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy to clipboard. Please copy manually.');
+      });
+    }
+
+    // Logout button click handler
+    logoutButton.onclick = async () => {
+      try {
+        // Hide the account modal first
+        document.getElementById('accountModal').style.display = 'none';
+        
+        // Fetch user data to get display name and code
+        const response = await fetch(`/user/${userId}`);
+        if (response.ok) {
+          const userData = await response.json();
+          logoutDisplayName.textContent = userData.displayName || userData.name;
+          logoutCode.textContent = userData.code || 'N/A';
+          logoutModal.style.display = 'flex';
+        } else {
+          console.error('Failed to fetch user data for logout');
+          alert('Failed to get user information. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error fetching user data for logout:', error);
+        alert('Failed to get user information. Please try again.');
+      }
+    };
+
+    // Close logout modal handlers
+    closeLogoutModal.onclick = () => {
+      logoutModal.style.display = 'none';
+    };
+
+    cancelLogout.onclick = () => {
+      logoutModal.style.display = 'none';
+    };
+
+    // Back to account button handler
+    document.getElementById('backToAccount').onclick = () => {
+      logoutModal.style.display = 'none';
+      document.getElementById('accountModal').style.display = 'flex';
+    };
+
+    logoutModal.onclick = (e) => {
+      if (e.target === logoutModal) {
+        logoutModal.style.display = 'none';
+      }
+    };
+
+    // Confirm logout
+    confirmLogout.onclick = () => {
+      // Clear localStorage
+      localStorage.removeItem('userId');
+      localStorage.removeItem('publicKey');
+      
+      // Close WebSocket connection if open
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+      
+      // Redirect to welcome page
+      window.location.href = '/welcome.html';
+    };
+
+    // Add drag and drop functionality
+
+    // Add GIF functionality
+    const gifButton = document.getElementById('gifButton');
+    const gifModal = document.getElementById('gifModal');
+    const closeGifModal = document.getElementById('closeGifModal');
+    const gifSearchInput = document.getElementById('gifSearchInput');
+    const gifSearchBtn = document.getElementById('gifSearchBtn');
+    const gifResults = document.getElementById('gifResults');
+    const gifLoading = document.getElementById('gifLoading');
+    const gifError = document.getElementById('gifError');
+
+    // Giphy API configuration
+    const GIPHY_API_KEY = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65'; // More reliable API key
+    const GIPHY_BASE_URL = 'https://api.giphy.com/v1/gifs';
+
+    // GIF button click handler
+    gifButton.onclick = () => {
+      gifModal.style.display = 'flex';
+      gifSearchInput.focus();
+      // Load trending GIFs on modal open
+      loadTrendingGifs();
+    };
+
+    // Close GIF modal handlers
+    closeGifModal.onclick = () => {
+      gifModal.style.display = 'none';
+      clearGifResults();
+    };
+
+    gifModal.onclick = (e) => {
+      if (e.target === gifModal) {
+        gifModal.style.display = 'none';
+        clearGifResults();
+      }
+    };
+
+    // Search GIFs on Enter key
+    gifSearchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        searchGifs();
+      }
+    });
+
+    // Search button click handler
+    gifSearchBtn.onclick = searchGifs;
+
+    // Function to search GIFs
+    async function searchGifs() {
+      const query = gifSearchInput.value.trim();
+      if (!query) {
+        showGifError('Please enter a search term');
+        return;
+      }
+
+      showGifLoading();
+      clearGifResults();
+
+      try {
+        const response = await fetch(`/api/gifs/search?q=${encodeURIComponent(query)}&limit=20`);
+        const data = await response.json();
+
+        if (data.data && data.data.length > 0) {
+          displayGifResults(data.data);
+        } else {
+          showGifError('No GIFs found for your search');
+        }
+      } catch (error) {
+        console.error('Error searching GIFs:', error);
+        showGifError('Failed to search GIFs. Please try again.');
+      } finally {
+        hideGifLoading();
+      }
+    }
+
+    // Function to load trending GIFs
+    async function loadTrendingGifs() {
+      showGifLoading();
+      clearGifResults();
+
+      try {
+        const response = await fetch('/api/gifs/trending?limit=20');
+        const data = await response.json();
+
+        if (data.data && data.data.length > 0) {
+          displayGifResults(data.data);
+        } else {
+          showGifError('Failed to load trending GIFs');
+        }
+      } catch (error) {
+        console.error('Error loading trending GIFs:', error);
+        showGifError('Failed to load trending GIFs. Please try again.');
+      } finally {
+        hideGifLoading();
+      }
+    }
+
+    // Function to display GIF results
+    function displayGifResults(gifs) {
+      gifResults.innerHTML = '';
+      
+      gifs.forEach(gif => {
+        const gifContainer = document.createElement('div');
+        gifContainer.style.cssText = 'cursor:pointer; border-radius:8px; overflow:hidden; transition:transform 0.2s;';
+        gifContainer.onmouseover = () => gifContainer.style.transform = 'scale(1.05)';
+        gifContainer.onmouseout = () => gifContainer.style.transform = 'scale(1)';
+        
+        const img = document.createElement('img');
+        img.src = gif.images.fixed_height_small.url;
+        img.alt = gif.title || 'GIF';
+        img.style.cssText = 'width:100%; height:auto; display:block;';
+        
+        gifContainer.appendChild(img);
+        
+        // Click handler to send GIF
+        gifContainer.onclick = () => {
+          sendGif(gif.images.original.url, gif.title || 'GIF');
+          gifModal.style.display = 'none';
+          clearGifResults();
+        };
+        
+        gifResults.appendChild(gifContainer);
+      });
+    }
+
+    // Function to send GIF
+    async function sendGif(gifUrl, gifTitle) {
+      if (ws.readyState === WebSocket.OPEN) {
+        try {
+          const messageId = (crypto.randomUUID) ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+          // Show message immediately in UI
+          const localMsg = {
+            id: messageId,
+            content: `[GIF: ${gifTitle}]`,
+            timestamp: Date.now(),
+            sender: currentUserName || 'You',
+            userId: userId,
+            gifUrl: gifUrl
+          };
+          await showMessage(localMsg);
+
+          // Send message through WebSocket
+          ws.send(JSON.stringify({
+            type: "message",
+            id: messageId,
+            content: `[GIF: ${gifTitle}]`,
+            sender: currentUserName,
+            userId: userId,
+            gifUrl: gifUrl
+          }));
+
+          // Stats logging
+          statsLog(`SEND: [${messageId}] GIF: ${gifTitle}`);
+        } catch (error) {
+          console.error('Failed to send GIF:', error);
+          statsLog('ERROR: Failed to send GIF: ' + error);
+          alert('Failed to send GIF. Please try again.');
+        }
+      } else {
+        alert("WebSocket not connected!");
+        statsLog('ERROR: WebSocket not connected!');
+      }
+    }
+
+    // Helper functions for GIF modal
+    function showGifLoading() {
+      gifLoading.style.display = 'block';
+      gifError.style.display = 'none';
+    }
+
+    function hideGifLoading() {
+      gifLoading.style.display = 'none';
+    }
+
+    function showGifError(message) {
+      gifError.textContent = message;
+      gifError.style.display = 'block';
+      gifLoading.style.display = 'none';
+    }
+
+    function clearGifResults() {
+      gifResults.innerHTML = '';
+      gifError.style.display = 'none';
+    }
+
+    // Update showMessage function to handle GIFs
+    const originalShowMessage = window.showMessage;
+    window.showMessage = async function(message) {
+      // Call original function first
+      if (originalShowMessage) {
+        await originalShowMessage(message);
+      }
+
+      // Add GIF handling
+      if (message.gifUrl) {
+        const messageElement = document.querySelector(`[data-message-id="${message.id}"]`);
+        if (messageElement) {
+          const contentDiv = messageElement.querySelector('.content');
+          if (contentDiv) {
+            // Create GIF container
+            const gifContainer = document.createElement('div');
+            gifContainer.style.cssText = 'margin-top:8px; border-radius:8px; overflow:hidden; max-width:300px;';
+            
+            const gifImg = document.createElement('img');
+            gifImg.src = message.gifUrl;
+            gifImg.alt = message.content || 'GIF';
+            gifImg.style.cssText = 'width:100%; height:auto; display:block; cursor:pointer;';
+            
+            // Add click to enlarge functionality
+            gifImg.onclick = () => {
+              const modal = document.createElement('div');
+              modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; cursor:pointer;';
+              
+              const enlargedImg = document.createElement('img');
+              enlargedImg.src = message.gifUrl;
+              enlargedImg.style.cssText = 'max-width:90vw; max-height:90vh; object-fit:contain;';
+              
+              modal.appendChild(enlargedImg);
+              document.body.appendChild(modal);
+              
+              modal.onclick = () => modal.remove();
+            };
+            
+            gifContainer.appendChild(gifImg);
+            contentDiv.appendChild(gifContainer);
+          }
+        }
+      }
+    };
+
+    // Edit chat name functionality
+    const editChatNameBtn = document.getElementById('editChatNameBtn');
+    const editChatNameInput = document.getElementById('editChatNameInput');
+    const saveChatNameBtn = document.getElementById('saveChatNameBtn');
+    const cancelChatNameBtn = document.getElementById('cancelChatNameBtn');
+
+    editChatNameBtn.onclick = () => {
+      editChatNameInput.value = document.getElementById('chatTitle').textContent;
+      document.getElementById('chatTitleContainer').style.display = 'none';
+      document.getElementById('editChatNameForm').style.display = 'flex';
+    };
+
+    saveChatNameBtn.onclick = async () => {
+      const newName = editChatNameInput.value.trim();
+      if (newName) {
+        // Call backend to rename
+        const res = await fetch(`/api/chats/${chatID}/rename`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, newName })
+        });
+        if (res.ok) {
+          document.getElementById('chatTitle').textContent = newName;
+          document.getElementById('editChatNameForm').style.display = 'none';
+          document.getElementById('chatTitleContainer').style.display = 'flex';
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Failed to rename chat');
+        }
+      }
+    };
+
+    cancelChatNameBtn.onclick = () => {
+      document.getElementById('editChatNameForm').style.display = 'none';
+      document.getElementById('chatTitleContainer').style.display = 'flex';
+    };
+
+    let selectMode = false;
+    let selectedMessages = new Set();
+
+    const toggleSelectModeBtn = document.getElementById('toggleSelectModeBtn');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    const selectedCount = document.getElementById('selectedCount');
+
+    toggleSelectModeBtn.onclick = () => {
+      selectMode = !selectMode;
+      selectedMessages.clear();
+      updateSelectUI();
+      renderAllCheckboxes();
+    };
+
+    deleteSelectedBtn.onclick = async () => {
+      if (selectedMessages.size === 0) return;
+      if (!confirm(`Delete ${selectedMessages.size} selected message(s)?`)) return;
+      const messageIds = Array.from(selectedMessages);
+      try {
+        const res = await fetch(`/api/chats/${chatID}/delete-messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, messageIds })
+        });
+        if (res.ok) {
+          messageIds.forEach(removeMessage);
+          selectedMessages.clear();
+          updateSelectUI();
+          renderAllCheckboxes();
+        } else {
+          alert('Failed to delete messages');
+        }
+      } catch (err) {
+        alert('Failed to delete messages');
+      }
+    };
+
+    function updateSelectUI() {
+      if (selectMode) {
+        toggleSelectModeBtn.textContent = 'Cancel Select';
+        deleteSelectedBtn.style.display = 'inline-block';
+        selectedCount.textContent = selectedMessages.size > 0 ? `${selectedMessages.size} selected` : '';
+      } else {
+        toggleSelectModeBtn.textContent = 'Select Messages';
+        deleteSelectedBtn.style.display = 'none';
+        selectedCount.textContent = '';
+      }
+    }
+
+    function renderAllCheckboxes() {
+      document.querySelectorAll('.message').forEach(msgEl => {
+        const checkbox = msgEl.querySelector('.select-msg-checkbox');
+        if (checkbox) msgEl.removeChild(checkbox);
+        if (selectMode && msgEl.dataset.userId === userId) {
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.className = 'select-msg-checkbox';
+          cb.style.marginRight = '8px';
+          cb.checked = selectedMessages.has(msgEl.dataset.messageId);
+          cb.onclick = e => {
+            e.stopPropagation();
+            if (cb.checked) selectedMessages.add(msgEl.dataset.messageId);
+            else selectedMessages.delete(msgEl.dataset.messageId);
+            updateSelectUI();
+          };
+          msgEl.insertBefore(cb, msgEl.firstChild);
+        }
+      });
+    }
+
+    // Patch showMessage to support select mode checkboxes
+    const origShowMessage = window.showMessage || showMessage;
+    window.showMessage = async function(message) {
+      await origShowMessage(message);
+      renderAllCheckboxes();
+    };
+
+    // --- PATCHES AT END OF FILE ---
+    // Patch 1: Add GIF support to showMessage
+    const mainShowMessage = window.showMessage; // This is the correct, latest version
+    window.showMessage = async function(message) {
+      // Call the main showMessage (with reaction and edit buttons)
+      if (mainShowMessage) {
+        await mainShowMessage(message);
+      }
+      // Add GIF handling
+      if (message.gifUrl) {
+        const messageElement = document.querySelector(`[data-message-id="${message.id}"]`);
+        if (messageElement) {
+          const contentDiv = messageElement.querySelector('.content');
+          if (contentDiv) {
+            const gifContainer = document.createElement('div');
+            gifContainer.style.cssText = 'margin-top:8px; border-radius:8px; overflow:hidden; max-width:300px;';
+            const gifImg = document.createElement('img');
+            gifImg.src = message.gifUrl;
+            gifImg.alt = message.content || 'GIF';
+            gifImg.style.cssText = 'width:100%; height:auto; display:block; cursor:pointer;';
+            gifImg.onclick = () => {
+              const modal = document.createElement('div');
+              modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; cursor:pointer;';
+              const enlargedImg = document.createElement('img');
+              enlargedImg.src = message.gifUrl;
+              enlargedImg.style.cssText = 'max-width:90vw; max-height:90vh; object-fit:contain;';
+              modal.appendChild(enlargedImg);
+              document.body.appendChild(modal);
+              modal.onclick = () => modal.remove();
+            };
+            gifContainer.appendChild(gifImg);
+            contentDiv.appendChild(gifContainer);
+          }
+        }
+      }
+    };
+    // Patch 2: Add select mode checkboxes to showMessage
+    const gifShowMessage = window.showMessage;
+    window.showMessage = async function(message) {
+      await gifShowMessage(message);
+      renderAllCheckboxes();
+    };
+
+    let reactionMenu = null;
   </script>
 </body>
 </html>
