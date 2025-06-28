@@ -4,30 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Enkryptonite</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --primary-light: #dbeafe;
-            --secondary-color: #64748b;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-color: rgba(148, 163, 184, 0.2);
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 20px;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -35,88 +12,61 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
-            line-height: 1.6;
+            padding: 20px;
         }
 
         .welcome-container {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            padding: 3rem;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-            max-width: 520px;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
             width: 100%;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .welcome-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), #667eea, #764ba2);
         }
 
         .logo {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
         }
 
         .subtitle {
-            color: var(--text-secondary);
-            margin-bottom: 3rem;
+            color: #666;
+            margin-bottom: 40px;
             font-size: 1.1rem;
-            line-height: 1.6;
-            font-weight: 400;
         }
 
         .profile-section {
-            margin-bottom: 2.5rem;
+            margin-bottom: 30px;
         }
 
         .profile-pic-container {
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            margin: 0 auto 1.5rem;
-            background: linear-gradient(135deg, var(--primary-light), #e0e7ff);
-            border: 3px dashed var(--border-color);
+            margin: 0 auto 20px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s;
             position: relative;
             overflow: hidden;
         }
 
         .profile-pic-container:hover {
-            border-color: var(--primary-color);
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-            transform: scale(1.05);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .profile-pic-container:hover .profile-pic-placeholder {
-            color: white;
+            border-color: #007bff;
+            background: #f0f2ff;
         }
 
         .profile-pic-container img {
@@ -128,128 +78,71 @@
 
         .profile-pic-placeholder {
             font-size: 3rem;
-            color: var(--primary-color);
-            transition: all 0.3s ease;
+            color: #adb5bd;
         }
 
         .upload-text {
-            color: var(--primary-color);
+            color: #007bff;
             font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-            font-weight: 500;
-        }
-
-        .form-section {
-            margin-bottom: 2rem;
+            margin-bottom: 20px;
         }
 
         .name-input {
             width: 100%;
-            padding: 1rem 1.5rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            font-size: 1rem;
-            margin-bottom: 0.75rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.9);
-            font-family: inherit;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            transition: border-color 0.2s;
         }
 
         .name-input:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            background: white;
-        }
-
-        .name-input::placeholder {
-            color: var(--text-secondary);
+            border-color: #007bff;
         }
 
         .error-message {
-            color: var(--danger-color);
+            color: #dc3545;
             font-size: 0.9rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 20px;
             min-height: 1.2em;
-            font-weight: 500;
-            text-align: left;
-            padding: 0.5rem;
-            background: rgba(239, 68, 68, 0.05);
-            border-radius: var(--radius-sm);
-            border-left: 3px solid var(--danger-color);
         }
 
         .start-btn {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            background-color: #007bff;
             color: white;
             border: none;
-            padding: 1rem 2rem;
-            border-radius: var(--radius-md);
+            padding: 10px 20px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 16px;
+            transition: background-color 0.2s;
             width: 100%;
-            position: relative;
-            overflow: hidden;
-            font-family: inherit;
-            box-shadow: var(--shadow-md);
         }
 
-        .start-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .start-btn:active:not(:disabled) {
-            transform: translateY(0);
+        .start-btn:hover {
+            background-color: #0056b3;
         }
 
         .start-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
-        }
-
-        .toggle-link {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .toggle-link:hover {
-            color: var(--primary-hover);
-            text-decoration: underline;
-        }
-
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        .checkbox-container input[type="checkbox"] {
-            transform: scale(1.2);
-            accent-color: var(--primary-color);
         }
 
         .loading {
             display: none;
-            margin-top: 1.5rem;
+            margin-top: 20px;
         }
 
         .spinner {
-            border: 3px solid var(--border-color);
-            border-top: 3px solid var(--primary-color);
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
             border-radius: 50%;
             width: 30px;
             height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+            margin: 0 auto;
         }
 
         @keyframes spin {
@@ -258,179 +151,60 @@
         }
 
         .features {
-            margin-top: 2.5rem;
-            padding-top: 2.5rem;
-            border-top: 1px solid var(--border-color);
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e9ecef;
         }
 
         .features h3 {
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
         }
 
         .feature-list {
             list-style: none;
             text-align: left;
-            display: grid;
-            gap: 0.75rem;
         }
 
         .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            padding: 0.5rem;
-            border-radius: var(--radius-sm);
-            transition: all 0.2s ease;
+            padding: 8px 0;
+            color: #666;
+            position: relative;
+            padding-left: 25px;
         }
 
-        .feature-list li:hover {
-            background: var(--primary-light);
-            color: var(--primary-color);
-        }
-
-        .feature-list li i {
-            color: var(--success-color);
-            font-size: 1.1rem;
-            width: 20px;
-            flex-shrink: 0;
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
         }
 
         @media (max-width: 480px) {
             .welcome-container {
-                padding: 2rem 1.5rem;
-                margin: 1rem;
+                padding: 30px 20px;
             }
             
             .logo {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
             
             .profile-pic-container {
                 width: 100px;
                 height: 100px;
             }
-
-            .subtitle {
-                font-size: 1rem;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInFromTop {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .welcome-container {
-            animation: fadeInUp 0.6s ease;
-        }
-
-        .logo {
-            animation: slideInFromTop 0.8s ease 0.2s both;
-        }
-
-        .subtitle {
-            animation: slideInFromTop 0.8s ease 0.4s both;
-        }
-
-        .profile-section {
-            animation: fadeInUp 0.8s ease 0.6s both;
-        }
-
-        /* Success states */
-        .success-feedback {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-            padding: 0.75rem;
-            border-radius: var(--radius-sm);
-            margin-bottom: 1rem;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            border-left: 3px solid var(--success-color);
-        }
-
-        /* Enhanced form styling */
-        .form-group {
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-        }
-
-        .input-group {
-            position: relative;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        .name-input.with-icon {
-            padding-left: 3rem;
-        }
-
-        /* Button loading state */
-        .btn-loading {
-            position: relative;
-            color: transparent;
-        }
-
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 50%;
-            left: 50%;
-            margin-left: -10px;
-            margin-top: -10px;
-            border: 2px solid transparent;
-            border-top-color: #ffffff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
         }
     </style>
 </head>
 <body>
     <div class="welcome-container">
         <div class="logo">Enkryptonite</div>
-        <p class="subtitle">Create your secure identity and start chatting with end-to-end encryption</p>
+        <p class="subtitle">Create your identity to start chatting securely</p>
         
         <div class="profile-section">
             <div class="profile-pic-container" id="profilePicContainer">
-                <i class="fas fa-user profile-pic-placeholder"></i>
+                <div class="profile-pic-placeholder">👤</div>
             </div>
             <p class="upload-text">Click to upload a profile picture (optional)</p>
             <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
@@ -438,63 +212,37 @@
         
         <!-- Registration form -->
         <div class="form-section" id="registerSection">
-            <div class="form-group">
-                <label class="form-label" for="nameInput">Display Name</label>
-                <div class="input-group">
-                    <i class="fas fa-user input-icon"></i>
-                    <input type="text" id="nameInput" class="name-input with-icon" placeholder="Choose your display name" maxlength="32">
-                </div>
-            </div>
-            <div id="errorMessage" class="error-message" style="display: none;"></div>
-            <button id="startBtn" class="start-btn">
-                <i class="fas fa-rocket"></i>
-                Start Chatting
-            </button>
-            <p style="margin-top:1rem;font-size:14px;color:var(--text-secondary);">Already have an account? <a href="#" id="showSignIn" class="toggle-link">Sign in</a></p>
+            <input type="text" id="nameInput" class="name-input" placeholder="Choose your display name" maxlength="32">
+            <div id="errorMessage" class="error-message"></div>
+            <button id="startBtn" class="start-btn">Start Chatting</button>
+            <p style="margin-top:12px;font-size:14px;">Already have an account? <a href="#" id="showSignIn">Sign in</a></p>
         </div>
 
         <!-- Sign-in form (hidden by default) -->
         <div class="form-section" id="signInSection" style="display:none;">
-            <div class="form-group">
-                <label class="form-label" for="signInName">Display Name</label>
-                <div class="input-group">
-                    <i class="fas fa-user input-icon"></i>
-                    <input type="text" id="signInName" class="name-input with-icon" placeholder="Your display name" maxlength="32">
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="signInCode">Secret Word</label>
-                <div class="input-group">
-                    <i class="fas fa-key input-icon"></i>
-                    <input type="password" id="signInCode" class="name-input with-icon" placeholder="Your secret word">
-                </div>
-            </div>
-            <div class="checkbox-container">
-                <input type="checkbox" id="keepSignedIn">
-                <label for="keepSignedIn">Keep me signed in</label>
-            </div>
-            <div id="signInError" class="error-message" style="display: none;"></div>
-            <button id="signInBtn" class="start-btn">
-                <i class="fas fa-sign-in-alt"></i>
-                Sign In
-            </button>
-            <p style="margin-top:1rem;font-size:14px;color:var(--text-secondary);">New here? <a href="#" id="showRegister" class="toggle-link">Create account</a></p>
+            <input type="text" id="signInName" class="name-input" placeholder="Display name" maxlength="32" style="margin-bottom:10px;">
+            <input type="text" id="signInCode" class="name-input" placeholder="Secret word (not 4-digit code)" style="margin-bottom:6px;">
+            <label style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+              <input type="checkbox" id="keepSignedIn"> Keep me signed in
+            </label>
+            <div id="signInError" class="error-message"></div>
+            <button id="signInBtn" class="start-btn">Sign In</button>
+            <p style="margin-top:12px;font-size:14px;">New here? <a href="#" id="showRegister">Create account</a></p>
         </div>
         
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p style="color: var(--text-secondary);">Setting up your account...</p>
+            <p style="margin-top: 10px; color: #666;">Setting up your account...</p>
         </div>
         
         <div class="features">
-            <h3><i class="fas fa-shield-alt" style="color: var(--primary-color); margin-right: 0.5rem;"></i>What you get:</h3>
+            <h3>What you get:</h3>
             <ul class="feature-list">
-                <li><i class="fas fa-lock"></i> End-to-end encrypted messaging</li>
-                <li><i class="fas fa-user-friends"></i> Private conversations</li>
-                <li><i class="fas fa-star"></i> Star your favorite chats</li>
-                <li><i class="fas fa-user-plus"></i> No registration required</li>
-                <li><i class="fas fa-bolt"></i> Instant setup</li>
-                <li><i class="fas fa-mobile-alt"></i> Works on all devices</li>
+                <li>End-to-end encrypted messaging</li>
+                <li>Private conversations</li>
+                <li>Star your favorite chats</li>
+                <li>No registration required</li>
+                <li>Instant setup</li>
             </ul>
         </div>
     </div>
@@ -533,14 +281,7 @@
                     return;
                 }
 
-                // Check file size (5MB limit)
-                if (file.size > 5 * 1024 * 1024) {
-                    showError('Image must be smaller than 5MB.');
-                    profilePicInput.value = '';
-                    return;
-                }
-
-                // Display image
+                // Display image without compression
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     selectedProfilePic = event.target.result;
@@ -572,24 +313,12 @@
 
         function showError(message) {
             errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
             startBtn.disabled = true;
         }
 
         function clearError() {
             errorMessage.textContent = '';
-            errorMessage.style.display = 'none';
             startBtn.disabled = false;
-        }
-
-        function showSignInError(message) {
-            signInError.textContent = message;
-            signInError.style.display = 'block';
-        }
-
-        function clearSignInError() {
-            signInError.textContent = '';
-            signInError.style.display = 'none';
         }
 
         // Handle form submission
@@ -601,13 +330,12 @@
                 return;
             }
 
-            if (errorMessage.style.display === 'block') {
+            if (errorMessage.textContent) {
                 return; // Don't proceed if there are validation errors
             }
 
             // Show loading state
             startBtn.disabled = true;
-            startBtn.classList.add('btn-loading');
             loading.style.display = 'block';
 
             try {
@@ -679,24 +407,14 @@
                     localStorage.setItem('profilePic', userData.profilePic);
                 }
                 
-                // Show success and redirect
-                loading.innerHTML = `
-                    <div style="color: var(--success-color);">
-                        <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                        <p>Account created successfully!</p>
-                    </div>
-                `;
-                
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1500);
+                // Redirect to homepage
+                window.location.href = '/';
                 
             } catch (error) {
                 console.error('Error registering user:', error);
                 showError(error.message || 'Could not start your session. Please try again.');
                 loading.style.display = 'none';
                 startBtn.disabled = false;
-                startBtn.classList.remove('btn-loading');
             }
         };
 
@@ -719,20 +437,8 @@
         });
 
         // Toggle sections
-        showSignIn.onclick = (e) => { 
-            e.preventDefault(); 
-            registerSection.style.display='none'; 
-            signInSection.style.display='block'; 
-            clearError();
-            clearSignInError();
-        };
-        showRegister.onclick = (e) => { 
-            e.preventDefault(); 
-            signInSection.style.display='none'; 
-            registerSection.style.display='block'; 
-            clearSignInError();
-            clearError();
-        };
+        showSignIn.onclick = (e) => { e.preventDefault(); registerSection.style.display='none'; signInSection.style.display='block'; };
+        showRegister.onclick = (e) => { e.preventDefault(); signInSection.style.display='none'; registerSection.style.display='block'; };
 
         // Auto-redirect if remember flag set
         (function(){
@@ -747,53 +453,21 @@
         signInBtn.onclick = async () => {
             const dName = signInName.value.trim();
             const code = signInCode.value.trim();
-            clearSignInError();
-            
-            if(!dName || !code){ 
-                showSignInError('Please enter both display name and secret word'); 
-                return; 
-            }
-
-            signInBtn.disabled = true;
-            signInBtn.classList.add('btn-loading');
+            signInError.textContent='';
+            if(!dName || !code){ signInError.textContent='Enter name and secret word'; return; }
 
             try {
                 const res = await fetch(`/api/find-user?displayName=${encodeURIComponent(dName)}&code=${encodeURIComponent(code)}`);
-                if(!res.ok){ 
-                    showSignInError('User not found or secret word incorrect'); 
-                    return; 
-                }
+                if(!res.ok){ signInError.textContent='User not found or secret word incorrect'; return; }
                 const data = await res.json();
                 localStorage.setItem('userId', data.userId);
                 localStorage.setItem('userName', data.name);
-                if(keepSignedInChk.checked){ 
-                    localStorage.setItem('keepSignedIn','true'); 
-                }
-                
-                // Show success
-                signInBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
-                signInBtn.style.background = 'var(--success-color)';
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
+                if(keepSignedInChk.checked){ localStorage.setItem('keepSignedIn','true'); }
+                window.location.href = '/';
             } catch (err) {
-                showSignInError('Error signing in. Please try again.');
-            } finally {
-                if (signInError.style.display === 'block') {
-                    signInBtn.disabled = false;
-                    signInBtn.classList.remove('btn-loading');
-                }
+                signInError.textContent='Error signing in';
             }
         };
-
-        // Handle Enter key for sign-in
-        [signInName, signInCode].forEach(input => {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !signInBtn.disabled) {
-                    signInBtn.click();
-                }
-            });
-        });
     </script>
 </body>
-</html>
+</html> 
