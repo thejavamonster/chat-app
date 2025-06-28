@@ -213,7 +213,7 @@ const upload = multer({
 })
 
 // Serve uploaded files from the correct directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(DATA_DIR, 'uploads')));
 
 // Serve welcome page
 app.get('/welcome', (req, res) => {
