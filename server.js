@@ -156,9 +156,9 @@ app.use(express.static('public'))
 app.use(express.json())
 
 // Ensure uploads directory exists
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR);
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
 // Multer storage config for general files
@@ -183,14 +183,10 @@ app.post('/upload-file', fileUpload.single('file'), (req, res) => {
     res.json({ url: fileUrl, originalName: req.file.originalname });
 });
 
-// Configure multer for file uploads
+// Configure multer for image uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(DATA_DIR, 'uploads')
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true })
-        }
-        cb(null, uploadDir)
+        cb(null, UPLOADS_DIR)
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
@@ -477,6 +473,21 @@ app.post('/create-chat', async (req, res) => {
     try {
         await db.collection('chats').insertOne(chat);
         console.log(`Created new chat: ${chatName} (${chatId}) by user ${creatorId} at ${new Date(chat.createdAt).toLocaleString()}`);
+        
+        // Automatically star the chat for the creator
+        if (creatorId) {
+            try {
+                await db.collection('users').updateOne(
+                    { id: creatorId },
+                    { $addToSet: { starredChats: chatId } }
+                );
+                console.log(`Automatically starred chat ${chatId} for creator ${creatorId}`);
+            } catch (starError) {
+                console.error('Error auto-starring chat for creator:', starError);
+                // Don't fail the chat creation if starring fails
+            }
+        }
+        
         res.json({ id: chatId, name: chatName });
     } catch (error) {
         console.error('Error creating chat:', error);
@@ -1138,7 +1149,8 @@ app.get('/api/all-chats', async (req, res) => {
             chats: chats.map(chat => ({
                 id: chat.id,
                 name: chat.name,
-                createdAt: chat.createdAt
+                createdAt: chat.createdAt,
+                creatorId: chat.creatorId || null
             })),
             hasMore: skip + chats.length < totalChats
         });
