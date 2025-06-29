@@ -4,20 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enkryptonite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rowdies:wght@700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            background: linear-gradient(120deg, #cbe5ff 0%, #e6f2ff 50%, #b3d1fa 100%);
+            background-size: 200% 200%;
+            animation: shimmerBG 8s ease-in-out infinite;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        @keyframes shimmerBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+            max-width: 900px;
+            min-width: 600px;
+            min-height: 420px;
+            margin: 48px auto 0 auto;
+            padding: 32px 36px 36px 36px;
         }
 
         h1 {
@@ -45,26 +63,39 @@
             font-size: 16px;
         }
 
-        button {
-            padding: 10px 20px;
+        button, .btn, .back-btn {
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            color: white;
-            transition: background-color 0.2s;
-        }
-
-        button.primary {
+            border-radius: 8px;
             background-color: #007bff;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 10px 22px;
+            box-shadow: 0 2px 8px rgba(80,120,200,0.07);
+            transition: background 0.2s, box-shadow 0.2s, color 0.2s, transform 0.1s;
+            cursor: pointer;
+            outline: none;
         }
-
-        button.secondary {
+        button.secondary, .btn.secondary, .back-btn.secondary {
             background-color: #6c757d;
         }
-
-        button:hover {
-            opacity: 0.9;
+        button:hover, .btn:hover, .back-btn:hover {
+            background-color: #0056b3;
+            color: white;
+            box-shadow: 0 4px 16px rgba(80,120,200,0.13);
+            transform: translateY(-2px) scale(1.03);
+        }
+        button.secondary:hover, .btn.secondary:hover, .back-btn.secondary:hover {
+            background-color: #495057;
+        }
+        button:active, .btn:active, .back-btn:active {
+            background-color: #0069d9;
+            color: white;
+            box-shadow: 0 1px 4px rgba(80,120,200,0.08);
+            transform: scale(0.98);
+        }
+        button.secondary:active, .btn.secondary:active, .back-btn.secondary:active {
+            background-color: #343a40;
         }
 
         .recent-chats {
@@ -192,32 +223,133 @@
         .star-btn.starred {
             opacity: 1;
         }
+
+        /* --- Modal Styles --- */
+        .modal-bg {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.18);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-bg.active {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.13);
+            padding: 32px 28px 24px 28px;
+            min-width: 320px;
+            max-width: 90vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .modal input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            border: 1px solid #b3d1fa;
+            margin-bottom: 18px;
+        }
+        .modal .modal-actions {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+            justify-content: flex-end;
+        }
+        /* --- Horizontal Button Row --- */
+        .button-row {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .brand-title {
+            font-family: 'Rowdies', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 2.8rem;
+            text-align: center;
+            margin-bottom: 0.2em;
+            letter-spacing: 1px;
+        }
+        .brand-subtitle {
+            text-align: center;
+            font-size: 1.05rem;
+            color: #3a4a6a;
+            margin-bottom: 1.1em;
+            letter-spacing: 0.5px;
+        }
+        .brand-logo {
+            display: block;
+            margin: 0 auto 1.5em auto;
+            max-width: 160px;
+            width: 60%;
+            min-width: 100px;
+        }
+        .branding-block {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-top: 24px;
+            margin-bottom: 18px;
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .branding-block h1 {
+            margin-bottom: 4px;
+        }
+        .brand-subtitle-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 0;
+            margin-bottom: 24px;
+        }
+        .brand-subtitle-row img {
+            height: 1.2em;
+            width: auto;
+            vertical-align: middle;
+            display: inline-block;
+        }
+        .brand-subtitle-row span {
+            font-size: 1.05rem;
+            color: #3a4a6a;
+            letter-spacing: 0.5px;
+        }
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
     <div class="container" style="display: flex; gap: 32px;">
         <div style="flex: 1;">
-            <h1 style="display:flex;align-items:center;justify-content:space-between;">
-                <span>Enkryptonite</span>
-                <button id="accountBtn" style="background:none; border:none; cursor:pointer; padding:4px 8px;">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
-                </button>
-            </h1>
-            <div class="actions-row">
-                <div class="chat-form" style="display: flex; gap: 8px; align-items: center;">
-                    <input type="text" id="chatName" placeholder="Enter chat name">
-                    <div class="dropdown" style="position: relative;">
-                        <button class="primary" id="createDropdownBtn">Create ▼</button>
-                        <div id="createDropdown" class="dropdown-content" style="display:none; position:absolute; top:100%; left:0; background:#fff; border:1px solid #ccc; border-radius:4px; min-width:140px; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                            <a href="#" id="createChatOption" style="display:block; padding:8px 16px; text-decoration:none; color:#333; cursor:pointer;">Chat</a>
-                            <a href="#" id="privateMsgOption" style="display:block; padding:8px 16px; text-decoration:none; color:#333; cursor:pointer;">Private Message</a>
-                        </div>
-                    </div>
+            <div class="branding-block">
+                <div class="header-row">
+                    <h1 style="margin: 0;">Enkryptonite</h1>
+                    <button id="accountBtn" style="background:none; border:none; cursor:pointer; padding:4px 8px;">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+                    </button>
                 </div>
-                <div class="action-buttons">
-                    <button class="secondary" onclick="window.location.href='/search.html'">Search Chats</button>
-                    <button class="secondary" onclick="window.location.href='/all-chats.html'">View All Chats</button>
+                <div class="brand-subtitle-row">
+                    <img src="/safecomms-logo.png" alt="SafeComms Incorporated Logo" />
+                    <span>Produced by SafeComms Incorporated</span>
                 </div>
+            </div>
+            <div class="button-row">
+                <button id="openCreateModalBtn" class="primary">Create</button>
+                <button id="searchChatsBtn" class="secondary">Search Chats</button>
+                <button id="viewAllChatsBtn" class="secondary">View All Chats</button>
             </div>
             <div class="recent-chats">
                 <h2>Recent Chats (Last 24 Hours)</h2>
@@ -267,10 +399,10 @@
     <div id="logoutModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2100; justify-content:center; align-items:center;">
       <div style="background:#fff; padding:2rem; border-radius:8px; min-width:400px; max-width:90vw; margin:auto; position:relative; display:flex; flex-direction:column; align-items:center;">
         <button id="closeLogoutModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
-        <h2 style="margin-top:0; color:#dc3545;">⚠️ Logout Warning</h2>
+        <h2 style="margin-top:0; color:#dc3545;">⚠️ Warning</h2>
         
         <div style="width:100%; margin:1rem 0; text-align:center;">
-          <p style="margin-bottom:1rem; color:#666;">Please copy your login information before logging out. You'll need this to log back in:</p>
+          <p style="margin-bottom:1rem; color:#666;">Please copy your login information before logging out. It contains sensitive information you need to log in.</p>
           
           <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
             <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">Display Name:</label>
@@ -278,17 +410,17 @@
           </div>
           
           <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
-            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">4-Digit Code (for display):</label>
+            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">4-Digit Code:</label>
             <div id="logoutCode" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
           </div>
           
           <div style="background:#f8f9fa; padding:1rem; border:1px solid #dee2e6; border-radius:4px; margin:1rem 0;">
-            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">Secret Word (for login):</label>
+            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:#495057;">AI Generated Secret Word:</label>
             <div id="logoutSecretWord" style="background:white; padding:0.5rem; border:1px solid #ced4da; border-radius:4px; font-family:monospace; font-size:16px; cursor:pointer;" onclick="copyToClipboard(this.textContent)"></div>
           </div>
           
           <p style="margin-top:1rem; color:#dc3545; font-size:14px;">
-            <strong>⚠️ Warning:</strong> If you don't save this information, you may not be able to log back in with the same account!
+            <strong>⚠️ Warning:</strong> This is sensitive information. Do not tell anyone, or else the FBI, CIA, and the United States military will come after you.
           </p>
         </div>
 
@@ -300,17 +432,157 @@
       </div>
     </div>
 
+    <!-- Modal for chat creation -->
+    <div id="createModalBg" class="modal-bg">
+        <div class="modal">
+            <h2 style="margin-top:0;">Create a Chat</h2>
+            <input type="text" id="modalChatNameInput" placeholder="Enter chat name" />
+            <div class="modal-actions">
+                <button id="modalCreateBtn" class="primary">Create</button>
+                <button id="modalCancelBtn" class="secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Function to create a new chat
-        async function createChat() {
-            const chatNameInput = document.getElementById('chatName');
-            const chatName = chatNameInput.value.trim();
-            
-            if (!chatName) {
-                alert('Please enter a chat name');
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Modal logic
+            const openCreateModalBtn = document.getElementById('openCreateModalBtn');
+            const createModalBg = document.getElementById('createModalBg');
+            const modalChatNameInput = document.getElementById('modalChatNameInput');
+            const modalCreateBtn = document.getElementById('modalCreateBtn');
+            const modalCancelBtn = document.getElementById('modalCancelBtn');
+            const closePrivateMsgModal = document.getElementById('closePrivateMsgModal');
+            const privateMsgModal = document.getElementById('privateMsgModal');
+            const userListContainer = document.getElementById('userListContainer');
+            const startGroupDMBtn = document.getElementById('startGroupDMBtn');
+
+            if (openCreateModalBtn && createModalBg && modalChatNameInput && modalCreateBtn && modalCancelBtn) {
+                openCreateModalBtn.onclick = () => {
+                    createModalBg.classList.add('active');
+                    modalChatNameInput.value = '';
+                    setTimeout(() => modalChatNameInput.focus(), 100);
+                };
+                modalCancelBtn.onclick = () => {
+                    createModalBg.classList.remove('active');
+                };
+                createModalBg.onclick = (e) => {
+                    if (e.target === createModalBg) createModalBg.classList.remove('active');
+                };
+                modalChatNameInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') modalCreateBtn.click();
+                });
+                modalCreateBtn.onclick = async () => {
+                    const chatName = modalChatNameInput.value.trim();
+                    if (!chatName) {
+                        modalChatNameInput.focus();
+                        return;
+                    }
+                    await createChat(chatName);
+                    createModalBg.classList.remove('active');
+                };
+            }
+
+            if (closePrivateMsgModal && privateMsgModal) {
+                closePrivateMsgModal.onclick = () => {
+                    privateMsgModal.style.display = 'none';
+                };
+                privateMsgModal.onclick = (e) => {
+                    if (e.target === privateMsgModal) privateMsgModal.style.display = 'none';
+                };
+            }
+
+            // User and sidebar logic
+            const userId = localStorage.getItem('userId');
+            const userName = localStorage.getItem('userName');
+
+            if (!userId || !userName) {
+                window.location.href = '/welcome';
                 return;
             }
 
+            try {
+                const userResponse = await fetch(`/user/${userId}`);
+                if (userResponse.ok) {
+                    await fetchStarredChatIds();
+                    loadMyStarredChats();
+                    loadPrivateMessages();
+                    loadRecentChats();
+                } else {
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('userName');
+                    window.location.href = '/welcome';
+                    return;
+                }
+            } catch (error) {
+                console.error('Error verifying user:', error);
+                window.location.href = '/welcome';
+                return;
+            }
+
+            // Existing logic for handling actions from other pages
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('action')) {
+                handleAction(params);
+            }
+
+            // Initialize logout functionality
+            if (typeof initializeLogoutFunctionality === 'function') {
+                initializeLogoutFunctionality();
+            }
+
+            // Add event listeners for Search Chats, View All Chats, and Account buttons
+            const searchChatsBtn = document.getElementById('searchChatsBtn');
+            const viewAllChatsBtn = document.getElementById('viewAllChatsBtn');
+            const accountBtn = document.getElementById('accountBtn');
+            const accountModal = document.getElementById('accountModal');
+            const closeAccountModal = document.getElementById('closeAccountModal');
+            const profilePicInput = document.getElementById('profilePicInput');
+            const profilePicContainer = document.getElementById('profilePicContainer');
+            const accountNameDisplay = document.getElementById('accountNameDisplay');
+
+            if (searchChatsBtn) {
+                searchChatsBtn.onclick = () => {
+                    window.location.href = '/search.html';
+                };
+            }
+            if (viewAllChatsBtn) {
+                viewAllChatsBtn.onclick = () => {
+                    window.location.href = '/all-chats.html';
+                };
+            }
+            if (accountBtn && accountModal && closeAccountModal && profilePicInput && profilePicContainer && accountNameDisplay) {
+                accountBtn.onclick = async () => {
+                    const userId = localStorage.getItem('userId');
+                    if (!userId) { window.location.href = '/welcome'; return; }
+                    try {
+                        const res = await fetch(`/user/${userId}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            accountNameDisplay.textContent = data.fullName || data.name;
+                            renderProfilePicOrInitials(data.name, data.profilePic);
+                        }
+                    } catch {}
+                    accountModal.style.display = 'flex';
+                };
+                closeAccountModal.onclick = () => accountModal.style.display = 'none';
+                accountModal.onclick = (e) => { if (e.target === accountModal) accountModal.style.display = 'none'; };
+                profilePicInput.onchange = async function() {
+                    const file = this.files[0]; if (!file) return;
+                    const formData = new FormData(); formData.append('profilePic', file);
+                    const userId = localStorage.getItem('userId');
+                    try {
+                        const res = await fetch(`/upload-profile-pic/${userId}`, { method: 'POST', body: formData });
+                        if (res.ok) { setTimeout(async () => {
+                            const uRes = await fetch(`/user/${userId}`); if (uRes.ok) { const uData = await uRes.json(); renderProfilePicOrInitials(uData.name, uData.profilePic + '?t=' + Date.now()); }
+                        }, 1500); }
+                    } catch (err) { alert('Upload failed'); }
+                };
+            }
+        });
+
+        // Function to create a new chat
+        async function createChat(chatName) {
             try {
                 const userId = localStorage.getItem('userId');
                 const response = await fetch('/create-chat', {
@@ -329,7 +601,6 @@
                 }
 
                 const chat = await response.json();
-                chatNameInput.value = '';
                 
                 // Refresh the recent chats list
                 loadRecentChats();
@@ -432,13 +703,6 @@
 
         // Refresh recent chats every minute
         setInterval(loadRecentChats, 60000);
-
-        // Handle enter key in the input field
-        document.getElementById('chatName').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                createChat();
-            }
-        });
 
         // Dropdown logic
         const createDropdownBtn = document.getElementById('createDropdownBtn');
@@ -704,48 +968,6 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const userId = localStorage.getItem('userId');
-            const userName = localStorage.getItem('userName');
-
-            if (!userId || !userName) {
-                // Redirect to welcome page instead of showing modal
-                window.location.href = '/welcome';
-                return;
-            }
-
-            // If user exists, verify they're still valid and load their chats
-            try {
-                const userResponse = await fetch(`/user/${userId}`);
-                if (userResponse.ok) {
-                    // User exists, load their chats
-                    await fetchStarredChatIds();
-                    refreshChatLists();
-                } else {
-                    // User not found, clear localStorage and redirect to welcome page
-                    console.log('User not found on server, clearing localStorage');
-                    localStorage.removeItem('userId');
-                    localStorage.removeItem('userName');
-                    window.location.href = '/welcome';
-                    return;
-                }
-            } catch (error) {
-                console.error('Error verifying user:', error);
-                // On error, redirect to welcome page
-                window.location.href = '/welcome';
-                return;
-            }
-
-            // Existing logic for handling actions from other pages
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('action')) {
-                handleAction(params);
-            }
-
-            // Initialize logout functionality
-            initializeLogoutFunctionality();
-        });
-
         function refreshChatLists() {
             loadMyStarredChats();
             loadRecentChats();
@@ -758,13 +980,6 @@
             loadRecentChats();
             loadPrivateMessages();
         };
-
-        const accountBtn = document.getElementById('accountBtn');
-        const accountModal = document.getElementById('accountModal');
-        const closeAccountModal = document.getElementById('closeAccountModal');
-        const profilePicInput = document.getElementById('profilePicInput');
-        const profilePicContainer = document.getElementById('profilePicContainer');
-        const accountNameDisplay = document.getElementById('accountNameDisplay');
 
         function getInitials(name) {
           if (!name) return '';
@@ -780,33 +995,6 @@
           if(url){circle.style.backgroundImage=`url('${url}')`;} else {circle.style.backgroundColor='#e0e7ef';circle.style.display='flex';circle.style.alignItems='center';circle.style.justifyContent='center';circle.innerHTML=`<span style="color:#007bff;font-size:2.5rem;font-weight:bold;">${getInitials(name)}</span>`;}
           profilePicContainer.appendChild(circle);
         }
-
-        accountBtn.onclick = async ()=>{
-          const userId=localStorage.getItem('userId');
-          if(!userId){window.location.href='/welcome';return;}
-          try{
-            const res=await fetch(`/user/${userId}`);
-            if(res.ok){const data=await res.json();
-              accountNameDisplay.textContent=data.fullName||data.name;
-              renderProfilePicOrInitials(data.name,data.profilePic);
-            }
-          }catch{}
-          accountModal.style.display='flex';
-        };
-        closeAccountModal.onclick=()=>accountModal.style.display='none';
-        accountModal.onclick=e=>{if(e.target===accountModal)accountModal.style.display='none';};
-
-        profilePicInput.onchange=async function(){
-          const file=this.files[0];if(!file)return;
-          const formData=new FormData();formData.append('profilePic',file);
-          const userId=localStorage.getItem('userId');
-          try{
-            const res=await fetch(`/upload-profile-pic/${userId}`,{method:'POST',body:formData});
-            if(res.ok){setTimeout(async()=>{
-              const uRes=await fetch(`/user/${userId}`);if(uRes.ok){const uData=await uRes.json();renderProfilePicOrInitials(uData.name,uData.profilePic+'?t='+Date.now());}
-            },1500);}
-          }catch(err){alert('Upload failed');}
-        };
 
         // Add logout functionality
         function initializeLogoutFunctionality() {
