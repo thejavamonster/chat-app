@@ -13,12 +13,26 @@
 
         body {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            background: linear-gradient(120deg, #cbe5ff 0%, #e6f2ff 50%, #b3d1fa 100%);
+            background-size: 200% 200%;
+            animation: shimmerBG 8s ease-in-out infinite;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+        }
+
+        @keyframes shimmerBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .welcome-container {
@@ -49,19 +63,15 @@
         }
 
         .profile-pic-container {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
-            margin: 0 auto 20px;
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
+            border: 3px dashed #d3dbe3;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
+            margin: 0 auto 16px auto;
+            background: none;
         }
 
         .profile-pic-container:hover {
@@ -195,16 +205,46 @@
                 height: 100px;
             }
         }
+
+        /* Replace the emoji with a clean SVG icon for profile upload */
+        .profile-pic-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 124px;
+            height: 124px;
+            border-radius: 50%;
+            background: #eaf2fb;
+            border: 2px solid #b3d1fa;
+            cursor: pointer;
+            margin: 0;
+            transition: box-shadow 0.2s;
+            outline: none !important;
+        }
+        .profile-pic-label:focus,
+        .profile-pic-label:active {
+            outline: none !important;
+            border: 2px solid #b3d1fa;
+            box-shadow: none;
+        }
+        .profile-pic-label svg {
+            width: 64px;
+            height: 64px;
+            stroke: #007bff;
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="welcome-container">
         <div class="logo">Enkryptonite</div>
-        <p class="subtitle">Create your identity to start chatting securely</p>
+        <p class="subtitle">Create your DNA</p>
         
         <div class="profile-section">
             <div class="profile-pic-container" id="profilePicContainer">
-                <div class="profile-pic-placeholder">👤</div>
+                <label for="profilePicInput" class="profile-pic-label">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+                </label>
             </div>
             <p class="upload-text">Click to upload a profile picture (optional)</p>
             <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
@@ -214,35 +254,35 @@
         <div class="form-section" id="registerSection">
             <input type="text" id="nameInput" class="name-input" placeholder="Choose your display name" maxlength="32">
             <div id="errorMessage" class="error-message"></div>
-            <button id="startBtn" class="start-btn">Start Chatting</button>
-            <p style="margin-top:12px;font-size:14px;">Already have an account? <a href="#" id="showSignIn">Sign in</a></p>
+            <button id="startBtn" class="start-btn">Be More Powerful Than Superman</button>
+            <p style="margin-top:12px;font-size:14px;">Already have DNA Here? <a href="#" id="showSignIn">Sign in</a></p>
         </div>
 
         <!-- Sign-in form (hidden by default) -->
         <div class="form-section" id="signInSection" style="display:none;">
             <input type="text" id="signInName" class="name-input" placeholder="Display name" maxlength="32" style="margin-bottom:10px;">
-            <input type="text" id="signInCode" class="name-input" placeholder="Secret word (not 4-digit code)" style="margin-bottom:6px;">
+            <input type="text" id="signInCode" class="name-input" placeholder="Secret word" style="margin-bottom:6px;">
             <label style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:10px;">
               <input type="checkbox" id="keepSignedIn"> Keep me signed in
             </label>
             <div id="signInError" class="error-message"></div>
             <button id="signInBtn" class="start-btn">Sign In</button>
-            <p style="margin-top:12px;font-size:14px;">New here? <a href="#" id="showRegister">Create account</a></p>
+            <p style="margin-top:12px;font-size:14px;">New here? <a href="#" id="showRegister">Create DNA</a></p>
         </div>
         
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: #666;">Setting up your account...</p>
+            <p style="margin-top: 10px; color: #666;">Setting up your DNA...</p>
         </div>
         
         <div class="features">
-            <h3>What you get:</h3>
+            <h3>The Powers Available:</h3>
             <ul class="feature-list">
-                <li>End-to-end encrypted messaging</li>
-                <li>Private conversations</li>
-                <li>Star your favorite chats</li>
-                <li>No registration required</li>
-                <li>Instant setup</li>
+                <li>World Class Encryption That Keeps Your Messages Protected</li>
+                <li>Extremely Customizable</li>
+                <li>Latest Chats Are Shown On The Home Page</li>
+                <li>Easy To Use</li>
+                <li>Nerd Mode</li>
             </ul>
         </div>
     </div>
