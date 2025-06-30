@@ -329,6 +329,41 @@
             justify-content: space-between;
             width: 100%;
         }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 8px 0;
+            z-index: 10;
+            min-width: 160px;
+        }
+        .dropdown-menu.active {
+            display: block;
+        }
+        .dropdown-menu a {
+            display: block;
+            padding: 10px 16px;
+            color: #333;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+        .dropdown-menu a:hover {
+            background-color: #f5f5f5;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
     </style>
 </head>
 <body>
@@ -346,8 +381,12 @@
                     <span>Produced by SafeComms Incorporated</span>
                 </div>
             </div>
-            <div class="button-row">
-                <button id="openCreateModalBtn" class="primary">Create</button>
+            <div class="button-row" style="position: relative;">
+                <button id="createBtn" class="primary">Create</button>
+                <div id="createDropdown" class="dropdown-menu">
+                    <a href="#" id="openCreateModalBtn">Create a Chat</a>
+                    <a href="#" id="openPrivateMessageModalBtn">Private Messages</a>
+                </div>
                 <button id="searchChatsBtn" class="secondary">Search Chats</button>
                 <button id="viewAllChatsBtn" class="secondary">View All Chats</button>
             </div>
@@ -371,12 +410,14 @@
     </div>
 
     <!-- Private Message Modal -->
-    <div id="privateMsgModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2000; justify-content:center; align-items:center;">
-        <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative;">
-            <button id="closePrivateMsgModal" style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">×</button>
-            <h2>Start Private Message</h2>
-            <div id="userListContainer" style="max-height:300px; overflow-y:auto; margin-top:1rem;"></div>
-            <button id="startGroupDMBtn" style="margin-top:1.2rem; background:#007bff; color:white; border:none; border-radius:6px; padding:10px 24px; font-size:1.1em; display:none;">Start Group DM</button>
+    <div id="privateMessageModal" class="modal-bg">
+        <div class="modal">
+            <button id="closePrivateMessageModal" class="modal-close-btn">&times;</button>
+            <h2 class="modal-title">Start a Private Message</h2>
+            <div id="membersList" style="width: 100%; max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+                <!-- Member list will be populated here -->
+            </div>
+            <button id="startPrivateChatBtn" class="primary">Start Private Chat</button>
         </div>
     </div>
 
@@ -452,10 +493,10 @@
             const modalChatNameInput = document.getElementById('modalChatNameInput');
             const modalCreateBtn = document.getElementById('modalCreateBtn');
             const modalCancelBtn = document.getElementById('modalCancelBtn');
-            const closePrivateMsgModal = document.getElementById('closePrivateMsgModal');
-            const privateMsgModal = document.getElementById('privateMsgModal');
-            const userListContainer = document.getElementById('userListContainer');
-            const startGroupDMBtn = document.getElementById('startGroupDMBtn');
+            const closePrivateMessageModal = document.getElementById('closePrivateMessageModal');
+            const privateMessageModal = document.getElementById('privateMessageModal');
+            const membersList = document.getElementById('membersList');
+            const startPrivateChatBtn = document.getElementById('startPrivateChatBtn');
 
             if (openCreateModalBtn && createModalBg && modalChatNameInput && modalCreateBtn && modalCancelBtn) {
                 openCreateModalBtn.onclick = () => {
@@ -483,12 +524,12 @@
                 };
             }
 
-            if (closePrivateMsgModal && privateMsgModal) {
-                closePrivateMsgModal.onclick = () => {
-                    privateMsgModal.style.display = 'none';
+            if (closePrivateMessageModal && privateMessageModal) {
+                closePrivateMessageModal.onclick = () => {
+                    privateMessageModal.style.display = 'none';
                 };
-                privateMsgModal.onclick = (e) => {
-                    if (e.target === privateMsgModal) privateMsgModal.style.display = 'none';
+                privateMessageModal.onclick = (e) => {
+                    if (e.target === privateMessageModal) privateMessageModal.style.display = 'none';
                 };
             }
 
@@ -579,6 +620,84 @@
                     } catch (err) { alert('Upload failed'); }
                 };
             }
+
+            const createBtn = document.getElementById('createBtn');
+            const createDropdown = document.getElementById('createDropdown');
+            const openPrivateMessageModalBtn = document.getElementById('openPrivateMessageModalBtn');
+
+            if (createBtn) {
+                createBtn.onclick = () => {
+                    createDropdown.classList.toggle('active');
+                };
+            }
+
+            if (openCreateModalBtn) {
+                openCreateModalBtn.onclick = (e) => {
+                    e.preventDefault();
+                    createModalBg.style.display = 'flex';
+                    createDropdown.classList.remove('active');
+                };
+            }
+            
+            if (openPrivateMessageModalBtn) {
+                openPrivateMessageModalBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    await loadAllUsersForPrivateMessage();
+                    privateMessageModal.style.display = 'flex';
+                    createDropdown.classList.remove('active');
+                };
+            }
+
+            if(typeof closePrivateMessageModal !== 'undefined' && closePrivateMessageModal) {
+                closePrivateMessageModal.onclick = () => {
+                    privateMessageModal.style.display = 'none';
+                };
+            }
+
+            if(startPrivateChatBtn) {
+                startPrivateChatBtn.onclick = async () => {
+                    const selectedUsers = Array.from(membersList.querySelectorAll('input[type="checkbox"]:checked'))
+                        .map(cb => ({ id: cb.dataset.userId, name: cb.dataset.userName }));
+
+                    if (selectedUsers.length === 0) {
+                        alert('Please select at least one user.');
+                        return;
+                    }
+
+                    // Add current user to the list for group chat creation
+                    const allParticipants = [...selectedUsers, { id: localStorage.getItem('userId'), name: localStorage.getItem('userName') }];
+                    const participantIds = allParticipants.map(u => u.id);
+                    const participantNames = allParticipants.map(u => u.name);
+
+                    if (participantIds.length === 1) { // DM with self
+                        const chatId = await findOrCreatePrivateChat(participantIds[0], participantNames[0]);
+                         if (chatId) {
+                            window.location.href = `/chat.html?chatID=${chatId}`;
+                        }
+                    } else if (participantIds.length > 1) { // Group chat
+                        const chatName = 'Private Chat with ' + selectedUsers.map(u => u.name).join(', ');
+                        const response = await fetch('/create-group-chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: chatName, members: participantIds, isPrivate: true })
+                        });
+                        const chat = await response.json();
+                        if (chat && chat.id) {
+                            window.location.href = `/chat.html?chatID=${chat.id}`;
+                        } else {
+                            alert('Failed to create group chat.');
+                        }
+                    }
+                    privateMessageModal.style.display = 'none';
+                };
+            }
+
+            // Close dropdown if clicking outside
+            document.addEventListener('click', function(event) {
+                if (!createBtn.contains(event.target) && !createDropdown.contains(event.target)) {
+                    createDropdown.classList.remove('active');
+                }
+            });
         });
 
         // Function to create a new chat
@@ -656,7 +775,9 @@
 
         // Helper function to escape HTML
         function escapeHtml(unsafe) {
+            if (unsafe === undefined || unsafe === null) return '';
             return unsafe
+                .toString()
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
@@ -1082,6 +1203,27 @@
               // Redirect to welcome page
               window.location.href = '/welcome.html';
             };
+        }
+
+        async function loadAllUsersForPrivateMessage() {
+            try {
+                const res = await fetch('/api/all-users');
+                const users = await res.json();
+                const currentUserId = localStorage.getItem('userId');
+                membersList.innerHTML = users
+                    .filter(user => user.id !== currentUserId) // Exclude current user
+                    .map(user => `
+                        <div style="padding: 8px; border-bottom: 1px solid #eee;">
+                            <label>
+                                <input type="checkbox" data-user-id="${user.id}" data-user-name="${user.name}">
+                                ${escapeHtml(user.fullName || user.name || 'Unknown User')}
+                            </label>
+                        </div>
+                    `).join('');
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                membersList.innerHTML = '<p style="color:red">Could not load users.</p>';
+            }
         }
     </script>
     <script src="/js/utils.js"></script>
