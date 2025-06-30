@@ -1434,6 +1434,51 @@ app.post('/api/chats/:chatId/edit-message', async (req, res) => {
     }
 });
 
+// Get all users
+app.get('/api/all-users', async (req, res) => {
+    try {
+        const users = await db.collection('users').find({}, { projection: { id: 1, name: 1, fullName: 1 } }).toArray();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+// Create a new group chat
+app.post('/create-group-chat', async (req, res) => {
+    const { name, members, isPrivate } = req.body;
+    const creatorId = members[members.length-1]; // Last user is creator
+
+    if (!name || !members || members.length === 0) {
+        return res.status(400).json({ error: 'Missing chat name or members' });
+    }
+
+    try {
+        const newChat = {
+            id: uuidv4(),
+            name: name,
+            creatorId: creatorId,
+            createdAt: Date.now(),
+            messages: [],
+            members: members,
+            isPrivate: isPrivate || false,
+        };
+
+        await db.collection('chats').insertOne(newChat);
+        
+        // Add this chat to the starred list for all members
+        await db.collection('users').updateMany(
+            { id: { $in: members } },
+            { $addToSet: { starredChats: newChat.id } }
+        );
+
+        res.status(201).json(newChat);
+    } catch (error) {
+        console.error('Error creating group chat:', error);
+        res.status(500).json({ error: 'Failed to create group chat' });
+    }
+});
+
 // Connect to MongoDB and start the server
 const PORT = process.env.PORT || 3000;
 connectDB().then(() => {
