@@ -1639,7 +1639,10 @@
     const userInfoByIdCache = {};
 
     async function getUserInfoById(uid, fallbackName = '') {
-      if (!uid) return { userId: '', initials: getInitials(fallbackName), profilePic: null, code: null, name: fallbackName, fullName: fallbackName };
+      // More robust check for a valid UID
+      if (!uid || typeof uid !== 'string' || uid.trim() === '') {
+        return { userId: '', initials: getInitials(fallbackName), profilePic: null, code: null, name: fallbackName, fullName: fallbackName };
+      }
 
       // Always fetch fresh for current user to keep avatar current
       if (uid === userId) {
