@@ -827,9 +827,9 @@ wss.on('connection', async (ws) => {
                     }
                 );
                 
-                // Broadcast to all clients
+                // Broadcast to all clients except the sender
                 wss.clients.forEach((client) => {
-                    if (client.readyState === WebSocket.OPEN && client.chatID === chatID) {
+                    if (client !== ws && client.readyState === WebSocket.OPEN && client.chatID === chatID) {
                         client.send(JSON.stringify({
                             type: 'message',
                             message
