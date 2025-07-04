@@ -21,6 +21,7 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
         }
 
         @keyframes shimmerBG {
@@ -33,6 +34,53 @@
             100% {
                 background-position: 0% 50%;
             }
+        }
+
+        .bolt-tag {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: white;
+            border: 3px solid #333;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            font-size: 11px;
+            text-align: center;
+            line-height: 1.1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            cursor: pointer;
+        }
+
+        .bolt-tag:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            background: #f8f9fa;
+        }
+
+        .bolt-tag:active {
+            transform: translateY(0) scale(1.02);
+        }
+
+        .bolt-tag .bolt-b {
+            font-size: 24px;
+            font-weight: 900;
+            margin-bottom: -2px;
+        }
+
+        .bolt-tag .powered-text {
+            font-size: 8px;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
         }
 
         .welcome-container {
@@ -204,6 +252,22 @@
                 width: 100px;
                 height: 100px;
             }
+
+            .bolt-tag {
+                width: 60px;
+                height: 60px;
+                top: 15px;
+                right: 15px;
+                font-size: 9px;
+            }
+
+            .bolt-tag .bolt-b {
+                font-size: 18px;
+            }
+
+            .bolt-tag .powered-text {
+                font-size: 7px;
+            }
         }
 
         /* Replace the emoji with a clean SVG icon for profile upload */
@@ -236,6 +300,11 @@
     </style>
 </head>
 <body>
+    <a href="https://bolt.new" target="_blank" class="bolt-tag">
+        <div class="bolt-b">b</div>
+        <div class="powered-text">POWERED BY BOLT.NEW</div>
+    </a>
+
     <div class="welcome-container">
         <div class="logo">Enkryptonite</div>
         <p class="subtitle">Create your DNA</p>
@@ -508,4 +577,4 @@
         };
     </script>
 </body>
-</html> 
+</html>
